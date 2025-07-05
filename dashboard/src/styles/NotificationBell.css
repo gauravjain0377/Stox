@@ -1,0 +1,186 @@
+.notification-bell-container {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  margin-right: 16px;
+}
+
+.notification-bell-container:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.bell-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bell-icon {
+  color: var(--text-inverse);
+  transition: transform 0.2s ease;
+}
+
+.notification-bell-container:hover .bell-icon {
+  transform: scale(1.1);
+}
+
+.notification-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--accent-danger);
+  color: var(--text-inverse);
+  border-radius: 10px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  min-width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--bg-secondary);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* Tooltip */
+.notification-tooltip {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 320px;
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--border-primary);
+  z-index: 1000;
+  margin-top: 8px;
+  overflow: hidden;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tooltip-count {
+  background: var(--accent-primary);
+  color: var(--text-inverse);
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.tooltip-content {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.tooltip-item {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-secondary);
+  transition: background-color 0.2s ease;
+}
+
+.tooltip-item:hover {
+  background: var(--bg-tertiary);
+}
+
+.tooltip-item:last-child {
+  border-bottom: none;
+}
+
+.tooltip-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.tooltip-time {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.tooltip-more {
+  padding: 12px 20px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--accent-primary);
+  font-weight: 500;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-primary);
+}
+
+.tooltip-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* Scrollbar for tooltip */
+.tooltip-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.tooltip-content::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+.tooltip-content::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+  border-radius: 2px;
+}
+
+.tooltip-content::-webkit-scrollbar-thumb:hover {
+  background: var(--border-accent);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .notification-tooltip {
+    width: 280px;
+    right: -120px;
+  }
+  
+  .notification-bell-container {
+    margin-right: 12px;
+  }
+} 

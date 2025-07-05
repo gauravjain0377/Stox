@@ -1,0 +1,83 @@
+/* Auth page specific styles - only affects login/signup pages */
+
+/* Specific styles for login/signup forms only */
+.auth-page {
+  background: linear-gradient(
+    90deg,
+    rgba(2, 0, 36, 1) 0%,
+    rgba(143, 187, 204, 1) 35%,
+    rgba(0, 212, 255, 1) 100%
+  );
+  min-height: calc(100vh - 80px); /* Account for navbar height */
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  padding-top: 20px;
+}
+
+.auth-page .form_container {
+  background-color: #fff;
+  padding: 2rem 3rem;
+  border-radius: 0.5rem;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 8px 8px 24px 0px rgba(66, 68, 90, 1);
+  margin: 2rem auto;
+}
+
+.auth-page .form_container > h2 {
+  margin-block: 1rem;
+  padding-block: 0.6rem;
+  color: rgba(0, 212, 255, 1);
+}
+
+.auth-page .form_container > form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.auth-page .form_container div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.auth-page .form_container label {
+  font-size: 1.2rem;
+  color: #656262;
+}
+
+.auth-page .form_container input {
+  border: none;
+  padding: 0.5rem;
+  border-bottom: 1px solid gray;
+  font-size: 1.1rem;
+  outline: none;
+}
+
+.auth-page .form_container input::placeholder {
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.auth-page .form_container button {
+  background-color: rgba(0, 212, 255, 1);
+  color: #fff;
+  border: none;
+  padding: 0.6rem;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 0.3rem;
+}
+
+.auth-page .form_container span a {
+  text-decoration: none;
+  color: rgba(0, 212, 255, 1);
+}
+
+/* Responsive design for auth forms */
+@media only screen and (max-width: 768px) {
+  .auth-page .form_container {
+    margin: 1rem;
+    padding: 1.5rem 2rem;
+  }
+} 
