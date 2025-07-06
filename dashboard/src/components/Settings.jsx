@@ -6,7 +6,7 @@ import "../styles/Settings.css";
 const Settings = ({ user }) => {
   const context = useContext(GeneralContext);
   const { theme, setTheme } = useTheme();
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState("overview");
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
@@ -41,11 +41,11 @@ const Settings = ({ user }) => {
   });
 
   const tabs = [
-    { id: "profile", label: "Profile", icon: "👤" },
-    { id: "security", label: "Security", icon: "🔒" },
-    { id: "notifications", label: "Notifications", icon: "🔔" },
-    { id: "accounts", label: "Linked Accounts", icon: "🔗" },
-    { id: "preferences", label: "Preferences", icon: "⚙️" }
+    { id: "overview", label: "Overview", icon: "🏠" },
+    { id: "profile", label: "Edit Profile", icon: "👤" },
+    { id: "security", label: "Account Settings", icon: "🔒" },
+    { id: "notifications", label: "Privacy & Security", icon: "🔔" },
+    { id: "help", label: "Help & Support", icon: "❓" }
   ];
 
   const handleProfileSubmit = async (e) => {
@@ -121,6 +121,21 @@ const Settings = ({ user }) => {
       setIsLoading(false);
     }
   };
+
+  const renderOverviewTab = () => (
+    <div className="settings-content overview-content">
+      <div className="overview-card">
+        <div className="overview-section-title">PERSONAL INFORMATION</div>
+        <div className="overview-info-row">
+          <span className="overview-info-label">👤</span>
+          <span>{user?.username || user?.email || 'User'}</span>
+          <span className="overview-info-label">✉️</span>
+          <span>{user?.email}</span>
+        </div>
+        {/* Add more info as needed */}
+      </div>
+    </div>
+  );
 
   const renderProfileTab = () => (
     <div className="settings-content">
@@ -520,18 +535,18 @@ const Settings = ({ user }) => {
 
   const renderContent = () => {
     switch (activeTab) {
+      case "overview":
+        return renderOverviewTab();
       case "profile":
         return renderProfileTab();
       case "security":
         return renderSecurityTab();
       case "notifications":
         return renderNotificationsTab();
-      case "accounts":
-        return renderAccountsTab();
-      case "preferences":
-        return renderPreferencesTab();
+      case "help":
+        return <div className="settings-content">Help & Support coming soon.</div>;
       default:
-        return renderProfileTab();
+        return renderOverviewTab();
     }
   };
 

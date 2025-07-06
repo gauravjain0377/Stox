@@ -119,15 +119,50 @@ const TopNavbar = () => {
             </button>
             {/* Settings Dropdown/Modal */}
             {settingsOpen && (
-              <div className="absolute right-0 mt-2 w-[420px] max-w-xs bg-white rounded-xl shadow-2xl border border-gray-100 z-50 animate-fade-in overflow-hidden">
-                <div className="profile-summary-top">
-                  <div className="profile-avatar-big">{getInitials()}</div>
-                  <div className="profile-summary-details">
-                    <div className="profile-summary-name">{user?.username || user?.email || 'User'}</div>
-                    <div className="profile-summary-email">{user?.email}</div>
+              <div className="profile-dropdown-card profile-dropdown-compact">
+                <div className="profile-dropdown-header-compact">
+                  <div>
+                    <div className="profile-dropdown-name">{user?.username || user?.email || 'User'}</div>
+                    <div className="profile-dropdown-email">{user?.email}</div>
+                  </div>
+                  <button className="profile-dropdown-settings-btn" title="Profile Settings">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="10" r="8"/><path d="M10 6v4l2 2"/></svg>
+                  </button>
+                </div>
+                <div className="profile-dropdown-divider"></div>
+                <div className="profile-dropdown-links-compact">
+                  <div className="profile-dropdown-link-compact">
+                    <span className="profile-dropdown-link-icon">🪙</span>
+                    <div className="profile-dropdown-link-main">
+                      <span className="profile-dropdown-link-title">₹0.00</span>
+                      <span className="profile-dropdown-link-desc">Stocks, F&O balance</span>
+                    </div>
+                    <span className="profile-dropdown-link-arrow">›</span>
+                  </div>
+                  <div className="profile-dropdown-link-compact">
+                    <span className="profile-dropdown-link-icon">📄</span>
+                    <span className="profile-dropdown-link-title">All Orders</span>
+                    <span className="profile-dropdown-link-arrow">›</span>
+                  </div>
+                  <div className="profile-dropdown-link-compact">
+                    <span className="profile-dropdown-link-icon">🏦</span>
+                    <span className="profile-dropdown-link-title">Bank Details</span>
+                    <span className="profile-dropdown-link-arrow">›</span>
+                  </div>
+                  <div className="profile-dropdown-link-compact">
+                    <span className="profile-dropdown-link-icon">🎧</span>
+                    <span className="profile-dropdown-link-title">24 x 7 Customer Support</span>
+                    <span className="profile-dropdown-link-arrow">›</span>
+                  </div>
+                  <div className="profile-dropdown-link-compact">
+                    <span className="profile-dropdown-link-icon">📊</span>
+                    <span className="profile-dropdown-link-title">Reports</span>
+                    <span className="profile-dropdown-link-arrow">›</span>
                   </div>
                 </div>
-                <Settings user={user} />
+                <div className="profile-dropdown-footer-compact">
+                  <button className="profile-dropdown-logout-compact" onClick={handleLogout}>Log out</button>
+                </div>
               </div>
             )}
           </div>
