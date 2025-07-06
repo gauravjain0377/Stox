@@ -16,25 +16,86 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing auth on mount
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    console.log('🔍 Dashboard AuthContext: Checking for auth data...');
     
-    if (storedToken && storedUser && isLoggedIn === 'true') {
+    // Check for auth data in URL parameters first (from frontend login)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('token');
+    const urlUser = urlParams.get('user');
+    const urlIsLoggedIn = urlParams.get('isLoggedIn');
+    
+    console.log('🔍 URL Parameters:', {
+      hasToken: !!urlToken,
+      hasUser: !!urlUser,
+      isLoggedIn: urlIsLoggedIn,
+      fullUrl: window.location.href
+    });
+    
+    if (urlToken && urlUser && urlIsLoggedIn === 'true') {
       try {
-        const userData = JSON.parse(storedUser);
-        setToken(storedToken);
+        const userData = JSON.parse(urlUser);
+        console.log('🔄 Setting auth data from URL parameters...');
+        setToken(urlToken);
         setUser(userData);
+        localStorage.setItem('token', urlToken);
+        localStorage.setItem('user', urlUser);
+        localStorage.setItem('isLoggedIn', 'true');
+        
+        // Clean up URL parameters
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+        
+        console.log('✅ Auth data loaded from URL parameters:', {
+          user: userData,
+          hasToken: !!urlToken
+        });
+        
+        // Force a re-render to ensure state is updated
+        setTimeout(() => {
+          console.log('🔄 Auth state after URL processing:', { user: !!user, token: !!token });
+        }, 50);
       } catch (error) {
-        console.error('Error parsing stored user data:', error);
+        console.error('❌ Error parsing URL auth data:', error);
         // Clear invalid data
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         localStorage.removeItem('isLoggedIn');
       }
+    } else {
+      // Check for existing auth in localStorage
+      const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
+      const isLoggedIn = localStorage.getItem('isLoggedIn');
+      
+      console.log('🔍 LocalStorage check:', {
+        hasToken: !!storedToken,
+        hasUser: !!storedUser,
+        isLoggedIn: isLoggedIn
+      });
+      
+      if (storedToken && storedUser && isLoggedIn === 'true') {
+        try {
+          const userData = JSON.parse(storedUser);
+          setToken(storedToken);
+          setUser(userData);
+          console.log('✅ Auth data loaded from localStorage');
+        } catch (error) {
+          console.error('❌ Error parsing stored user data:', error);
+          // Clear invalid data
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('isLoggedIn');
+        }
+      } else {
+        console.log('❌ No auth data found in URL or localStorage');
+      }
     }
-    setLoading(false);
+    
+    // Add a small delay before setting loading to false to ensure URL processing is complete
+    setTimeout(() => {
+      setLoading(false);
+      console.log('🏁 AuthContext loading complete, user state:', { user: !!user, token: !!token });
+    }, 200);
   }, []);
 
   const login = (userData, userToken) => {
@@ -51,8 +112,8 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('isLoggedIn');
-    // Redirect to login page
-    window.location.href = 'http://localhost:3000/login';
+    // Redirect to frontend login page
+    window.location.href = 'http://localhost:5173/login';
   };
 
   const value = {

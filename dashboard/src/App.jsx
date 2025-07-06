@@ -17,6 +17,8 @@ import OrderDetail from './components/OrderDetail';
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
   
+  console.log('🔒 ProtectedRoute check:', { user: !!user, loading });
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -29,9 +31,22 @@ const ProtectedRoute = ({ children }) => {
   }
   
   if (!user) {
-    return <Navigate to="http://localhost:3000/login" replace />;
+    console.log('❌ No user found, redirecting to frontend login...');
+    // Add a small delay to ensure AuthContext has processed URL parameters
+    setTimeout(() => {
+      window.location.href = 'http://localhost:5173/login';
+    }, 100);
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Redirecting to login...</p>
+        </div>
+      </div>
+    );
   }
   
+  console.log('✅ User authenticated, rendering dashboard');
   return children;
 };
 

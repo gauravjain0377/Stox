@@ -80,6 +80,28 @@ const Login = () => {
         // Show success message
         setErrorMsg("Login successful! Redirecting to dashboard...");
         
+        // Immediate redirect attempt
+        const immediateRedirect = () => {
+          const finalToken = localStorage.getItem('token');
+          const finalUser = localStorage.getItem('user');
+          const finalLogin = localStorage.getItem('isLoggedIn');
+          
+          if (finalToken && finalUser && finalLogin === 'true') {
+            console.log("🚀 Immediate redirect attempt...");
+            const authParams = new URLSearchParams({
+              token: finalToken,
+              user: finalUser,
+              isLoggedIn: finalLogin
+            });
+            const dashboardUrl = `http://localhost:5174?${authParams.toString()}`;
+            console.log("🚀 Immediate redirect URL:", dashboardUrl);
+            window.location.href = dashboardUrl;
+          }
+        };
+        
+        // Try immediate redirect
+        setTimeout(immediateRedirect, 100);
+        
         // Final check before redirect
         setTimeout(() => {
           const finalToken = localStorage.getItem('token');
@@ -105,8 +127,18 @@ const Login = () => {
             user: finalUser,
             isLoggedIn: finalLogin
           });
-          window.location.href = `http://localhost:5174?${authParams.toString()}`;
-        }, 2000);
+          const dashboardUrl = `http://localhost:5174?${authParams.toString()}`;
+          console.log("🔄 Dashboard URL:", dashboardUrl);
+          
+          // Try redirecting to dashboard
+          try {
+            window.location.href = dashboardUrl;
+          } catch (error) {
+            console.error("❌ Redirect failed:", error);
+            // Fallback: open in new tab
+            window.open(dashboardUrl, '_blank');
+          }
+        }, 500);
       } else {
         setErrorMsg(res.data.message || "Login failed. Please try again.");
       }

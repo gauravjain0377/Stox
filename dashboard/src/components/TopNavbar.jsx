@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import { 
   Bell, 
   Search, 
@@ -119,7 +119,7 @@ const TopNavbar = () => {
             </button>
             {/* Settings Dropdown/Modal */}
             {settingsOpen && (
-              <div className="profile-dropdown-card profile-dropdown-compact">
+              <div className="profile-dropdown-card profile-dropdown-compact absolute right-0 mt-2 w-80 z-50 bg-white shadow-lg rounded-xl border border-gray-100">
                 <div className="profile-dropdown-header-compact">
                   <div>
                     <div className="profile-dropdown-name">{user?.username || user?.email || 'User'}</div>
@@ -139,26 +139,26 @@ const TopNavbar = () => {
                     </div>
                     <span className="profile-dropdown-link-arrow">›</span>
                   </div>
-                  <div className="profile-dropdown-link-compact">
+                  <Link to="/orders" className="profile-dropdown-link-compact">
                     <span className="profile-dropdown-link-icon">📄</span>
                     <span className="profile-dropdown-link-title">All Orders</span>
                     <span className="profile-dropdown-link-arrow">›</span>
-                  </div>
-                  <div className="profile-dropdown-link-compact">
+                  </Link>
+                  <Link to="/bank-details" className="profile-dropdown-link-compact">
                     <span className="profile-dropdown-link-icon">🏦</span>
                     <span className="profile-dropdown-link-title">Bank Details</span>
                     <span className="profile-dropdown-link-arrow">›</span>
-                  </div>
-                  <div className="profile-dropdown-link-compact">
+                  </Link>
+                  <Link to="/support" className="profile-dropdown-link-compact">
                     <span className="profile-dropdown-link-icon">🎧</span>
                     <span className="profile-dropdown-link-title">24 x 7 Customer Support</span>
                     <span className="profile-dropdown-link-arrow">›</span>
-                  </div>
-                  <div className="profile-dropdown-link-compact">
+                  </Link>
+                  <Link to="/reports" className="profile-dropdown-link-compact">
                     <span className="profile-dropdown-link-icon">📊</span>
                     <span className="profile-dropdown-link-title">Reports</span>
                     <span className="profile-dropdown-link-arrow">›</span>
-                  </div>
+                  </Link>
                 </div>
                 <div className="profile-dropdown-footer-compact">
                   <button className="profile-dropdown-logout-compact" onClick={handleLogout}>Log out</button>
