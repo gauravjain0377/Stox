@@ -17,7 +17,10 @@ const uri = process.env.MONGO_URL || "mongodb://localhost:27017/test";
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  credentials: true
+}));
 app.use(bodyParser.json());
 
 // Add test endpoint
@@ -589,6 +592,39 @@ app.get('/api/stocks/:symbol', async (req, res) => {
     res.json(stock);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch stock details" });
+  }
+});
+
+app.post("/api/users/change-password", async (req, res) => {
+  try {
+    const { email, currentPassword, newPassword } = req.body;
+    console.log('🔑 Change password request:', { email, currentPassword: !!currentPassword, newPassword: !!newPassword });
+    if (!email || !currentPassword || !newPassword) {
+      console.log('❌ Missing required fields');
+      return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
+
+    const user = await UserModel.findOne({ email });
+    if (!user) {
+      console.log('❌ User not found for email:', email);
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const isMatch = await verifyPassword(currentPassword, user.password);
+    if (!isMatch) {
+      console.log('❌ Current password is incorrect for user:', email);
+      return res.status(400).json({ success: false, message: "Current password is incorrect" });
+    }
+
+    const newHash = await hashPassword(newPassword);
+    user.password = newHash;
+    await user.save();
+    console.log('✅ Password updated for user:', email);
+
+    res.json({ success: true, message: "Password updated successfully" });
+  } catch (err) {
+    console.error("❌ Error changing password:", err);
+    res.status(500).json({ success: false, message: "Server error: " + err.message });
   }
 });
 

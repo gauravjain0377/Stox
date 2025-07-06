@@ -1,297 +1,170 @@
-import React, { useState, useContext } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import GeneralContext from './GeneralContext';
-import { useTheme } from '../context/ThemeContext';
-import '../styles/Settings.css';
+import React, { useState } from 'react';
+import axios from 'axios';
+import { Eye, EyeOff, Lock } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
-const tabs = [
-  { label: 'All Orders', value: 'orders' },
-  { label: 'Edit Profile', value: 'edit' },
-  { label: 'Privacy & Security', value: 'privacy' },
-  { label: 'Help & Support', value: 'support' },
-];
-
-function getTabFromQuery(search) {
-  const params = new URLSearchParams(search);
-  return params.get('tab') || 'orders';
+function getPasswordStrength(password) {
+  if (!password) return 0;
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[a-z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+  return score;
 }
 
-const ProfileSettings = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const context = useContext(GeneralContext);
-  const { theme, setTheme } = useTheme();
-  const activeTab = getTabFromQuery(location.search);
-  const user = context.user || {};
+const strengthLabels = ['Too short', 'Weak', 'Fair', 'Good', 'Strong', 'Very strong'];
+const strengthColors = ['bg-gray-300', 'bg-red-400', 'bg-yellow-400', 'bg-yellow-500', 'bg-green-400', 'bg-green-600'];
 
-  // State from Settings.jsx
+const ProfileSettings = () => {
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
-  const [profileForm, setProfileForm] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
-    dateOfBirth: user?.dateOfBirth || '',
-    address: user?.address || ''
-  });
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
-  const [securitySettings, setSecuritySettings] = useState({
-    twoFactorEnabled: true,
-    emailNotifications: true,
-    smsNotifications: false,
-    loginAlerts: true,
-    tradeConfirmations: true
+  const [showPassword, setShowPassword] = useState({
+    current: false,
+    new: false,
+    confirm: false
   });
+  const [successAnim, setSuccessAnim] = useState(false);
 
-  // Handlers from Settings.jsx
-  const handleProfileSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setMessage({ type: '', text: '' });
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setMessage({ type: 'success', text: 'Profile updated successfully!' });
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to update profile. Please try again.' });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const strength = getPasswordStrength(passwordForm.newPassword);
+  const passwordsMatch = passwordForm.newPassword === passwordForm.confirmPassword;
+
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setMessage({ type: '', text: '' });
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    setSuccessAnim(false);
+    
+    if (!user?.email) {
+      setMessage({ type: 'error', text: 'User email not found. Please re-login.' });
+      setIsLoading(false);
+      return;
+    }
+    
+    if (!passwordsMatch) {
       setMessage({ type: 'error', text: "New passwords don't match!" });
       setIsLoading(false);
       return;
     }
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setMessage({ type: 'success', text: 'Password changed successfully!' });
-      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to change password. Please try again.' });
-    } finally {
+    if (strength < 3) {
+      setMessage({ type: 'error', text: 'Please choose a stronger password.' });
       setIsLoading(false);
+      return;
     }
-  };
-  const handleSecurityToggle = async (setting) => {
-    setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setSecuritySettings(prev => ({ ...prev, [setting]: !prev[setting] }));
-      setMessage({ type: 'success', text: `${setting} updated successfully!` });
+      const res = await axios.post('http://localhost:3000/api/users/change-password', {
+        email: user.email,
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword
+      }, { withCredentials: true });
+      if (res.data.success) {
+        setMessage({ type: 'success', text: 'Password changed successfully!' });
+        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        setSuccessAnim(true);
+        setTimeout(() => setSuccessAnim(false), 2000);
+      } else {
+        setMessage({ type: 'error', text: res.data.message || 'Failed to change password.' });
+      }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to update setting. Please try again.' });
-    } finally {
-      setIsLoading(false);
+      setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to change password.' });
     }
-  };
-  const handleLogoutAllDevices = async () => {
-    if (!window.confirm('Are you sure you want to logout from all devices? This will require you to login again on all devices.')) return;
-    setIsLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setMessage({ type: 'success', text: 'Logged out from all devices successfully!' });
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to logout from all devices. Please try again.' });
-    } finally {
-      setIsLoading(false);
-    }
+    setIsLoading(false);
   };
 
-  // Tab content renderers
-  const renderEditProfileTab = () => (
-    <div className="settings-content">
-      <div className="settings-header">
-        <h2>Profile Settings</h2>
-        <p>Update your personal information and account details</p>
-      </div>
-      <form onSubmit={handleProfileSubmit} className="settings-form">
-        <div className="form-grid">
-          <div className="form-group">
-            <label htmlFor="firstName">First Name</label>
-            <input type="text" id="firstName" value={profileForm.firstName} onChange={e => setProfileForm(prev => ({ ...prev, firstName: e.target.value }))} required />
-          </div>
-          <div className="form-group">
-            <label htmlFor="lastName">Last Name</label>
-            <input type="text" id="lastName" value={profileForm.lastName} onChange={e => setProfileForm(prev => ({ ...prev, lastName: e.target.value }))} required />
-          </div>
-          <div className="form-group">
-            <label htmlFor="email">Email Address</label>
-            <input type="email" id="email" value={profileForm.email} onChange={e => setProfileForm(prev => ({ ...prev, email: e.target.value }))} required />
-          </div>
-          <div className="form-group">
-            <label htmlFor="phone">Phone Number</label>
-            <input type="tel" id="phone" value={profileForm.phone} onChange={e => setProfileForm(prev => ({ ...prev, phone: e.target.value }))} required />
-          </div>
-          <div className="form-group">
-            <label htmlFor="dateOfBirth">Date of Birth</label>
-            <input type="date" id="dateOfBirth" value={profileForm.dateOfBirth} onChange={e => setProfileForm(prev => ({ ...prev, dateOfBirth: e.target.value }))} required />
-          </div>
-          <div className="form-group full-width">
-            <label htmlFor="address">Address</label>
-            <textarea id="address" value={profileForm.address} onChange={e => setProfileForm(prev => ({ ...prev, address: e.target.value }))} rows="3" required />
-          </div>
-        </div>
-        <div className="form-actions">
-          <button type="submit" className="btn-primary" disabled={isLoading}>{isLoading ? 'Updating...' : 'Update Profile'}</button>
-        </div>
-      </form>
-    </div>
-  );
+  const handleShowPassword = (field) => {
+    setShowPassword((prev) => ({ ...prev, [field]: !prev[field] }));
+  };
 
-  const renderPrivacyTab = () => (
-    <div className="settings-content">
-      <div className="settings-header">
-        <h2>Privacy & Security</h2>
-        <p>Manage your account security, authentication, and notification settings</p>
-      </div>
-      {/* Security Settings */}
-      <div className="settings-section">
-        <h3>Change Password</h3>
-        <form onSubmit={handlePasswordSubmit} className="settings-form">
-          <div className="form-group">
-            <label htmlFor="currentPassword">Current Password</label>
-            <input type="password" id="currentPassword" value={passwordForm.currentPassword} onChange={e => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))} required />
-          </div>
-          <div className="form-group">
-            <label htmlFor="newPassword">New Password</label>
-            <input type="password" id="newPassword" value={passwordForm.newPassword} onChange={e => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))} required />
-          </div>
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm New Password</label>
-            <input type="password" id="confirmPassword" value={passwordForm.confirmPassword} onChange={e => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))} required />
-          </div>
-          <div className="form-actions">
-            <button type="submit" className="btn-primary" disabled={isLoading}>{isLoading ? 'Changing...' : 'Change Password'}</button>
-          </div>
-        </form>
-      </div>
-      {/* Two-Factor Authentication */}
-      <div className="settings-section">
-        <h3>Two-Factor Authentication</h3>
-        <div className="toggle-section">
-          <div className="toggle-item">
-            <div className="toggle-info">
-              <h4>Email OTP</h4>
-              <p>Receive one-time passwords via email for additional security</p>
-            </div>
-            <label className="toggle-switch">
-              <input type="checkbox" checked={securitySettings.twoFactorEnabled} onChange={() => handleSecurityToggle('twoFactorEnabled')} disabled={isLoading} />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
-        </div>
-      </div>
-      {/* Account Security */}
-      <div className="settings-section">
-        <h3>Account Security</h3>
-        <div className="security-actions">
-          <button onClick={handleLogoutAllDevices} className="btn-danger" disabled={isLoading}>{isLoading ? 'Processing...' : 'Logout from All Devices'}</button>
-          <p className="security-note">This will sign you out from all devices and require you to login again</p>
-        </div>
-      </div>
-      {/* Notification Preferences */}
-      <div className="settings-section">
-        <h3>Notification Preferences</h3>
-        <div className="toggle-section">
-          <div className="toggle-item">
-            <div className="toggle-info">
-              <h4>Email Notifications</h4>
-              <p>Receive important updates and alerts via email</p>
-            </div>
-            <label className="toggle-switch">
-              <input type="checkbox" checked={securitySettings.emailNotifications} onChange={() => handleSecurityToggle('emailNotifications')} disabled={isLoading} />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
-          <div className="toggle-item">
-            <div className="toggle-info">
-              <h4>SMS Notifications</h4>
-              <p>Get critical alerts and security codes via SMS</p>
-            </div>
-            <label className="toggle-switch">
-              <input type="checkbox" checked={securitySettings.smsNotifications} onChange={() => handleSecurityToggle('smsNotifications')} disabled={isLoading} />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
-        </div>
-      </div>
-      {/* Alert Types */}
-      <div className="settings-section">
-        <h3>Alert Types</h3>
-        <div className="toggle-section">
-          <div className="toggle-item">
-            <div className="toggle-info">
-              <h4>Login Alerts</h4>
-              <p>Get notified when someone logs into your account</p>
-            </div>
-            <label className="toggle-switch">
-              <input type="checkbox" checked={securitySettings.loginAlerts} onChange={() => handleSecurityToggle('loginAlerts')} disabled={isLoading} />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
-          <div className="toggle-item">
-            <div className="toggle-info">
-              <h4>Trade Confirmations</h4>
-              <p>Receive confirmations for all your trades</p>
-            </div>
-            <label className="toggle-switch">
-              <input type="checkbox" checked={securitySettings.tradeConfirmations} onChange={() => handleSecurityToggle('tradeConfirmations')} disabled={isLoading} />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Main render
   return (
-    <div className="max-w-3xl mx-auto mt-8 p-6 bg-white rounded-xl shadow">
-      <div className="flex gap-4 mb-6">
-        {tabs.map((tab) => (
-          tab.value === 'orders' ? (
-            <button
-              key={tab.value}
-              onClick={() => navigate('/orders')}
-              className={`px-5 py-2 rounded-lg border text-base font-medium transition-all duration-150 ${
-                activeTab === tab.value
-                  ? 'bg-indigo-900 text-white border-indigo-900'
-                  : 'bg-white text-black border-gray-300 hover:bg-gray-100'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ) : (
-            <button
-              key={tab.value}
-              onClick={() => navigate(`/profile/settings?tab=${tab.value}`)}
-              className={`px-5 py-2 rounded-lg border text-base font-medium transition-all duration-150 ${
-                activeTab === tab.value
-                  ? 'bg-indigo-900 text-white border-indigo-900'
-                  : 'bg-white text-black border-gray-300 hover:bg-gray-100'
-              }`}
-            >
-              {tab.label}
-            </button>
-          )
-        ))}
-      </div>
-      {message.text && (
-        <div className={`settings-message${message.type === 'error' ? ' error' : ''}`}>{message.text}</div>
-      )}
-      <div className="min-h-[120px]">
-        {activeTab === 'edit' && renderEditProfileTab()}
-        {activeTab === 'privacy' && renderPrivacyTab()}
-        {activeTab === 'support' && <div className="settings-content">Help & Support coming soon.</div>}
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-green-50 flex items-center justify-center py-8">
+      <div className="max-w-lg w-full p-8 bg-white rounded-2xl shadow-xl animate-fade-in relative">
+        <h2 className="text-2xl font-bold mb-6 text-center text-indigo-900">Change Password</h2>
+        <form onSubmit={handlePasswordSubmit} className="space-y-6">
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><Lock size={18} /></span>
+              <input
+                type={showPassword.current ? 'text' : 'password'}
+                className="w-full border border-gray-300 rounded-lg px-10 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                value={passwordForm.currentPassword}
+                onChange={e => setPasswordForm(f => ({ ...f, currentPassword: e.target.value }))}
+                required
+                aria-label="Current Password"
+              />
+              <button type="button" aria-label="Show/Hide Password" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" onClick={() => handleShowPassword('current')}>
+                {showPassword.current ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><Lock size={18} /></span>
+              <input
+                type={showPassword.new ? 'text' : 'password'}
+                className="w-full border border-gray-300 rounded-lg px-10 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                value={passwordForm.newPassword}
+                onChange={e => setPasswordForm(f => ({ ...f, newPassword: e.target.value }))}
+                required
+                aria-label="New Password"
+              />
+              <button type="button" aria-label="Show/Hide Password" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" onClick={() => handleShowPassword('new')}>
+                {showPassword.new ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <div className={`h-2 w-24 rounded-full ${strengthColors[strength]}`}></div>
+              <span className={`text-xs font-medium ${strength >= 4 ? 'text-green-700' : 'text-gray-500'}`}>{strengthLabels[strength]}</span>
+            </div>
+          </div>
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><Lock size={18} /></span>
+              <input
+                type={showPassword.confirm ? 'text' : 'password'}
+                className="w-full border border-gray-300 rounded-lg px-10 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                value={passwordForm.confirmPassword}
+                onChange={e => setPasswordForm(f => ({ ...f, confirmPassword: e.target.value }))}
+                required
+                aria-label="Confirm New Password"
+              />
+              <button type="button" aria-label="Show/Hide Password" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" onClick={() => handleShowPassword('confirm')}>
+                {showPassword.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            {passwordForm.confirmPassword && !passwordsMatch && (
+              <div className="text-xs text-red-600 mt-1">Passwords do not match</div>
+            )}
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-indigo-700 text-white py-2 rounded-lg font-semibold hover:bg-indigo-800 transition"
+            disabled={isLoading}
+            aria-busy={isLoading}
+          >
+            {isLoading ? 'Changing...' : 'Change Password'}
+          </button>
+          {message.text && (
+            <div className={`text-center mt-4 ${message.type === 'error' && message.text === 'Current password is incorrect' ? 'bg-red-600 text-white py-2 rounded flex items-center justify-center gap-2' : message.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>{message.type === 'error' && message.text === 'Current password is incorrect' ? (<><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>{message.text}</>) : message.text}</div>
+          )}
+          {successAnim && (
+            <div className="flex justify-center mt-6 animate-bounce">
+              <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="text-green-500">
+                <circle cx="12" cy="12" r="10" strokeWidth="2" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12l2 2 4-4" />
+              </svg>
+            </div>
+          )}
+        </form>
       </div>
     </div>
   );

@@ -144,12 +144,12 @@ const TopNavbar = () => {
               <div className="profile-dropdown-card profile-dropdown-compact absolute right-0 mt-2 w-80 z-50 bg-white shadow-lg rounded-xl border border-gray-100">
                 <div className="profile-dropdown-header-compact">
                   <div>
-                    <Link to="/profile/details" className="profile-dropdown-name text-left font-semibold text-base text-primary-900 hover:underline block" style={{background:'none',border:'none',padding:0,cursor:'pointer'}}>
+                    <Link to="/profile/overview" className="profile-dropdown-name text-left font-semibold text-base text-primary-900 hover:underline block" style={{background:'none',border:'none',padding:0,cursor:'pointer'}}>
                       {user?.username || user?.email || 'User'}
                     </Link>
-                    <Link to="/profile/details" className="profile-dropdown-email text-left text-xs text-gray-500 hover:underline block" style={{background:'none',border:'none',padding:0,cursor:'pointer'}}>
+                    <div className="profile-dropdown-email text-left text-xs text-gray-500 block" style={{background:'none',border:'none',padding:0}}>
                       {user?.email}
-                    </Link>
+                    </div>
                   </div>
                   <button className="profile-dropdown-settings-btn" title="Profile Settings">
                     <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="10" r="8"/><path d="M10 6v4l2 2"/></svg>
@@ -157,22 +157,22 @@ const TopNavbar = () => {
                 </div>
                 <div className="profile-dropdown-divider"></div>
                 <div className="profile-dropdown-links-compact">
-                  <Link to="/orders" className="profile-dropdown-link-compact">
+                  <Link to="/orders" className="profile-dropdown-link-compact" onClick={() => setSettingsOpen(false)}>
                     <span className="profile-dropdown-link-icon">📄</span>
                     <span className="profile-dropdown-link-title">All Orders</span>
                     <span className="profile-dropdown-link-arrow">›</span>
                   </Link>
-                  <Link to="/profile/details" className="profile-dropdown-link-compact">
+                  <Link to="/profile/edit" className="profile-dropdown-link-compact" onClick={() => setSettingsOpen(false)}>
                     <span className="profile-dropdown-link-icon">👤</span>
                     <span className="profile-dropdown-link-title">Edit Profile</span>
                     <span className="profile-dropdown-link-arrow">›</span>
                   </Link>
-                  <Link to="/profile/settings?tab=privacy" className="profile-dropdown-link-compact">
+                  <Link to="/profile/settings?tab=privacy" className="profile-dropdown-link-compact" onClick={() => setSettingsOpen(false)}>
                     <span className="profile-dropdown-link-icon">🔒</span>
                     <span className="profile-dropdown-link-title">Privacy & Security</span>
                     <span className="profile-dropdown-link-arrow">›</span>
                   </Link>
-                  <Link to="/profile/settings?tab=support" className="profile-dropdown-link-compact">
+                  <Link to="/profile/settings?tab=support" className="profile-dropdown-link-compact" onClick={() => setSettingsOpen(false)}>
                     <span className="profile-dropdown-link-icon">❓</span>
                     <span className="profile-dropdown-link-title">Help & Support</span>
                     <span className="profile-dropdown-link-arrow">›</span>

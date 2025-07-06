@@ -14,6 +14,8 @@ import PersonalWatchlist from './components/PersonalWatchlist';
 import OrderDetail from './components/OrderDetail';
 import ProfileSettings from './components/ProfileSettings';
 import ProfileDetails from './components/ProfileDetails';
+import ProfileOverview from './components/ProfileOverview';
+import ProfileEdit from './components/ProfileEdit';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -122,6 +124,16 @@ function App() {
               <Route path="/profile/details" element={
                 <DashboardLayout>
                   <ProfileDetails />
+                </DashboardLayout>
+              } />
+              <Route path="/profile/overview" element={
+                <DashboardLayout>
+                  <ProfileOverview />
+                </DashboardLayout>
+              } />
+              <Route path="/profile/edit" element={
+                <DashboardLayout>
+                  <ProfileEdit />
                 </DashboardLayout>
               } />
               
