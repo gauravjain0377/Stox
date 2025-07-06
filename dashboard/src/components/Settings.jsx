@@ -3,7 +3,7 @@ import GeneralContext from "./GeneralContext";
 import { useTheme } from "../context/ThemeContext";
 import "../styles/Settings.css";
 
-const Settings = () => {
+const Settings = ({ user }) => {
   const context = useContext(GeneralContext);
   const { theme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState("profile");
@@ -12,12 +12,12 @@ const Settings = () => {
 
   // Form states
   const [profileForm, setProfileForm] = useState({
-    firstName: context.user?.firstName || "John",
-    lastName: context.user?.lastName || "Doe",
-    email: context.user?.email || "john.doe@example.com",
-    phone: context.user?.phone || "+91 98765 43210",
-    dateOfBirth: context.user?.dateOfBirth || "1990-01-01",
-    address: context.user?.address || "123 Trading Street, Mumbai, Maharashtra"
+    firstName: user?.firstName || context.user?.firstName || "",
+    lastName: user?.lastName || context.user?.lastName || "",
+    email: user?.email || context.user?.email || "",
+    phone: user?.phone || context.user?.phone || "",
+    dateOfBirth: user?.dateOfBirth || context.user?.dateOfBirth || "",
+    address: user?.address || context.user?.address || ""
   });
 
   const [passwordForm, setPasswordForm] = useState({
@@ -536,40 +536,23 @@ const Settings = () => {
   };
 
   return (
-    <div className="settings-container">
-      <div className="settings-sidebar">
-        <div className="sidebar-header">
-          <h1>Settings</h1>
-        </div>
-        <nav className="settings-nav">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              className={`nav-tab ${activeTab === tab.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              <span className="tab-icon">{tab.icon}</span>
-              <span className="tab-label">{tab.label}</span>
-            </button>
-          ))}
-        </nav>
+    <div className="settings-modal-inner">
+      <div className="settings-tabs">
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            className={`settings-tab${activeTab === tab.id ? ' active' : ''}`}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            <span className="tab-icon">{tab.icon}</span>
+            <span className="tab-label">{tab.label}</span>
+          </button>
+        ))}
       </div>
-
-      <div className="settings-main">
-        {message.text && (
-          <div className={`message ${message.type}`}>
-            {message.text}
-            <button 
-              className="message-close"
-              onClick={() => setMessage({ type: "", text: "" })}
-            >
-              ×
-            </button>
-          </div>
-        )}
-        
-        {renderContent()}
-      </div>
+      {message.text && (
+        <div className={`settings-message${message.type === 'error' ? ' error' : ''}`}>{message.text}</div>
+      )}
+      {renderContent()}
     </div>
   );
 };

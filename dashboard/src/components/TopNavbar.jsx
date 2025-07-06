@@ -26,7 +26,6 @@ const sectionNav = [
   { label: "Positions", to: "/positions" },
   { label: "Portfolio Analytics", to: "/portfolio" },
   { label: "Watchlist", to: "/watchlist" },
-  { label: "Settings", to: "/settings" },
 ];
 
 const TopNavbar = () => {
@@ -121,7 +120,14 @@ const TopNavbar = () => {
             {/* Settings Dropdown/Modal */}
             {settingsOpen && (
               <div className="absolute right-0 mt-2 w-[420px] max-w-xs bg-white rounded-xl shadow-2xl border border-gray-100 z-50 animate-fade-in overflow-hidden">
-                <Settings />
+                <div className="profile-summary-top">
+                  <div className="profile-avatar-big">{getInitials()}</div>
+                  <div className="profile-summary-details">
+                    <div className="profile-summary-name">{user?.username || user?.email || 'User'}</div>
+                    <div className="profile-summary-email">{user?.email}</div>
+                  </div>
+                </div>
+                <Settings user={user} />
               </div>
             )}
           </div>

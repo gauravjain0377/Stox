@@ -558,4 +558,211 @@
 .settings-sidebar::-webkit-scrollbar-thumb:hover,
 .settings-main::-webkit-scrollbar-thumb:hover {
   background: var(--border-accent);
+}
+
+.profile-summary-top {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  background: linear-gradient(90deg, #e0e7ff 0%, #f0fdf4 100%);
+  padding: 2rem 2rem 1.2rem 2rem;
+  border-bottom: 1.5px solid #f1f5f9;
+}
+.profile-avatar-big {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb 60%, #22a06b 100%);
+  color: #fff;
+  font-size: 2.2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 12px 0 rgba(30,41,59,0.10);
+}
+.profile-summary-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.profile-summary-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #18181b;
+}
+.profile-summary-email {
+  font-size: 1.01rem;
+  color: #64748b;
+  font-weight: 500;
+}
+.settings-tabs {
+  display: flex;
+  gap: 0.5rem;
+  background: #f8fafc;
+  padding: 0.7rem 1.2rem;
+  border-bottom: 1.5px solid #f1f5f9;
+  justify-content: space-between;
+  align-items: center;
+}
+.settings-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.08rem;
+  font-weight: 600;
+  color: #64748b;
+  background: none;
+  border: none;
+  border-radius: 999px;
+  padding: 0.5rem 1.3rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.settings-tab.active {
+  background: #2563eb;
+  color: #fff;
+}
+.settings-tab:hover:not(.active) {
+  background: #e0e7ff;
+  color: #2563eb;
+}
+.settings-content {
+  padding: 2rem 2rem 1.5rem 2rem;
+  background: #fff;
+  border-radius: 0 0 18px 18px;
+  box-shadow: 0 2px 12px 0 rgba(30,41,59,0.04);
+  min-height: 320px;
+}
+.settings-header h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #18181b;
+  margin-bottom: 0.3rem;
+}
+.settings-header p {
+  color: #64748b;
+  font-size: 1.01rem;
+  margin-bottom: 1.2rem;
+}
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem 2.2rem;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+.form-group label {
+  font-size: 1.01rem;
+  color: #64748b;
+  font-weight: 500;
+}
+.form-group input,
+.form-group textarea {
+  padding: 0.7rem 1rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  background: #f8fafc;
+  color: #222;
+  transition: border 0.15s;
+}
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: #2563eb;
+  background: #fff;
+  outline: none;
+}
+.settings-btn {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.8rem 2.2rem;
+  font-size: 1.08rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+  box-shadow: 0 1px 4px 0 rgba(30,41,59,0.04);
+}
+.settings-btn:disabled {
+  background: #a5b4fc;
+  cursor: not-allowed;
+}
+.settings-btn:hover:not(:disabled) {
+  background: #1e40af;
+}
+.settings-message {
+  margin-top: 0.7rem;
+  font-size: 1.01rem;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 0.7rem 1.2rem;
+  background: #f1f5f9;
+  color: #2563eb;
+}
+.settings-message.error {
+  background: #fee2e2;
+  color: #ef4444;
+}
+.settings-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #222;
+  margin-bottom: 1.1rem;
+}
+.settings-toggle input[type="checkbox"] {
+  width: 2.2rem;
+  height: 1.2rem;
+  border-radius: 999px;
+  background: #e0e7ef;
+  appearance: none;
+  outline: none;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.15s;
+}
+.settings-toggle input[type="checkbox"]:checked {
+  background: #22a06b;
+}
+.settings-toggle input[type="checkbox"]::before {
+  content: "";
+  position: absolute;
+  left: 0.2rem;
+  top: 0.15rem;
+  width: 1rem;
+  height: 0.9rem;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.15s;
+}
+.settings-toggle input[type="checkbox"]:checked::before {
+  transform: translateX(1rem);
+}
+@media (max-width: 600px) {
+  .profile-summary-top, .settings-content {
+    padding: 1rem 0.5rem;
+  }
+  .settings-tabs {
+    flex-wrap: wrap;
+    padding: 0.5rem 0.2rem;
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 } 

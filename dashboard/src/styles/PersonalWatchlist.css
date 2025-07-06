@@ -778,4 +778,557 @@
   .stock-symbol {
     font-size: 1.3rem;
   }
+}
+
+.modern-watchlist {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px 0 rgba(30, 41, 59, 0.08);
+  padding: 2.5rem 2rem;
+  max-width: 900px;
+  margin: 40px auto;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Watchlist Tabs */
+.watchlist-tabs {
+  display: flex;
+  gap: 0.7rem;
+  margin-bottom: 1.7rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.watchlist-tab {
+  background: #e6f9f0;
+  color: #22a06b;
+  font-weight: 600;
+  font-size: 1.08rem;
+  border-radius: 999px;
+  padding: 0.4rem 1.3rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  position: relative;
+}
+.watchlist-tab.active {
+  background: #22a06b;
+  color: #fff;
+}
+.watchlist-tab:hover:not(.active) {
+  background: #d1fae5;
+}
+.delete-watchlist-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 1.1rem;
+  margin-left: 0.3rem;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 0.1rem 0.3rem;
+  transition: background 0.15s;
+}
+.delete-watchlist-btn:hover {
+  background: #fee2e2;
+}
+.add-watchlist-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.add-watchlist-input {
+  font-size: 1.05rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 0.3rem 1rem;
+  background: #f8fafc;
+  color: #22a06b;
+  outline: none;
+  min-width: 120px;
+  transition: border 0.15s;
+}
+.add-watchlist-input:focus {
+  border-color: #22a06b;
+}
+.add-watchlist-btn {
+  background: #22a06b;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.add-watchlist-btn:hover {
+  background: #15803d;
+}
+
+/* Add/Search Bar */
+.watchlist-search-bar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.watchlist-search-input {
+  flex: 2;
+  padding: 0.7rem 1rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 1rem;
+  background: #f8fafc;
+  color: #222;
+  transition: border 0.2s;
+}
+.watchlist-search-input:focus {
+  border-color: #22a06b;
+  outline: none;
+}
+.watchlist-add-input {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 1rem;
+  background: #f8fafc;
+  color: #222;
+  transition: border 0.2s;
+  min-width: 180px;
+}
+.watchlist-add-input:focus {
+  border-color: #22a06b;
+  outline: none;
+}
+.add-stock-btn {
+  background: #22a06b;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 2.2rem;
+  height: 2.2rem;
+  font-size: 1.5rem;
+  cursor: pointer;
+  margin-left: 0.2rem;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.add-stock-btn:hover {
+  background: #15803d;
+}
+
+/* Table */
+.watchlist-table-outer {
+  background: #f8fafc;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px 0 rgba(30, 41, 59, 0.06);
+  padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+  overflow-x: auto;
+}
+.watchlist-table-modern {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 1rem;
+  background: transparent;
+}
+.watchlist-table-modern th {
+  text-align: left;
+  font-weight: 700;
+  color: #2563eb;
+  background: #f8fafc;
+  padding: 0.9rem 1rem;
+  border-bottom: 1.5px solid #e2e8f0;
+  font-size: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.watchlist-table-modern td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fff;
+  vertical-align: middle;
+}
+.company-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.company-name {
+  font-weight: 500;
+  color: #222;
+  font-size: 1.05rem;
+}
+.market-price {
+  font-weight: 600;
+  color: #222;
+}
+.day-change {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+.day-change.up {
+  color: #22a06b;
+}
+.day-change.down {
+  color: #ef4444;
+}
+.delete-stock-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 1.2rem;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 0.1rem 0.3rem;
+  transition: background 0.15s;
+}
+.delete-stock-btn:hover {
+  background: #fee2e2;
+}
+.mini-chart {
+  display: block;
+  margin: 0 auto;
+}
+.empty-state {
+  text-align: center;
+  color: #64748b;
+  padding: 2rem 0;
+  font-size: 1.1rem;
+}
+
+/* Confirmation Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.confirmation-modal {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  max-width: 450px;
+  width: 90%;
+  margin: 20px;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 1.5rem 0 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 1rem;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 6px;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+}
+
+.modal-close-btn:hover {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.modal-content {
+  padding: 1.5rem;
+}
+
+.modal-content p {
+  margin: 0 0 1rem 0;
+  color: #475569;
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+.modal-content p:last-child {
+  margin-bottom: 0;
+  font-size: 0.95rem;
+  color: #64748b;
+}
+
+.modal-content strong {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0 1.5rem 1.5rem 1.5rem;
+  justify-content: flex-end;
+}
+
+.modal-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+  min-width: 100px;
+}
+
+.modal-btn-cancel {
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.modal-btn-cancel:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.modal-btn-delete {
+  background: #ef4444;
+  color: #fff;
+}
+
+.modal-btn-delete:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 900px) {
+  .modern-watchlist {
+    padding: 1.2rem 0.5rem;
+  }
+  .watchlist-tabs {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .watchlist-table-modern th,
+  .watchlist-table-modern td {
+    padding: 0.7rem 0.5rem;
+  }
+  .confirmation-modal {
+    width: 95%;
+    margin: 10px;
+  }
+  .modal-actions {
+    flex-direction: column;
+  }
+  .modal-btn {
+    width: 100%;
+  }
+}
+@media (max-width: 600px) {
+  .modern-watchlist {
+    padding: 0.5rem 0.1rem;
+  }
+  .watchlist-tabs {
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .watchlist-search-bar {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .watchlist-table-outer {
+    padding: 0.2rem;
+  }
+  .watchlist-table-modern th,
+  .watchlist-table-modern td {
+    font-size: 0.97rem;
+    padding: 0.6rem 0.3rem;
+  }
+  .modal-header,
+  .modal-content,
+  .modal-actions {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+.stock-dropdown-list {
+  position: absolute;
+  top: 110%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px 0 rgba(30, 41, 59, 0.13);
+  z-index: 20;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1.5px solid #e2e8f0;
+  margin-top: 0.2rem;
+}
+.stock-dropdown-item {
+  padding: 0.7rem 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 1.05rem;
+  color: #222;
+  transition: background 0.14s, color 0.14s;
+}
+.stock-dropdown-item:hover {
+  background: #e6f9f0;
+  color: #22a06b;
+}
+.stock-symbol {
+  font-weight: 700;
+  color: #2563eb;
+  min-width: 70px;
+}
+.stock-name {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.watchlist-search-bar-modern {
+  display: flex;
+  gap: 1.2rem;
+  margin-bottom: 1.5rem;
+  align-items: stretch;
+}
+.input-group {
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px 0 rgba(30,41,59,0.04);
+  border: 1.5px solid #e2e8f0;
+  padding: 0.1rem 0.7rem;
+  flex: 1;
+  position: relative;
+  min-width: 220px;
+}
+.input-icon {
+  color: #64748b;
+  font-size: 1.1rem;
+  margin-right: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+.watchlist-search-input-modern,
+.watchlist-add-input-modern {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 1.05rem;
+  color: #222;
+  padding: 0.7rem 0.2rem;
+  width: 100%;
+}
+.watchlist-search-input-modern:focus,
+.watchlist-add-input-modern:focus {
+  background: #fff;
+}
+.stock-dropdown-list-modern {
+  position: absolute;
+  top: 110%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px 0 rgba(30, 41, 59, 0.13);
+  z-index: 20;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1.5px solid #e2e8f0;
+  margin-top: 0.2rem;
+}
+.stock-dropdown-item-modern {
+  padding: 0.7rem 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  font-size: 1.05rem;
+  color: #222;
+  transition: background 0.14s, color 0.14s;
+  border-left: 3px solid transparent;
+}
+.stock-dropdown-item-modern.selected,
+.stock-dropdown-item-modern:hover {
+  background: #e6f9f0;
+  color: #22a06b;
+  border-left: 3px solid #22a06b;
+}
+.stock-symbol-modern {
+  font-weight: 700;
+  color: #2563eb;
+  min-width: 90px;
+}
+.stock-price-modern {
+  color: #64748b;
+  font-weight: 500;
+  margin-left: auto;
+}
+@media (max-width: 900px) {
+  .watchlist-search-bar-modern {
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+  .input-group {
+    min-width: 0;
+    width: 100%;
+  }
 } 
