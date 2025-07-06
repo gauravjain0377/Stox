@@ -1,0 +1,121 @@
+import React, { useState, useContext } from 'react';
+import GeneralContext from './GeneralContext';
+
+const initialProfile = {
+  name: '',
+  email: '',
+  dob: '',
+  gender: '',
+  mobile: '',
+  clientCode: '',
+  pan: '',
+  maritalStatus: '',
+  fatherName: '',
+  demat: '',
+  incomeRange: '',
+};
+
+const ProfileDetails = () => {
+  const context = useContext(GeneralContext);
+  const user = context.user || {};
+  const [profile, setProfile] = useState({
+    name: user?.username || '',
+    email: user?.email || '',
+    dob: user?.dateOfBirth || '',
+    gender: user?.gender || '',
+    mobile: user?.phone || '',
+    clientCode: user?.clientCode || '5384621902', // Example auto-generated
+    pan: user?.pan || '',
+    maritalStatus: user?.maritalStatus || '',
+    fatherName: user?.fatherName || '',
+    demat: user?.demat || '',
+    incomeRange: user?.incomeRange || '',
+  });
+  const [success, setSuccess] = useState('');
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setProfile((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    // Here you would call your backend API to update the profile
+    setSuccess('Profile updated successfully!');
+    setTimeout(() => setSuccess(''), 1500);
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto mt-10 p-8 bg-white rounded-xl shadow">
+      <h2 className="text-2xl font-bold mb-6 text-center">Profile Details</h2>
+      <form onSubmit={handleSave}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <input name="name" type="text" className="w-full border border-gray-300 rounded-lg px-3 py-2" value={profile.name} onChange={handleChange} required />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">PAN</label>
+            <input name="pan" type="text" className="w-full border border-gray-300 rounded-lg px-3 py-2" value={profile.pan} onChange={handleChange} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth (DD/MM/YYYY)</label>
+            <input name="dob" type="date" className="w-full border border-gray-300 rounded-lg px-3 py-2" value={profile.dob} onChange={handleChange} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+            <select name="gender" className="w-full border border-gray-300 rounded-lg px-3 py-2" value={profile.gender} onChange={handleChange}>
+              <option value="">Select</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
+            <input name="mobile" type="tel" className="w-full border border-gray-300 rounded-lg px-3 py-2" value={profile.mobile} onChange={handleChange} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Marital Status</label>
+            <select name="maritalStatus" className="w-full border border-gray-300 rounded-lg px-3 py-2" value={profile.maritalStatus} onChange={handleChange}>
+              <option value="">Select</option>
+              <option value="Single">Single</option>
+              <option value="Married">Married</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input name="email" type="email" className="w-full border border-gray-300 rounded-lg px-3 py-2" value={profile.email} onChange={handleChange} required />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Unique Client Code</label>
+            <input name="clientCode" type="text" className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100" value={profile.clientCode} readOnly />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Father's Name</label>
+            <input name="fatherName" type="text" className="w-full border border-gray-300 rounded-lg px-3 py-2" value={profile.fatherName} onChange={handleChange} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Demat Acc Number / BOID</label>
+            <input name="demat" type="text" className="w-full border border-gray-300 rounded-lg px-3 py-2" value={profile.demat} onChange={handleChange} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Income Range</label>
+            <select name="incomeRange" className="w-full border border-gray-300 rounded-lg px-3 py-2" value={profile.incomeRange} onChange={handleChange}>
+              <option value="">Select</option>
+              <option value="Below 1 Lac">Below 1 Lac</option>
+              <option value="1-5 Lac">1-5 Lac</option>
+              <option value="5-10 Lac">5-10 Lac</option>
+              <option value="10-25 Lac">10-25 Lac</option>
+              <option value=">25 Lac">Above 25 Lac</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" className="mt-8 w-full bg-indigo-700 text-white py-2 rounded-lg font-semibold hover:bg-indigo-800 transition">Save Changes</button>
+        {success && <div className="text-green-600 text-center mt-4">{success}</div>}
+      </form>
+    </div>
+  );
+};
+
+export default ProfileDetails; 

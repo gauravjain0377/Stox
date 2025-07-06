@@ -32,6 +32,12 @@ const TopNavbar = () => {
   const { user, logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [editProfileForm, setEditProfileForm] = useState({
+    name: user?.username || user?.email || '',
+    email: user?.email || ''
+  });
+  const [editProfileMsg, setEditProfileMsg] = useState('');
   const avatarRef = useRef();
 
   // Close settings dropdown on outside click
@@ -67,6 +73,22 @@ const TopNavbar = () => {
       return user.email[0].toUpperCase();
     }
     return "U";
+  };
+
+  const handleEditProfileOpen = () => {
+    setEditProfileForm({
+      name: user?.username || user?.email || '',
+      email: user?.email || ''
+    });
+    setEditProfileMsg('');
+    setShowEditProfile(true);
+  };
+
+  const handleEditProfileSave = (e) => {
+    e.preventDefault();
+    // Here you would call your backend API to update the profile
+    setEditProfileMsg('Profile updated successfully!');
+    setTimeout(() => setShowEditProfile(false), 1200);
   };
 
   return (
@@ -122,8 +144,12 @@ const TopNavbar = () => {
               <div className="profile-dropdown-card profile-dropdown-compact absolute right-0 mt-2 w-80 z-50 bg-white shadow-lg rounded-xl border border-gray-100">
                 <div className="profile-dropdown-header-compact">
                   <div>
-                    <div className="profile-dropdown-name">{user?.username || user?.email || 'User'}</div>
-                    <div className="profile-dropdown-email">{user?.email}</div>
+                    <Link to="/profile/details" className="profile-dropdown-name text-left font-semibold text-base text-primary-900 hover:underline block" style={{background:'none',border:'none',padding:0,cursor:'pointer'}}>
+                      {user?.username || user?.email || 'User'}
+                    </Link>
+                    <Link to="/profile/details" className="profile-dropdown-email text-left text-xs text-gray-500 hover:underline block" style={{background:'none',border:'none',padding:0,cursor:'pointer'}}>
+                      {user?.email}
+                    </Link>
                   </div>
                   <button className="profile-dropdown-settings-btn" title="Profile Settings">
                     <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="10" r="8"/><path d="M10 6v4l2 2"/></svg>
@@ -131,37 +157,67 @@ const TopNavbar = () => {
                 </div>
                 <div className="profile-dropdown-divider"></div>
                 <div className="profile-dropdown-links-compact">
-                  <div className="profile-dropdown-link-compact">
-                    <span className="profile-dropdown-link-icon">🪙</span>
-                    <div className="profile-dropdown-link-main">
-                      <span className="profile-dropdown-link-title">₹0.00</span>
-                      <span className="profile-dropdown-link-desc">Stocks, F&O balance</span>
-                    </div>
-                    <span className="profile-dropdown-link-arrow">›</span>
-                  </div>
                   <Link to="/orders" className="profile-dropdown-link-compact">
                     <span className="profile-dropdown-link-icon">📄</span>
                     <span className="profile-dropdown-link-title">All Orders</span>
                     <span className="profile-dropdown-link-arrow">›</span>
                   </Link>
-                  <Link to="/bank-details" className="profile-dropdown-link-compact">
-                    <span className="profile-dropdown-link-icon">🏦</span>
-                    <span className="profile-dropdown-link-title">Bank Details</span>
+                  <Link to="/profile/details" className="profile-dropdown-link-compact">
+                    <span className="profile-dropdown-link-icon">👤</span>
+                    <span className="profile-dropdown-link-title">Edit Profile</span>
                     <span className="profile-dropdown-link-arrow">›</span>
                   </Link>
-                  <Link to="/support" className="profile-dropdown-link-compact">
-                    <span className="profile-dropdown-link-icon">🎧</span>
-                    <span className="profile-dropdown-link-title">24 x 7 Customer Support</span>
+                  <Link to="/profile/settings?tab=privacy" className="profile-dropdown-link-compact">
+                    <span className="profile-dropdown-link-icon">🔒</span>
+                    <span className="profile-dropdown-link-title">Privacy & Security</span>
                     <span className="profile-dropdown-link-arrow">›</span>
                   </Link>
-                  <Link to="/reports" className="profile-dropdown-link-compact">
-                    <span className="profile-dropdown-link-icon">📊</span>
-                    <span className="profile-dropdown-link-title">Reports</span>
+                  <Link to="/profile/settings?tab=support" className="profile-dropdown-link-compact">
+                    <span className="profile-dropdown-link-icon">❓</span>
+                    <span className="profile-dropdown-link-title">Help & Support</span>
                     <span className="profile-dropdown-link-arrow">›</span>
                   </Link>
                 </div>
                 <div className="profile-dropdown-footer-compact">
                   <button className="profile-dropdown-logout-compact" onClick={handleLogout}>Log out</button>
+                </div>
+              </div>
+            )}
+            {/* Edit Profile Modal */}
+            {showEditProfile && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+                <div className="bg-white rounded-xl shadow-xl p-8 w-full max-w-md relative">
+                  <button className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-xl" onClick={() => setShowEditProfile(false)}>&times;</button>
+                  <h2 className="text-2xl font-bold mb-4 text-center">Edit Profile</h2>
+                  <form onSubmit={handleEditProfileSave} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                      <input
+                        type="text"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        value={editProfileForm.name}
+                        onChange={e => setEditProfileForm(f => ({ ...f, name: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <input
+                        type="email"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        value={editProfileForm.email}
+                        onChange={e => setEditProfileForm(f => ({ ...f, email: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full bg-indigo-700 text-white py-2 rounded-lg font-semibold hover:bg-indigo-800 transition"
+                    >
+                      Save Changes
+                    </button>
+                    {editProfileMsg && <div className="text-green-600 text-center mt-2">{editProfileMsg}</div>}
+                  </form>
                 </div>
               </div>
             )}
