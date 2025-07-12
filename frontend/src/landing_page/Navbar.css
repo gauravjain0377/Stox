@@ -1,0 +1,106 @@
+.custom-navbar {
+  font-family: 'Inter', 'Poppins', 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 40px;
+  background: rgba(255,255,255,0.85);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.10);
+  position: fixed;
+  top: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  border-radius: 32px;
+  width: calc(100% - 64px);
+  max-width: 1200px;
+  backdrop-filter: blur(12px) saturate(180%);
+  transition: all 0.3s cubic-bezier(.4,2,.6,1);
+}
+.custom-navbar.shrunk {
+  padding: 8px 24px;
+  top: 12px;
+  border-radius: 24px;
+  box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.12);
+  background: rgba(255,255,255,0.92);
+  width: calc(100% - 24px);
+}
+.navbar-logo img {
+  height: 38px;
+  width: auto;
+  transition: height 0.3s cubic-bezier(.4,2,.6,1);
+}
+.custom-navbar.shrunk .navbar-logo img {
+  height: 28px;
+}
+.navbar-menu {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+.navbar-menu ul {
+  display: flex;
+  gap: 32px;
+  background: rgba(245,247,250,0.85);
+  border-radius: 28px;
+  padding: 8px 36px;
+  margin: 0;
+  list-style: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  transition: background 0.3s;
+}
+.navbar-menu li a {
+  font-family: inherit;
+  color: #222;
+  font-weight: 500;
+  font-size: 1.08rem;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: background 0.15s, color 0.15s;
+}
+.navbar-menu li a:hover {
+  background: #e0e7ef;
+  color: #00796b;
+}
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.login-link {
+  font-family: inherit;
+  color: #222;
+  font-weight: 500;
+  text-decoration: none;
+  font-size: 1.08rem;
+  margin-right: 8px;
+  transition: color 0.15s;
+}
+.login-link:hover {
+  color: #00796b;
+}
+.open-account-btn {
+  font-family: inherit;
+  background: #00796b;
+  color: #fff;
+  border-radius: 22px;
+  padding: 8px 22px;
+  font-weight: 600;
+  font-size: 1.08rem;
+  text-decoration: none;
+  transition: background 0.18s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.open-account-btn:hover {
+  background: #005f56;
+}
+@media (max-width: 900px) {
+  .custom-navbar { flex-direction: column; padding: 12px 10px; width: calc(100% - 8px); left: 50%; transform: translateX(-50%); }
+  .custom-navbar.shrunk { padding: 6px 2px; width: calc(100% - 2px); }
+  .navbar-menu ul { padding: 8px 10px; gap: 12px; }
+  .navbar-actions { gap: 8px; }
+}
+body {
+  padding-top: 110px;
+} 

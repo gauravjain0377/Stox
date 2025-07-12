@@ -9,7 +9,6 @@ function PricingPage() {
     <>
       <Navbar />
       <Hero />
-      <OpenAccount />
       <Footer />
     </>
   );

@@ -1,63 +1,40 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import './Navbar.css';
 
 function Navbar() {
+  const navbarRef = useRef(null);
+  const [shrunk, setShrunk] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 30) {
+        setShrunk(true);
+      } else {
+        setShrunk(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <nav
-      className="navbar navbar-expand-lg border-bottom "
-      style={{ backgroundColor: "#FFF" }}
-    >
-      <div className="container ">
-        <Link className="navbar-brand" to="/">
-          <img
-            src="media/images/logo.png"
-            style={{ width: "09%" }}
-            alt="Logo"
-          />
+    <nav ref={navbarRef} className={`custom-navbar${shrunk ? ' shrunk' : ''}`}>
+      <div className="navbar-logo">
+        <Link to="/">
+          <img src="media/images/logo.png" alt="Logo" />
         </Link>
-        <button
-          className="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarSupportedContent"
-          aria-controls="navbarSupportedContent"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span className="navbar-toggler-icon"></span>
-        </button>
-        <div className="collapse navbar-collapse" id="navbarSupportedContent">
-          <form className="d-flex" role="search">
-            <ul className="navbar-nav mb-lg-0">
-              
-              <li className="nav-item">
-                <Link className="nav-link active" aria-current="page" to="/signup">
-                  Signup
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link active" aria-current="page" to="/about">
-                  About
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link active" aria-current="page" to="/products">
-                  Product
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link active" aria-current="page" to="/pricing">
-                  Pricing
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link active" aria-current="page" to="/support">
-                  Support
-                </Link>
-              </li>
-            </ul>
-          </form>
-        </div>
+      </div>
+      <div className="navbar-menu">
+        <ul>
+          <li><Link to="/about">About</Link></li>
+          <li><Link to="/pricing">Pricing</Link></li>
+          <li><Link to="/products">Products</Link></li>
+          <li><Link to="/support">Support</Link></li>
+        </ul>
+      </div>
+      <div className="navbar-actions">
+        <Link to="/login" className="login-link">Login</Link>
       </div>
     </nav>
   );

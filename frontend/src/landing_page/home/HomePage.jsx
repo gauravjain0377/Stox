@@ -1,13 +1,11 @@
 import React from 'react';
 import Hero from './Hero.jsx';
 import Stats from './Stats.jsx';
-import Pricing from './Pricing.jsx';
-import Education from './Education.jsx';
-
-import OpenAccount from '../OpenAccount.jsx';
+import TrustedInvestors from './TrustedInvestors.jsx';
+import SmartPortfolio from './SmartPortfolio.jsx';
+import Testimonials from './Testimonials.jsx';
 import Navbar from '../Navbar.jsx';
 import Footer from '../Footer.jsx';
-
 
 function HomePage() {
   return (
@@ -15,9 +13,9 @@ function HomePage() {
       <Navbar />
       <Hero />
       <Stats />
-      <Pricing />
-      <Education />
-      <OpenAccount />
+      <SmartPortfolio />
+      <TrustedInvestors />
+      <Testimonials />
       <Footer />
     </>
   );

@@ -1,19 +1,31 @@
 import React from 'react';
+import './Hero.css';
 
 function Hero() {
   return (
-    <div className='container p-5 mb-5' >
-      <div className='row  text-center'>
-        <img src="media/images/homeHero.png" alt="Hero Image" className='mb-3'/>
-        <h1 className='mt-5 '> Invest in everything </h1>
-        <p>Online platform to invest in stocks, derivatives, mutual funds, ETFs, bonds, and more.</p>
-        <button className='p-2 btn btn-primary fs-5' style={{width:"20%", margin: "0 auto"}}>
-        <a href="./signup" className="text-white">Sign up for free</a>   
-        </button>
-
+    <section className="hero-section">
+      <div className="hero-bg" />
+      <div className="hero-content">
+        <div className="hero-lines">
+          <div className="hero-line" />
+          <div className="hero-line" />
+          <div className="hero-line" />
+          <div className="hero-line" />
+          <div className="hero-line" />
+          <div className="hero-line" />
+        </div>
+        <button className="hero-badge">Zero Hidden Charges <span>&rarr;</span></button>
+        <h1 className="hero-title">Start Your Investment<br />Journey in Indian Markets</h1>
+        <p className="hero-desc">Trade stocks, mutual funds, and IPOs with zero hidden charges. Join 2M+ Indian investors building wealth through smart investing.</p>
+        <div className="hero-stats">
+          <span>SEBI Registered</span>
+          <span>NSE/BSE Member</span>
+          <span>2M+ Users</span>
+          <span>&#8377;0 AMC Forever</span>
+        </div>
+        <a href="/signup" className="hero-open-account-btn">Open Account</a>
       </div>
-
-    </div>
+    </section>
   );
 }
 
