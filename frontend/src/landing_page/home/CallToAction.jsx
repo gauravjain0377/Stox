@@ -3,7 +3,7 @@ import React from "react";
 export default function CallToAction() {
   return (
     <section
-      className="w-full flex flex-col items-center justify-center min-h-[480px] py-20 px-4 relative overflow-hidden"
+      className="w-full flex flex-col items-center justify-center min-h-[480px] py-8 px-4 relative overflow-hidden"
       style={{
         background: "linear-gradient(150deg, #007f7f 30%, #ff6a1a 100%)",
       }}

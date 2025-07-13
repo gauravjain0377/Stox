@@ -3,7 +3,7 @@ import './Hero.css';
 
 function Hero() {
   return (
-    <section className="hero-section">
+    <section className="hero-section py-8">
       <div className="hero-bg" />
       <div className="hero-content">
         <div className="hero-lines">

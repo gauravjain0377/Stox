@@ -2,7 +2,7 @@ import React from "react";
 
 function Stats() {
   return (
-    <section className="container py-5">
+    <section className="container py-8">
       <h1 style={{
         fontSize: '2.6rem',
         fontWeight: 700,

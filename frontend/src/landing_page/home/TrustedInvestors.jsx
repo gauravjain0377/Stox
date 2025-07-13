@@ -1,66 +1,59 @@
 import React from "react";
 
-function TrustedInvestors() {
+export default function TrustedInvestors() {
   return (
-    <section
-      className="w-full flex justify-center items-center py-16"
-      style={{ background: "linear-gradient(180deg, #f6fcfa 80%, #fff8f3 100%)", borderRadius: "2.5rem", marginTop: "-2rem" }}
-    >
-      <div className="w-full max-w-6xl px-2 md:px-8">
-        <h2 className="text-4xl md:text-5xl font-extrabold text-center mb-3" style={{ color: "#00796b", letterSpacing: "-0.01em", fontFamily: 'Inter, Poppins, Montserrat, sans-serif' }}>
-          Trusted by Indian Investors
+    <section className="py-8" style={{ background: '#FAFAFA', width: '100%' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+        <h2 style={{ fontSize: '3.2rem', fontWeight: 800, textAlign: 'center', marginBottom: 12, color: '#111', fontFamily: 'Inter, Poppins, Montserrat, sans-serif', letterSpacing: '-0.01em' }}>
+          Why Choose TradePro?
         </h2>
-        <p className="text-center text-lg md:text-xl text-slate-600 mb-12" style={{ fontWeight: 500, fontFamily: 'Inter, Poppins, Montserrat, sans-serif' }}>
-          India's most reliable trading platform with cutting-edge technology, regulatory compliance, and unwavering commitment to investor success.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-8">
-          {/* Card 1 */}
-          <div className="bg-white rounded-2xl border flex flex-col items-center justify-center text-center" style={{ borderColor: "#b6f0df", padding: '2.5rem 1.5rem', minHeight: 220, boxShadow: '0 1px 8px rgba(34,42,53,0.03)' }}>
-            <div className="mb-2" style={{ lineHeight: 1 }}>
-              <span style={{ fontWeight: 800, fontSize: "2.6rem", color: "#00796b", fontFamily: 'Inter, Poppins, Montserrat, sans-serif', letterSpacing: '-0.01em' }}>2</span>
-              <span style={{ fontWeight: 700, fontSize: "1.7rem", color: '#16a34a', marginLeft: 2, fontFamily: 'Inter, Poppins, Montserrat, sans-serif' }}>M+</span>
+        <div style={{ textAlign: 'center',
+        color: '#64748b',
+        fontSize: '1.18rem',
+        marginBottom: '2.5rem',
+        fontWeight: 400,
+        letterSpacing: '-0.01em',
+        lineHeight: 1.5 }}>
+          Everything you need to trade and invest in Indian markets
+        </div>
+        <div style={{ display: 'flex', gap: 48, flexWrap: 'wrap', justifyContent: 'space-between' }}>
+          {/* Feature 1 */}
+          <div style={{ flex: '1 1 320px', minWidth: 260, maxWidth: 400, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: 32 }}>
+            <div style={{ background: '#19c37d', color: '#fff', borderRadius: 12, width: 56, height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, marginBottom: 24 }}>
+              <i className="fas fa-chart-bar"></i>
             </div>
-            <div className="text-lg md:text-xl font-bold mb-1" style={{ color: "#0f3d3e", fontFamily: 'Inter, Poppins, Montserrat, sans-serif', lineHeight: 1.2 }}>Active Traders</div>
-            <div className="text-slate-500 text-base mt-2" style={{ fontWeight: 400, fontFamily: 'Inter, Poppins, Montserrat, sans-serif', lineHeight: 1.6 }}>
-              Growing community of retail and institutional investors actively trading on our platform
+            <div style={{ fontWeight: 700, fontSize: 22, marginBottom: 8, color: '#111' }}>Advanced Charting</div>
+            <div style={{ color: '#222', fontSize: 18, marginBottom: 18, fontWeight: 400, lineHeight: 1.6 }}>
+              Professional-grade charts with 100+ technical indicators and real-time market data across NSE and BSE.
             </div>
+            
           </div>
-          {/* Card 2 */}
-          <div className="bg-white rounded-2xl border flex flex-col items-center justify-center text-center" style={{ borderColor: "#b6f0df", padding: '2.5rem 1.5rem', minHeight: 220, boxShadow: '0 1px 8px rgba(34,42,53,0.03)' }}>
-            <div className="mb-2" style={{ lineHeight: 1 }}>
-              <span style={{ fontWeight: 800, fontSize: "2.3rem", color: "#00796b", fontFamily: 'Inter, Poppins, Montserrat, sans-serif', letterSpacing: '-0.01em' }}>₹50,000</span>
-              <span style={{ fontWeight: 700, fontSize: "1.2rem", color: '#16a34a', marginLeft: 2, fontFamily: 'Inter, Poppins, Montserrat, sans-serif' }}>Cr+</span>
+          {/* Feature 2 */}
+          <div style={{ flex: '1 1 320px', minWidth: 260, maxWidth: 400, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: 32 }}>
+            <div style={{ background: '#19c37d', color: '#fff', borderRadius: 12, width: 56, height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, marginBottom: 24 }}>
+              <i className="fas fa-shield-alt"></i>
             </div>
-            <div className="text-lg md:text-xl font-bold mb-1" style={{ color: "#0f3d3e", fontFamily: 'Inter, Poppins, Montserrat, sans-serif', lineHeight: 1.2 }}>Assets Under Management</div>
-            <div className="text-slate-500 text-base mt-2" style={{ fontWeight: 400, fontFamily: 'Inter, Poppins, Montserrat, sans-serif', lineHeight: 1.6 }}>
-              Total value of assets managed and traded through our secure platform
+            <div style={{ fontWeight: 700, fontSize: 22, marginBottom: 8, color: '#111' }}>Bank-grade Security</div>
+            <div style={{ color: '#222', fontSize: 18, marginBottom: 18, fontWeight: 400, lineHeight: 1.6 }}>
+              Your investments protected with 256-bit encryption, two-factor authentication, and SEBI-regulated security protocols.
             </div>
+           
           </div>
-          {/* Card 3 */}
-          <div className="bg-white rounded-2xl border flex flex-col items-center justify-center text-center" style={{ borderColor: "#b6f0df", padding: '2.5rem 1.5rem', minHeight: 220, boxShadow: '0 1px 8px rgba(34,42,53,0.03)' }}>
-            <div className="mb-2" style={{ lineHeight: 1 }}>
-              <span style={{ fontWeight: 800, fontSize: "2.3rem", color: "#00796b", fontFamily: 'Inter, Poppins, Montserrat, sans-serif', letterSpacing: '-0.01em' }}>100</span>
-              <span style={{ fontWeight: 700, fontSize: "1.2rem", color: '#16a34a', marginLeft: 2, fontFamily: 'Inter, Poppins, Montserrat, sans-serif' }}>%</span>
+          {/* Feature 3 */}
+          <div style={{ flex: '1 1 320px', minWidth: 260, maxWidth: 400, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: 32 }}>
+            <div style={{ background: '#19c37d', color: '#fff', borderRadius: 12, width: 56, height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, marginBottom: 24 }}>
+              <i className="fas fa-bolt"></i>
             </div>
-            <div className="text-lg md:text-xl font-bold mb-1" style={{ color: "#0f3d3e", fontFamily: 'Inter, Poppins, Montserrat, sans-serif', lineHeight: 1.2 }}>Uptime Guaranteed</div>
-            <div className="text-slate-500 text-base mt-2" style={{ fontWeight: 400, fontFamily: 'Inter, Poppins, Montserrat, sans-serif', lineHeight: 1.6 }}>
-              Rock-solid infrastructure ensuring your trades execute when markets move
+            <div style={{ fontWeight: 700, fontSize: 22, marginBottom: 8, color: '#111' }}>Lightning Fast Execution</div>
+            <div style={{ color: '#222', fontSize: 18, marginBottom: 18, fontWeight: 400, lineHeight: 1.6 }}>
+              Execute trades in milliseconds with our high-performance trading engine and dedicated mobile app.
             </div>
-          </div>
-          {/* Card 4 */}
-          <div className="bg-white rounded-2xl border flex flex-col items-center justify-center text-center" style={{ borderColor: "#ffd7b3", padding: '2.5rem 1.5rem', minHeight: 220, boxShadow: '0 1px 8px rgba(34,42,53,0.03)' }}>
-            <div className="mb-2" style={{ lineHeight: 1 }}>
-              <span style={{ fontWeight: 900, fontSize: "2.3rem", color: "#ff6600", fontFamily: 'Inter, Poppins, Montserrat, sans-serif', letterSpacing: '0.01em' }}>SEBI</span>
-            </div>
-            <div className="text-lg md:text-xl font-bold mb-1" style={{ color: "#0f3d3e", fontFamily: 'Inter, Poppins, Montserrat, sans-serif', lineHeight: 1.2 }}>SEBI Registered & Regulated</div>
-            <div className="text-slate-500 text-base mt-2" style={{ fontWeight: 400, fontFamily: 'Inter, Poppins, Montserrat, sans-serif', lineHeight: 1.6 }}>
-              Fully compliant with Indian securities regulations for your peace of mind
-            </div>
+           
           </div>
         </div>
       </div>
+      {/* FontAwesome CDN for icons (if not already included globally) */}
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     </section>
   );
-}
-
-export default TrustedInvestors; 
+} 

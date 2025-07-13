@@ -1,80 +1,71 @@
 import React from "react";
 
-function Footer() {
+export default function Footer() {
   return (
-    <footer style={{ backgroundColor: "rgb(250, 250, 250)" }}>
-      <div className="container-fluid border-top mt-5">
-        <div className="row mt-5">
-          <div className="col">
-            <img src="media/images/logo.png" style={{ width: "20%" }} />
-            <p className="text-muted">
-              &copy; 2025, Stox All rights reserved.
-            </p>
+    <footer style={{ background: "#FAFAFA", fontFamily: 'Inter, Poppins, Montserrat, sans-serif', color: '#222' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 24px 0 24px' }}>
+        {/* Top: Logo, Brand, Tagline, Social Icons */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0, marginBottom: 36 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+            <div style={{ background: '#19c37d', color: '#fff', fontWeight: 700, fontSize: 22, borderRadius: 8, padding: '6px 14px', letterSpacing: 1 }}>TP</div>
+            <span style={{ fontWeight: 700, fontSize: 22, letterSpacing: 0.01 }}>TradePro</span>
           </div>
-          <div className="col">
-            <p className="fs-5">Company</p>
-            <a href="./about" className="text-muted">About</a>
-            <br />
-            <a href="" className="text-muted">Products</a>
-            <br />
-            <a href="" className="text-muted">Pricing</a>
-            <br />
-            <a href="" className="text-muted">Referral programme</a>
-            <br />
-            <a href="" className="text-muted">Careers</a>
-            <br />
-            <a href="" className="text-muted">Press & media</a>
-            <br />
+          <div style={{ color: '#444', fontSize: 17, marginBottom: 18, maxWidth: 520 }}>
+            India's most trusted stock trading platform with zero brokerage equity delivery and transparent pricing.
           </div>
-          <div className="col">
-            <p className="fs-5">Support</p>
-            <a href="" className="text-muted">Contact</a>
-            <br />
-            <a href="" className="text-muted">Support portal</a>
-            <br />
-            <a href="" className="text-muted">Connect blog</a>
-            <br />
-            <a href="" className="text-muted">List of charges</a>
-            <br />
-          </div>
-          <div className="col">
-            <p className="fs-5">Account</p>
-            <a href="" className="text-muted">Open an account</a>
-            <br />
-            <a href="" className="text-muted">Fund transfer</a>
-            <br />
-            <a href="" className="text-muted">60 day challenge</a>
-            <br />
+          <div style={{ display: 'flex', gap: 18, fontSize: 22, color: '#222', marginBottom: 0 }}>
+            <a href="#" aria-label="Facebook" style={{ color: '#222', opacity: 0.7 }}><i className="fab fa-facebook-f"></i> <span style={{ fontSize: 0 }}>Facebook</span></a>
+            <a href="#" aria-label="Twitter" style={{ color: '#222', opacity: 0.7 }}><i className="fab fa-twitter"></i> <span style={{ fontSize: 0 }}>Twitter</span></a>
+            <a href="#" aria-label="LinkedIn" style={{ color: '#222', opacity: 0.7 }}><i className="fab fa-linkedin-in"></i> <span style={{ fontSize: 0 }}>LinkedIn</span></a>
+            <a href="#" aria-label="Instagram" style={{ color: '#222', opacity: 0.7 }}><i className="fab fa-instagram"></i> <span style={{ fontSize: 0 }}>Instagram</span></a>
           </div>
         </div>
-        <div className="mt-5 text-muted" style={{ fontSize: "12px" }}>
-          <p>
-          <strong>Disclaimer:</strong> This website is a personal project created for educational and demonstration purposes only. It is not a real stock trading platform and does not provide any financial, investment, or brokerage services. This platform is not registered with SEBI, NSE, BSE, MCX, CDSL, NSDL, or any other regulatory authority.
-<br></br><br></br>
-All information and features on this site are for learning purposes and should not be interpreted as financial advice or a recommendation to buy or sell any securities. Always consult a SEBI-registered stockbroker or financial advisor for real investment decisions.
-<br></br><br></br>
-<strong>Note:</strong> No real transactions or user data are processed or stored on this platform.
-<br></br><br></br>
-&copy; 2025, Stox All rights reserved.
-
-          </p>
-          <div className="footer-graveyard-links text-center">
-    <ul>
-      
-      <a href="https://www.nseindia.com/" className="text-muted">NSE</a>   &nbsp;&nbsp;&nbsp;&nbsp;
-  
-      <a href="https://www.bseindia.com/" className="text-muted">BSE</a>
-  
-    </ul>
-
-
-  </div>
+        {/* Divider */}
+        <div style={{ borderTop: '1px solid #ececec', margin: '0 0 0 0', width: '100%' }} />
+        {/* Four columns */}
+        <div style={{ display: 'flex', gap: 48, flexWrap: 'wrap', justifyContent: 'space-between', margin: '40px 0 0 0' }}>
+          <div style={{ minWidth: 160 }}>
+            <div style={{ fontWeight: 700, marginBottom: 12 }}>Products</div>
+            <div style={{ color: '#444', fontWeight: 400, fontSize: 16, lineHeight: 2 }}>
+              <div>Equity Trading</div>
+              <div>F&O Trading</div>
+              <div>Mutual Funds</div>
+              <div>IPO Applications</div>
+            </div>
+          </div>
+          <div style={{ minWidth: 160 }}>
+            <div style={{ fontWeight: 700, marginBottom: 12 }}>Support</div>
+            <div style={{ color: '#444', fontWeight: 400, fontSize: 16, lineHeight: 2 }}>
+              <div>Help Center</div>
+              <div>Contact Support</div>
+              <div>Trading Tutorial</div>
+              <div>Market Updates</div>
+            </div>
+          </div>
+          <div style={{ minWidth: 160 }}>
+            <div style={{ fontWeight: 700, marginBottom: 12 }}>Legal</div>
+            <div style={{ color: '#444', fontWeight: 400, fontSize: 16, lineHeight: 2 }}>
+              <div>Privacy Policy</div>
+              <div>Terms of Service</div>
+              <div>Risk Disclosure</div>
+              <div>SEBI Registration</div>
+            </div>
+          </div>
+          <div style={{ minWidth: 220, maxWidth: 320 }}>
+            <div style={{ fontWeight: 700, marginBottom: 12 }}>Disclaimer</div>
+            <div style={{ color: '#888', fontWeight: 400, fontSize: 15, lineHeight: 1.7 }}>
+              TradePro is a SEBI registered broker. Securities investments are subject to market risks. Please read all related documents carefully before investing.
+            </div>
+          </div>
+        </div>
+        {/* Copyright */}
+        <div style={{ borderTop: '1px solid #ececec', margin: '40px 0 0 0', width: '100%' }} />
+        <div style={{ color: '#888', fontSize: 15, textAlign: 'left', padding: '18px 0 8px 0', letterSpacing: 0.01 }}>
+          © 2024 TradePro. All rights reserved.
         </div>
       </div>
+      {/* FontAwesome CDN for icons (if not already included globally) */}
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     </footer>
   );
-
- 
 }
-
-export default Footer;

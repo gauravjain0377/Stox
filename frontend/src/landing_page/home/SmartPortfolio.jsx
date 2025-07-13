@@ -2,7 +2,7 @@ import React from "react";
 
 function SmartPortfolio() {
   return (
-    <section className="container py-5" style={{ marginTop: '-1.5rem' }}>
+    <section className="container py-8">
       <div className="row" style={{ display: 'flex', gap: '0', justifyContent: 'center' }}>
         {/* Left: Smart Portfolio */}
         <div className="col-12 col-md-6" style={{ padding: '2rem' }}>

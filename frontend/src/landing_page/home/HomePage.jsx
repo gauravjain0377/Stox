@@ -9,15 +9,32 @@ import Footer from '../Footer.jsx';
 
 function HomePage() {
   return (
-    <>
+    <div style={{ background: '#FAFAFA', minHeight: '100vh' }}>
       <Navbar />
-      <Hero />
-      <Stats />
-      <SmartPortfolio />
-      <TrustedInvestors />
-      <Testimonials />
+      
+      <section style={{ paddingTop: '0px', paddingBottom: '30px' }}>
+        <Hero />
+      </section>
+
+      <section style={{ paddingTop: '80px', paddingBottom: '30px' }}>
+        <Stats />
+      </section>
+
+      <section style={{  paddingBottom: '30px' }}>
+        <SmartPortfolio />
+      </section>
+
+      <section style={{ paddingTop: '80px', paddingBottom: '30px' }}>
+        <TrustedInvestors />
+      </section>
+
+      <section style={{ paddingTop: '80px', paddingBottom: '50px' }}>
+        <Testimonials />
+      </section>
+
+    
       <Footer />
-    </>
+    </div>
   );
 }
 

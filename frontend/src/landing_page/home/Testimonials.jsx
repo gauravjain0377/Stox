@@ -54,8 +54,7 @@ const testimonials = [
 
 export default function Testimonials() {
   const [focus, setFocus] = useState(4); // Centered on Priya Sharma by default
-  const [isPaused, setIsPaused] = useState(false);
-  const autoplayRef = useRef();
+
   const prevFocus = useRef(focus);
   const cardRef = useRef();
 
@@ -74,7 +73,7 @@ export default function Testimonials() {
   const minCardWidth = 320;
 
   return (
-    <section className="w-full flex flex-col items-center py-2 mb-2 relative" style={{
+    <section className="w-full flex flex-col items-center py-8 relative" style={{
       background: 'linear-gradient(180deg, #f6fcfa 60%, #f3f6ff 100%)',
       paddingLeft: '1rem',
       paddingRight: '1rem',
