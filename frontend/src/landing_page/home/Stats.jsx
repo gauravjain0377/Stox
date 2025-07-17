@@ -1,119 +1,96 @@
-import React from "react";
+// Stats.jsx
+import React, { useState, useEffect } from "react";
+import AOS from 'aos';
+import 'aos/dist/aos.css';
+import "./Stats.css";
+
+// Initial data for stocks - can be fetched from an API
+const initialStockData = [
+  { name: 'RELIANCE', price: 2847.50, change: '+42.30', percent: '+1.51%', trend: 'up' },
+  { name: 'TCS', price: 3965.20, change: '-15.80', percent: '-0.40%', trend: 'down' },
+  { name: 'HDFCBANK', price: 1634.75, change: '+28.45', percent: '+1.77%', trend: 'up' },
+  { name: 'INFY', price: 1523.90, change: '+12.25', percent: '+0.81%', trend: 'up' }
+];
 
 function Stats() {
+  const [stocks, setStocks] = useState(initialStockData);
+
+  useEffect(() => {
+    // Initialize AOS for animations
+    AOS.init({ duration: 800, once: true });
+
+    // Simulate real-time price update for the first stock (Reliance)
+    const interval = setInterval(() => {
+      setStocks(currentStocks => {
+        const newStocks = [...currentStocks];
+        // Fluctuate the price slightly
+        const oldPrice = newStocks[0].price;
+        const newPrice = oldPrice + (Math.random() - 0.5) * 5;
+        newStocks[0].price = parseFloat(newPrice.toFixed(2));
+        return newStocks;
+      });
+    }, 2000); // Update every 2 seconds
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <section className="container py-8">
-      <h1 style={{
-        fontSize: '2.6rem',
-        fontWeight: 700,
-        textAlign: 'center',
-        marginBottom: '0.5rem',
-        letterSpacing: '-0.02em',
-        color: '#1e293b',
-        fontFamily: 'Inter, Poppins, Montserrat, sans-serif',
-        textShadow: '0 2px 8px rgba(34,42,53,0.04)'
-      }}>
-        Complete Trading Platform for Indian Markets
-      </h1>
-      <p style={{
-        textAlign: 'center',
-        color: '#64748b',
-        fontSize: '1.18rem',
-        marginBottom: '2.5rem',
-        fontWeight: 400,
-        letterSpacing: '-0.01em',
-        lineHeight: 1.5
-      }}>
-        From real-time market data to AI-powered insights, everything you need to trade and<br />
-        invest in Indian stock markets with confidence.
-      </p>
-      <div className="row" style={{ display: 'flex', gap: '0', justifyContent: 'center' }}>
-        {/* Left: Real-time Market Data */}
-        <div className="col-12 col-md-6" style={{ padding: '2rem' }}>
-          <div style={{
-            background: 'linear-gradient(135deg, #f8fafc 60%, #e0f2fe 100%)',
-            borderRadius: '20px',
-            boxShadow: '0 4px 24px rgba(34,42,53,0.08)',
-            padding: '2.2rem',
-            minHeight: '340px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.5rem',
-            border: '1px solid #e0e7ef',
-            transition: 'box-shadow 0.2s',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', marginBottom: '0.5rem' }}>
-              <span style={{ fontSize: '1.7rem', color: '#0ea5e9', background: '#e0f2fe', borderRadius: '8px', padding: '0.3rem 0.7rem' }}>📈</span>
+    <section className="stats-section">
+      <div className="container">
+        <h1 className="stats-main-title" data-aos="fade-up">
+          A Complete Platform for the Indian Market
+        </h1>
+        <p className="stats-main-desc" data-aos="fade-up" data-aos-delay="100">
+          From real-time data to AI-powered insights, everything you need to trade and
+          invest in Indian stock markets with confidence.
+        </p>
+
+        <div className="stats-grid">
+          {/* Left Card: Real-time Market Data */}
+          <div className="stat-card" data-aos="fade-up" data-aos-delay="200">
+            <div className="card-header">
+              <span className="card-icon blue">📈</span>
               <div>
-                <div style={{ fontWeight: 700, fontSize: '1.15rem', color: '#1e293b' }}>Live Market Data</div>
-                <div style={{ fontSize: '1rem', color: '#64748b' }}>NSE • BSE • Real-time</div>
+                <div className="card-title">Live Market Data</div>
+                <div className="card-subtitle">NSE • BSE • Real-time</div>
               </div>
             </div>
-            {[{
-              name: 'RELIANCE', price: '₹2,847.50', change: '+42.30 (+1.51%)', color: '#16a34a', icon: '↗'
-            }, {
-              name: 'TCS', price: '₹3,965.20', change: '-15.80 (-0.40%)', color: '#dc2626', icon: '↘'
-            }, {
-              name: 'HDFCBANK', price: '₹1,634.75', change: '+28.45 (+1.77%)', color: '#16a34a', icon: '↗'
-            }, {
-              name: 'INFY', price: '₹1,523.90', change: '+12.25 (+0.81%)', color: '#16a34a', icon: '↗'
-            }].map((stock, i) => (
-              <div key={stock.name} style={{
-                background: '#f9fafb',
-                borderRadius: '12px',
-                padding: '1rem 1.2rem',
-                marginBottom: i !== 3 ? '0.7rem' : 0,
-                boxShadow: '0 1px 4px rgba(34,42,53,0.03)',
-                display: 'flex', flexDirection: 'column', gap: '0.2rem',
-                transition: 'box-shadow 0.2s',
-              }}>
-                <div style={{ fontWeight: 600, color: '#222', fontSize: '1.07rem', letterSpacing: '0.04em' }}>{stock.name}</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: 700, fontSize: '1.23rem' }}>{stock.price}</span>
-                  <span style={{ color: stock.color, fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>{stock.change} <span style={{ fontSize: '1.1em' }}>{stock.icon}</span></span>
+            <div className="stock-tickers">
+              {stocks.map((stock) => (
+                <div key={stock.name} className="ticker-item">
+                  <div className="ticker-name">{stock.name}</div>
+                  <div className="ticker-details">
+                    <span className="ticker-price">₹{stock.price.toLocaleString('en-IN')}</span>
+                    <span className={`ticker-change ${stock.trend}`}>
+                      {stock.change} ({stock.percent}) {stock.trend === 'up' ? '↗' : '↘'}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-        {/* Right: Advanced Charting */}
-        <div className="col-12 col-md-6" style={{ padding: '2rem' }}>
-          <div style={{
-            background: 'linear-gradient(135deg, #f8fafc 60%, #fef3c7 100%)',
-            borderRadius: '20px',
-            boxShadow: '0 4px 24px rgba(34,42,53,0.08)',
-            padding: '2.2rem',
-            minHeight: '340px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.5rem',
-            border: '1px solid #e0e7ef',
-            transition: 'box-shadow 0.2s',
-          }}>
-            <div style={{ fontWeight: 700, fontSize: '1.28rem', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
-              <span style={{ fontSize: '1.7rem', color: '#fb923c', background: '#fff7ed', borderRadius: '8px', padding: '0.3rem 0.7rem' }}>📊</span>
-              Technical Analysis
+
+          {/* Right Card: Advanced Charting */}
+          <div className="stat-card" data-aos="fade-up" data-aos-delay="300">
+            <div className="card-header">
+              <span className="card-icon orange">📊</span>
+              <div className="card-title">Technical Analysis</div>
             </div>
-            <div style={{ color: '#64748b', fontSize: '1.05rem', marginBottom: '0.5rem' }}>100+ Indicators</div>
-            <div style={{ background: '#f9fafb', borderRadius: '12px', padding: '1.5rem', minHeight: '120px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 4px rgba(34,42,53,0.03)' }}>
-              {/* Placeholder for chart */}
-              <svg width="120" height="60" viewBox="0 0 120 60">
-                <circle cx="10" cy="50" r="4" fill="#222" />
-                <circle cx="30" cy="40" r="4" fill="#222" />
-                <circle cx="50" cy="35" r="4" fill="#222" />
-                <circle cx="70" cy="30" r="4" fill="#222" />
-                <circle cx="90" cy="25" r="4" fill="#222" />
-                <circle cx="110" cy="20" r="4" fill="#222" />
-              </svg>
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginTop: '0.5rem', color: '#888', fontSize: '0.9rem' }}>
-                <span>9:15 AM</span>
-                <span>3:30 PM</span>
-              </div>
+            <div className="card-subtitle full-width">Over 100+ powerful indicators</div>
+            
+            {/* Animated Chart Placeholder */}
+            <div className="chart-container">
+               <svg className="animated-chart" viewBox="0 0 100 40" preserveAspectRatio="none">
+                 <path d="M 0,35 C 20,10 30,15 50,20 S 70,30 100,5" />
+               </svg>
             </div>
-            <div style={{ display: 'flex', gap: '0.7rem', marginTop: '0.7rem' }}>
-              <span style={{ background: '#e0f2fe', color: '#0284c7', borderRadius: '8px', padding: '0.2rem 0.8rem', fontWeight: 600, fontSize: '0.97rem' }}>RSI</span>
-              <span style={{ background: '#fee2e2', color: '#dc2626', borderRadius: '8px', padding: '0.2rem 0.8rem', fontWeight: 600, fontSize: '0.97rem' }}>MACD</span>
-              <span style={{ background: '#f3f4f6', color: '#222', borderRadius: '8px', padding: '0.2rem 0.8rem', fontWeight: 600, fontSize: '0.97rem' }}>SMA</span>
+
+            <div className="indicator-tags">
+              <span className="tag blue">RSI</span>
+              <span className="tag red">MACD</span>
+              <span className="tag gray">Bollinger Bands</span>
+              <span className="tag green">SMA</span>
             </div>
           </div>
         </div>

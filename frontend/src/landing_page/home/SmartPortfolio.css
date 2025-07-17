@@ -1,0 +1,197 @@
+/* SmartPortfolio.css */
+
+/* --- Main Section & Grid --- */
+.sp-section {
+  padding: 4rem 1rem;
+  background-color: #ffffff;
+  font-family: 'Inter', 'Poppins', sans-serif;
+}
+
+.sp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* --- Card Base Styles --- */
+.sp-card {
+  background: #fdfdfd;
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(27, 39, 53, 0.07);
+  padding: 2.2rem;
+  border: 1px solid #eef2f6;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.sp-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 40px rgba(27, 39, 53, 0.1);
+}
+
+.sp-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.sp-icon {
+  font-size: 1.5rem;
+  border-radius: 12px;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sp-icon.green { background-color: #dcfce7; color: #22c55e; }
+.sp-icon.orange { background-color: #fff7ed; color: #fb923c; }
+
+.sp-card-title {
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: #1e293b;
+  margin: 0;
+}
+
+.sp-card-subtitle {
+  font-size: 1rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* --- Portfolio Card Specifics --- */
+.portfolio-value-box {
+  background: linear-gradient(135deg, #f8fafc, #f0fdf4);
+  border-radius: 16px;
+  padding: 1.2rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.pv-label {
+  font-weight: 600;
+  color: #475569;
+  font-size: 1rem;
+  margin: 0 0 0.25rem 0;
+}
+.pv-amount-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.pv-amount {
+  font-weight: 800;
+  font-size: 2rem;
+  color: #1e293b;
+}
+.pv-change { font-weight: 600; font-size: 1rem; }
+.pv-change.up { color: #16a34a; }
+
+.holdings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.holding-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.9rem 1rem;
+  background-color: #f8fafc;
+  border-radius: 12px;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  cursor: pointer;
+}
+.holding-item:hover {
+  background-color: #f1f5f9;
+  transform: translateX(4px);
+}
+.holding-name { font-weight: 600; font-size: 1.05rem; margin: 0; color: #334155; }
+.holding-shares { color: #64748b; font-size: 0.95rem; margin: 0; }
+.holding-value-col { text-align: right; }
+.holding-value { font-weight: 700; font-size: 1.1rem; margin: 0; color: #1e293b; }
+.holding-change { font-weight: 600; font-size: 0.95rem; margin: 0; }
+.holding-change.up { color: #16a34a; }
+.holding-change.down { color: #dc2626; }
+
+@keyframes pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 146, 60, 0.4); }
+  70% { transform: scale(1.1); box-shadow: 0 0 10px 15px rgba(251, 146, 60, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 146, 60, 0); }
+}
+.ai-recommendation {
+  background-color: #fffbeb;
+  color: #b45309;
+  border-radius: 12px;
+  padding: 1rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: auto; /* Pushes to bottom */
+}
+.ai-recommendation .ai-icon {
+  animation: pulse 2s infinite;
+  color: #f97316;
+  background-color: #fed7aa;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1rem;
+}
+
+/* --- Learn & Invest Card Specifics --- */
+.articles-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex-grow: 1; /* Makes it take available space */
+}
+.article-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.1rem 1rem;
+  background-color: #f8fafc;
+  border-radius: 12px;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+}
+.article-item:hover {
+  background-color: #f1f5f9;
+  border-left-color: #fb923c;
+  transform: translateX(4px);
+}
+.article-title { margin: 0; font-weight: 500; color: #334155; }
+.article-category { color: #94a3b8; font-size: 0.9em; margin-left: 0.5rem; }
+.article-badge {
+  border-radius: 8px;
+  padding: 0.2rem 0.8rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-left: 0.5rem;
+}
+.article-badge.new { background-color: #fb923c; color: #fff; }
+.article-badge.featured { background-color: #fffbeb; color: #f59e0b; font-size: 1rem; }
+
+.market-insight-box {
+  background: linear-gradient(135deg, #f8fafc, #fefce8);
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  color: #475569;
+  font-weight: 500;
+  margin-top: 1.5rem;
+}
+
+/* --- Responsive Design --- */
+@media (max-width: 992px) {
+  .sp-grid {
+    grid-template-columns: 1fr;
+  }
+}

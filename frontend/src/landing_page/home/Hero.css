@@ -1,20 +1,45 @@
+/* Hero.css */
+
+/* Define color palette and other variables for easy theming */
+:root {
+  --primary-color: #00796b;
+  --primary-hover: #005f56;
+  --background-color: #fafbfc;
+  --text-primary: #1a202c;
+  --text-secondary: #4a5568;
+  --line-gradient: linear-gradient(180deg, #e0e7ef 0%, #b2c7d9 100%);
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Subtle background pan animation */
+@keyframes subtle-pan {
+  0% { transform: scale(1.05) translateX(-2%); }
+  100% { transform: scale(1.05) translateX(2%); }
+}
+
 .hero-section {
   position: relative;
   width: 100%;
-  min-height: 70vh;
+  min-height: 85vh; /* A bit more height */
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fafbfc;
+  background: var(--background-color);
   overflow: hidden;
+  padding: 2rem 0;
 }
+
 .hero-bg {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   background: url('/media/images/homeHero.png') center/cover no-repeat;
-  opacity: 0.12;
+  opacity: 0.1;
   z-index: 1;
+  /* Add the subtle animation */
+  animation: subtle-pan 30s infinite linear alternate;
 }
+
 .hero-content {
   position: relative;
   z-index: 2;
@@ -24,76 +49,127 @@
   text-align: center;
   padding: 80px 20px 40px 20px;
 }
+
 .hero-lines {
   display: flex;
   justify-content: center;
   gap: 18px;
-  margin-bottom: 18px;
+  margin-bottom: 24px;
 }
+
 .hero-line {
   width: 4px;
   height: 80px;
   border-radius: 2px;
-  background: linear-gradient(180deg, #e0e7ef 0%, #b2c7d9 100%);
+  background: var(--line-gradient);
   opacity: 0.7;
 }
+
 .hero-badge {
-  background: #00796b;
+  background: var(--primary-color);
   color: #fff;
   border: none;
   border-radius: 22px;
-  padding: 8px 28px;
+  padding: 8px 24px;
   font-size: 1.1rem;
   font-weight: 500;
   margin-bottom: 28px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: var(--shadow-sm);
   letter-spacing: 0.01em;
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+
+.hero-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.hero-badge span {
+  transition: transform 0.2s ease;
+}
+
+.hero-badge:hover span {
+  transform: translateX(4px);
+}
+
 .hero-title {
-  font-size: 3.2rem;
+  font-size: 3.5rem;
   font-weight: 800;
-  color: #00796b;
+  color: var(--text-primary);
   margin-bottom: 18px;
-  line-height: 1.1;
+  line-height: 1.15;
 }
+
+/* Highlight text with the brand color */
+.hero-title span {
+  color: var(--primary-color);
+}
+
 .hero-desc {
   font-size: 1.25rem;
-  color: #444;
-  margin-bottom: 32px;
+  color: var(--text-secondary);
+  margin: 0 auto 32px auto;
+  max-width: 650px; /* Better readability */
 }
+
 .hero-stats {
   display: flex;
   justify-content: center;
   gap: 32px;
   font-size: 1.1rem;
-  color: #00796b;
+  color: var(--primary-color);
   font-weight: 500;
   margin-top: 18px;
   flex-wrap: wrap;
 }
+
+.hero-stats span {
+  transition: color 0.2s ease;
+}
+
+.hero-stats span:hover {
+  color: var(--text-primary); /* Darken on hover for interactivity */
+}
+
 .hero-open-account-btn {
   display: inline-block;
-  margin: 36px auto 0 auto;
-  background: #00796b;
+  margin: 40px auto 0 auto;
+  background: var(--primary-color);
   color: #fff;
-  border-radius: 22px;
-  padding: 12px 38px;
+  border-radius: 28px; /* Slightly rounder */
+  padding: 14px 42px;
   font-weight: 700;
-  font-size: 1.18rem;
+  font-size: 1.2rem;
   text-decoration: none;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  transition: background 0.18s;
+  box-shadow: var(--shadow-md);
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
 }
+
 .hero-open-account-btn:hover {
-  background: #005f56;
+  background: var(--primary-hover);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 20px -5px rgba(0, 121, 107, 0.4); /* Colored shadow on hover */
 }
-@media (max-width: 700px) {
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .hero-title { font-size: 2.5rem; }
+  .hero-desc { font-size: 1.1rem; }
+  .hero-lines { gap: 12px; }
+  .hero-line { height: 60px; }
+  .hero-content { padding: 60px 15px 30px 15px; }
+  .hero-stats { gap: 16px; font-size: 1rem; }
+}
+
+@media (max-width: 480px) {
   .hero-title { font-size: 2rem; }
-  .hero-lines { gap: 8px; }
-  .hero-line { height: 50px; }
-  .hero-content { padding: 40px 5px 20px 5px; }
-  .hero-stats { gap: 12px; font-size: 1rem; }
-} 
+  .hero-badge { padding: 6px 18px; font-size: 1rem; }
+  .hero-stats {
+    gap: 8px 16px; /* row-gap column-gap */
+    justify-content: center;
+  }
+}
