@@ -1,42 +1,48 @@
-/* Hero.css */
+/* Hero.css - Revamped for a Modern & Premium User Experience */
 
-/* Define color palette and other variables for easy theming */
+/* 1. Import a modern, clean font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap');
+
+/* 2. Define a refined and modern color palette */
 :root {
   --primary-color: #00796b;
   --primary-hover: #005f56;
   --background-color: #fafbfc;
-  --text-primary: #1a202c;
-  --text-secondary: #4a5568;
+  --text-primary: #1d2b35; /* Darker text for high contrast */
+  --text-secondary: #4a5568; /* Reverted to the previous lighter gray */
+  --border-color: #e4e9ef;
   --line-gradient: linear-gradient(180deg, #e0e7ef 0%, #b2c7d9 100%);
   --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --glow-color: rgba(0, 121, 107, 0.4);
 }
 
-/* Subtle background pan animation */
+/* 3. Reverted to the subtle image background pan animation */
 @keyframes subtle-pan {
   0% { transform: scale(1.05) translateX(-2%); }
   100% { transform: scale(1.05) translateX(2%); }
 }
 
 .hero-section {
+  font-family: 'Inter', sans-serif;
   position: relative;
   width: 100%;
-  min-height: 85vh; /* A bit more height */
+  min-height: 90vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--background-color);
+  background-color: var(--background-color);
   overflow: hidden;
-  padding: 2rem 0;
+  padding: 9rem 1rem 5rem 1rem;
 }
 
+/* Reverted to the original image background */
 .hero-bg {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   background: url('/media/images/homeHero.png') center/cover no-repeat;
   opacity: 0.1;
   z-index: 1;
-  /* Add the subtle animation */
   animation: subtle-pan 30s infinite linear alternate;
 }
 
@@ -47,24 +53,15 @@
   max-width: 900px;
   margin: 0 auto;
   text-align: center;
-  padding: 80px 20px 40px 20px;
+  padding: 0 20px;
 }
 
+/* Removed the vertical lines for a cleaner look */
 .hero-lines {
-  display: flex;
-  justify-content: center;
-  gap: 18px;
-  margin-bottom: 24px;
+  display: none;
 }
 
-.hero-line {
-  width: 4px;
-  height: 80px;
-  border-radius: 2px;
-  background: var(--line-gradient);
-  opacity: 0.7;
-}
-
+/* Reverted badge to the previous style */
 .hero-badge {
   background: var(--primary-color);
   color: #fff;
@@ -73,9 +70,8 @@
   padding: 8px 24px;
   font-size: 1.1rem;
   font-weight: 500;
-  margin-bottom: 28px;
+  margin-bottom: 2rem;
   box-shadow: var(--shadow-sm);
-  letter-spacing: 0.01em;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -96,80 +92,91 @@
   transform: translateX(4px);
 }
 
+/* Kept the new title style */
 .hero-title {
-  font-size: 3.5rem;
+  font-size: 4.5rem;
   font-weight: 800;
   color: var(--text-primary);
-  margin-bottom: 18px;
-  line-height: 1.15;
+  margin-bottom: 1.5rem;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  background: linear-gradient(45deg, var(--primary-color), var(--text-primary) 80%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-/* Highlight text with the brand color */
-.hero-title span {
-  color: var(--primary-color);
-}
-
+/* Reverted description to the previous style */
 .hero-desc {
   font-size: 1.25rem;
   color: var(--text-secondary);
-  margin: 0 auto 32px auto;
-  max-width: 650px; /* Better readability */
+  margin: 0 auto 2.5rem auto;
+  max-width: 600px;
+  line-height: 1.6;
 }
 
+/* Reverted stats to the previous style */
 .hero-stats {
   display: flex;
   justify-content: center;
-  gap: 32px;
+  gap: 2.5rem;
   font-size: 1.1rem;
   color: var(--primary-color);
   font-weight: 500;
-  margin-top: 18px;
+  margin-bottom: 3rem;
   flex-wrap: wrap;
 }
 
 .hero-stats span {
-  transition: color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: color 0.3s ease;
 }
-
 .hero-stats span:hover {
-  color: var(--text-primary); /* Darken on hover for interactivity */
+  color: var(--text-primary);
 }
 
+/* Reverted button to the previous style */
 .hero-open-account-btn {
   display: inline-block;
-  margin: 40px auto 0 auto;
   background: var(--primary-color);
   color: #fff;
-  border-radius: 28px; /* Slightly rounder */
-  padding: 14px 42px;
+  border-radius: 28px;
+  padding: 16px 48px;
   font-weight: 700;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   text-decoration: none;
-  box-shadow: var(--shadow-md);
-  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 15px -5px var(--glow-color);
+  transition: all 0.3s ease;
 }
 
 .hero-open-account-btn:hover {
   background: var(--primary-hover);
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 12px 20px -5px rgba(0, 121, 107, 0.4); /* Colored shadow on hover */
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 8px 25px -5px var(--glow-color);
 }
 
 /* Responsive Adjustments */
 @media (max-width: 768px) {
-  .hero-title { font-size: 2.5rem; }
+  .hero-section {
+    padding-top: 7rem;
+  }
+  .hero-title { 
+    font-size: 3.2rem;
+  }
   .hero-desc { font-size: 1.1rem; }
-  .hero-lines { gap: 12px; }
-  .hero-line { height: 60px; }
-  .hero-content { padding: 60px 15px 30px 15px; }
-  .hero-stats { gap: 16px; font-size: 1rem; }
+  .hero-stats { gap: 1rem 2rem; font-size: 1rem; }
 }
 
 @media (max-width: 480px) {
-  .hero-title { font-size: 2rem; }
-  .hero-badge { padding: 6px 18px; font-size: 1rem; }
-  .hero-stats {
-    gap: 8px 16px; /* row-gap column-gap */
-    justify-content: center;
+  .hero-title { 
+    font-size: 2.6rem;
+  }
+  .hero-badge {
+    font-size: 0.9rem;
+  }
+  .hero-open-account-btn {
+    padding: 14px 32px;
+    font-size: 1rem;
   }
 }

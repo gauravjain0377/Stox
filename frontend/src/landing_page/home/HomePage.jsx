@@ -12,11 +12,11 @@ function HomePage() {
     <div style={{ background: '#FAFAFA', minHeight: '100vh' }}>
       <Navbar />
       
-      <section style={{ paddingTop: '0px', paddingBottom: '30px' }}>
+      <section style={{ paddingTop: '0px', paddingBottom: '0px' }}>
         <Hero />
       </section>
 
-      <section style={{ paddingTop: '80px', paddingBottom: '30px' }}>
+      <section style={{ paddingTop: '0px', paddingBottom: '30px' }}>
         <Stats />
       </section>
 
