@@ -2,25 +2,26 @@
 
 /* --- General Section Styling --- */
 .stats-section {
-  padding: 5rem 1rem;
-  background-color: #f8fafc;
+  padding: 6rem 1rem;
+  background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
   font-family: 'Inter', 'Poppins', sans-serif;
+  overflow: hidden; /* Prevent hover glow from spilling out */
 }
 
 .stats-main-title {
-  font-size: 2.6rem;
-  font-weight: 700;
+  font-size: 2.8rem;
+  font-weight: 800;
   text-align: center;
-  margin-bottom: 0.5rem;
-  letter-spacing: -0.02em;
-  color: #1e293b;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.03em;
+  color: #1a2333;
 }
 
 .stats-main-desc {
   text-align: center;
-  color: #64748b;
+  color: #5a6474;
   font-size: 1.18rem;
-  margin: 0 auto 3rem auto;
+  margin: 0 auto 3.5rem auto;
   font-weight: 400;
   line-height: 1.6;
   max-width: 750px;
@@ -28,50 +29,93 @@
 
 .stats-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2.5rem;
   max-width: 1200px;
   margin: 0 auto;
+  /* ⬇️ ADDED THIS PROPERTY ⬇️ */
+  /* Creates the 3D space for the tilt effect */
+  perspective: 1200px;
 }
 
-/* --- Card Styling --- */
+
+/* --- Card Styling (Glassmorphism + Aurora Hover) --- */
 .stat-card {
-  background: white;
-  border-radius: 24px;
-  box-shadow: 0 8px 16px -4px rgba(27, 39, 53, 0.06);
-  padding: 2.2rem;
-  border: 1px solid #e2e8f0;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 28px;
+  padding: 2.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
   display: flex;
   flex-direction: column;
+  /* Added a smooth transition for the transform property */
+  transition: transform 0.2s ease-out, box-shadow 0.3s ease;
+  will-change: transform; /* Optimization for browsers */
+}
+
+/* We no longer need the ::before pseudo-element for the hover effect */
+
+.stat-card:hover {
+  /* The transform is now handled by JavaScript. 
+     We can slightly increase the shadow on hover for more depth. */
+  box-shadow: 0 16px 40px 0 rgba(31, 38, 135, 0.2);
+}
+
+
+/* ⬇️ MODIFIED THIS RULE ⬇️ */
+/* Refined Spotlight Hover Effect */
+.stat-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    /* Changed to a subtle, larger, and softer white spotlight */
+    background: radial-gradient(
+        450px circle at var(--mouse-x) var(--mouse-y),
+        rgba(255, 255, 255, 0.15),
+        transparent 80%
+    );
+    opacity: 0;
+    transition: opacity 0.5s;
 }
 
 .stat-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 24px -4px rgba(27, 39, 53, 0.12);
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 0 16px 40px 0 rgba(31, 38, 135, 0.15);
+}
+
+.stat-card:hover::before {
+    opacity: 1;
 }
 
 .card-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 1.2rem;
+  margin-bottom: 1.2rem;
 }
 
 .card-icon {
   font-size: 1.8rem;
-  border-radius: 12px;
-  padding: 0.5rem;
+  border-radius: 14px;
+  width: 50px;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
-.card-icon.blue { background-color: #e0f2fe; }
-.card-icon.orange { background-color: #fff7ed; }
+.card-icon.blue { background: linear-gradient(135deg, #e0f2fe, #bae6fd); color: #0369a1; }
+.card-icon.orange { background: linear-gradient(135deg, #fff7ed, #fed7aa); color: #c2410c; }
 
 .card-title {
   font-weight: 700;
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   color: #1e293b;
 }
 
@@ -81,27 +125,22 @@
 }
 .card-subtitle.full-width {
   width: 100%;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 /* --- Stock Ticker Styling --- */
 .stock-tickers {
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 1rem;
   margin-top: 0.5rem;
 }
 
 .ticker-item {
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 0.8rem 1.2rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.ticker-item:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 8px rgba(34, 42, 53, 0.05);
+  background: rgba(241, 245, 249, 0.7);
+  border-radius: 14px;
+  padding: 1rem 1.4rem;
+  transition: background 0.3s ease;
 }
 
 .ticker-name {
@@ -109,7 +148,7 @@
   color: #334155;
   font-size: 1rem;
   letter-spacing: 0.03em;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.3rem;
 }
 
 .ticker-details {
@@ -120,8 +159,9 @@
 
 .ticker-price {
   font-weight: 700;
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   color: #1e293b;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .ticker-change {
@@ -130,9 +170,11 @@
   align-items: center;
   gap: 0.3rem;
   font-size: 1rem;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 .ticker-change.up { color: #16a34a; }
 .ticker-change.down { color: #dc2626; }
+
 
 /* --- Animated Chart Styling --- */
 .chart-container {
@@ -141,21 +183,21 @@
   align-items: center;
   justify-content: center;
   background: #f8fafc;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 1rem;
-  min-height: 140px;
+  min-height: 150px;
 }
 
 .animated-chart path {
   fill: none;
-  stroke: #fb923c;
-  stroke-width: 2.5;
+  stroke: url(#chart-gradient);
+  stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
-  /* The magic for animation */
   stroke-dasharray: 500;
   stroke-dashoffset: 500;
-  animation: draw 2s ease-in-out forwards;
+  animation: draw 2s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+  filter: drop-shadow(0px 2px 4px rgba(251, 146, 60, 0.5));
 }
 
 @keyframes draw {
@@ -168,20 +210,21 @@
 .indicator-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.7rem;
-  margin-top: 1.5rem;
+  gap: 0.8rem;
+  margin-top: 1.8rem;
 }
 
 .tag {
-  border-radius: 8px;
-  padding: 0.3rem 0.9rem;
+  border-radius: 10px;
+  padding: 0.4rem 1rem;
   font-weight: 600;
   font-size: 0.95rem;
+  border: 1px solid transparent;
 }
-.tag.blue { background-color: #e0f2fe; color: #0284c7; }
-.tag.red { background-color: #fee2e2; color: #b91c1c; }
-.tag.gray { background-color: #f3f4f6; color: #4b5563; }
-.tag.green { background-color: #dcfce7; color: #166534; }
+.tag.blue { background-color: #e0f2fe; color: #0284c7; border-color: #bae6fd; }
+.tag.red { background-color: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+.tag.gray { background-color: #f3f4f6; color: #4b5563; border-color: #e5e7eb; }
+.tag.green { background-color: #dcfce7; color: #166534; border-color: #bbf7d0; }
 
 /* --- Responsive Design --- */
 @media (max-width: 992px) {
@@ -192,12 +235,12 @@
 
 @media (max-width: 768px) {
   .stats-main-title {
-    font-size: 2rem;
+    font-size: 2.2rem;
   }
   .stats-main-desc {
     font-size: 1.05rem;
   }
   .stat-card {
-    padding: 1.5rem;
+    padding: 1.8rem;
   }
 }
