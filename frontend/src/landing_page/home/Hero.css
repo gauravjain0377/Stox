@@ -23,6 +23,8 @@
   100% { transform: scale(1.05) translateX(2%); }
 }
 
+/* Hero.css */
+
 .hero-section {
   font-family: 'Inter', sans-serif;
   position: relative;
@@ -33,7 +35,19 @@
   justify-content: center;
   background-color: var(--background-color);
   overflow: hidden;
-  padding: 9rem 1rem 5rem 1rem;
+  /* CHANGED: Reduced top padding from 9rem to 5rem */
+ padding: 3rem 1rem 0rem 1rem; 
+}
+
+/* ... keep other styles ... */
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .hero-section {
+    /* CHANGED: Reduced responsive top padding from 7rem to 4rem */
+    padding-top: 4rem;
+  }
+  /* ... keep other styles ... */
 }
 
 /* Reverted to the original image background */
@@ -47,8 +61,11 @@
 }
 
 .hero-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   position: relative;
-  z-index: 2;
+  z-index: 3;
   width: 100%;
   max-width: 900px;
   margin: 0 auto;
@@ -56,12 +73,38 @@
   padding: 0 20px;
 }
 
-/* Removed the vertical lines for a cleaner look */
-.hero-lines {
-  display: none;
+.hero-badge-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2rem;
 }
 
-/* Reverted badge to the previous style */
+.hero-lines {
+  display: flex;
+  justify-content: space-between;
+  width: 220px;
+  height: 120px;
+  margin-bottom: 1rem;
+}
+
+/* MODIFIED: Added initial state for animation */
+.hero-line {
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(
+    180deg, 
+    rgba(74, 85, 104, 0) 0%,
+    var(--text-secondary) 50%,
+    var(--text-secondary) 95%,
+    rgba(74, 85, 104, 0) 100%
+  );
+  
+  /* Start scaled to 0 and set origin to the top */
+  transform: scaleY(0);
+  transform-origin: top;
+}
+
 .hero-badge {
   background: var(--primary-color);
   color: #fff;
@@ -70,7 +113,6 @@
   padding: 8px 24px;
   font-size: 1.1rem;
   font-weight: 500;
-  margin-bottom: 2rem;
   box-shadow: var(--shadow-sm);
   display: inline-flex;
   align-items: center;
@@ -92,7 +134,6 @@
   transform: translateX(4px);
 }
 
-/* Kept the new title style */
 .hero-title {
   font-size: 4.5rem;
   font-weight: 800;
@@ -105,7 +146,6 @@
   -webkit-text-fill-color: transparent;
 }
 
-/* Reverted description to the previous style */
 .hero-desc {
   font-size: 1.25rem;
   color: var(--text-secondary);
@@ -114,7 +154,6 @@
   line-height: 1.6;
 }
 
-/* Reverted stats to the previous style */
 .hero-stats {
   display: flex;
   justify-content: center;
@@ -136,25 +175,7 @@
   color: var(--text-primary);
 }
 
-/* Reverted button to the previous style */
-.hero-open-account-btn {
-  display: inline-block;
-  background: var(--primary-color);
-  color: #fff;
-  border-radius: 28px;
-  padding: 16px 48px;
-  font-weight: 700;
-  font-size: 1.1rem;
-  text-decoration: none;
-  box-shadow: 0 4px 15px -5px var(--glow-color);
-  transition: all 0.3s ease;
-}
-
-.hero-open-account-btn:hover {
-  background: var(--primary-hover);
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 8px 25px -5px var(--glow-color);
-}
+/* ... (keep other styles like .hero-open-account-btn) ... */
 
 /* Responsive Adjustments */
 @media (max-width: 768px) {
@@ -175,8 +196,29 @@
   .hero-badge {
     font-size: 0.9rem;
   }
-  .hero-open-account-btn {
-    padding: 14px 32px;
-    font-size: 1rem;
+  /* ... (keep other media query styles) ... */
+}
+
+/* --- NEW: Animation Code for Hero Lines --- */
+
+/* 1. Define the "draw down" animation */
+@keyframes draw-line {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
   }
 }
+
+.hero-content.aos-animate .hero-line {
+  animation: draw-line 0.4s ease-out forwards;
+}
+
+/* 3. Stagger the animation for each line */
+/* CHANGED: The selectors now target .hero-content.aos-animate */
+.hero-content.aos-animate .hero-line:nth-child(1) { animation-delay: 0.1s; }
+.hero-content.aos-animate .hero-line:nth-child(2) { animation-delay: 0.2s; }
+.hero-content.aos-animate .hero-line:nth-child(3) { animation-delay: 0.3s; }
+.hero-content.aos-animate .hero-line:nth-child(4) { animation-delay: 0.4s; }
+.hero-content.aos-animate .hero-line:nth-child(5) { animation-delay: 0.5s; }

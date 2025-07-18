@@ -53,12 +53,10 @@ const testimonials = [
 ];
 
 export default function Testimonials() {
-  const [focus, setFocus] = useState(4); // Centered on Priya Sharma by default
-
+  const [focus, setFocus] = useState(4);
+  const [isPaused, setIsPaused] = useState(false);
   const prevFocus = useRef(focus);
   const cardRef = useRef();
-
-
 
   // Pause on hover/interact
   const pause = () => setIsPaused(true);
@@ -73,7 +71,7 @@ export default function Testimonials() {
   const minCardWidth = 320;
 
   return (
-    <section className="w-full flex flex-col items-center py-8 relative" style={{
+    <section className="w-full flex flex-col items-center py-8 relative pb-40" style={{
       background: 'linear-gradient(180deg, #f6fcfa 60%, #f3f6ff 100%)',
       paddingLeft: '1rem',
       paddingRight: '1rem',
@@ -88,62 +86,56 @@ export default function Testimonials() {
       </p>
       {/* Carousel */}
       <div
-  className="relative flex justify-center items-center w-full"
-  style={{ perspective: 1800, minHeight: 0 }}
-  onMouseEnter={pause}
-  onMouseLeave={resume}
-  onTouchStart={pause}
-  onTouchEnd={resume}
->
-
-        
-      
+        className="relative flex justify-center items-center w-full"
+        style={{ perspective: 1800, minHeight: 0 }}
+        onMouseEnter={pause}
+        onMouseLeave={resume}
+        onTouchStart={pause}
+        onTouchEnd={resume}
+      >
         {/* Cards */}
         <div className="relative flex items-center justify-center w-full max-w-[900px] mx-auto" style={{
-    height: 'auto',
-    display: 'grid',
-    alignItems: 'center',
-    justifyContent: 'center'
-  }}>
-          <AnimatePresence initial={false} custom={direction}>
+          height: 'auto',
+          display: 'grid',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          {/* Remove AnimatePresence and key from card container */}
+          <div
+            ref={cardRef}
+            className="flex flex-col items-center justify-center rounded-3xl border-2 shadow-2xl bg-gradient-to-br from-cyan-50 via-white to-fuchsia-100 transition-all duration-500"
+            style={{
+              width: 'min(520px, 92vw)',
+              minWidth: minCardWidth,
+              maxWidth: maxCardWidth,
+              padding: '2.2rem 1.5rem 2.5rem 1.5rem',
+              margin: '0 auto',
+              zIndex: 10,
+              cursor: 'default',
+              boxShadow: '0 8px 32px 0 rgba(34,211,238,0.10), 0 8px 32px 0 rgba(221,0,255,0.07)',
+              position: 'relative',
+              overflow: 'hidden',
+              borderColor: 'rgba(34,211,238,0.35)', // cyan-400 with opacity
+            }}
+            aria-label={`Focused testimonial from ${testimonials[focus].name}`}
+          >
+            {/* Decorative quote icon */}
             <motion.div
-              key={focus}
-              ref={cardRef}
-              className="flex flex-col items-center justify-center rounded-3xl border border-slate-200 backdrop-blur-xl bg-white/90 shadow-xl"
-              initial={{
-                opacity: 0,
-                scale: 0.92,
-                x: direction > 0 ? 120 : -120,
-                rotateY: direction > 0 ? 18 : -18,
-              }}
-              animate={{
-                opacity: 1,
-                scale: 1.08,
-                x: 0,
-                rotateY: 0,
-                transition: { type: "spring", stiffness: 120, damping: 18 }
-              }}
-              exit={{
-                opacity: 0,
-                scale: 0.92,
-                x: direction > 0 ? -120 : 120,
-                rotateY: direction > 0 ? -18 : 18,
-                transition: { duration: 0.45, ease: "easeInOut" }
-              }}
-              style={{
-                width: 'min(520px, 92vw)',
-                minWidth: minCardWidth,
-                maxWidth: maxCardWidth,
-                padding: '1.5rem 1.2rem',
-                margin: '0 auto',
-                zIndex: 10,
-                cursor: 'default',
-              }}
-              tabIndex={0}
-              aria-label={`Focused testimonial from ${testimonials[focus].name}`}
+              key={focus + '-quote'}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 0.18, y: 0, transition: { delay: 0.05 } }}
+              exit={{ opacity: 0, y: -10, transition: { duration: 0.1 } }}
+              className="absolute left-6 top-4 text-7xl md:text-8xl select-none pointer-events-none"
+              style={{ fontFamily: 'serif', zIndex: 1, color: 'rgba(139,92,246,0.18)' }} // fuchsia-500 with opacity
+              aria-hidden="true"
             >
+              “
+            </motion.div>
+            {/* Animate avatar with glow */}
+            <AnimatePresence mode="wait" initial={false}>
               <motion.div
-                className="w-24 h-24 rounded-full overflow-hidden border-4 border-cyan-400 shadow-xl mb-5 bg-slate-100 flex items-center justify-center z-10"
+                key={focus + '-avatar'}
+                className="w-24 h-24 rounded-full overflow-hidden border-4 shadow-xl mb-5 bg-slate-100 flex items-center justify-center z-10"
                 layoutId={`avatar-${focus}`}
                 style={{
                   margin: '0 auto',
@@ -151,75 +143,57 @@ export default function Testimonials() {
                   justifyContent: 'center',
                   alignItems: 'center',
                   boxShadow: '0 0 0 8px rgba(34,211,238,0.10), 0 8px 32px 0 rgba(34,42,53,0.10)',
+                  borderColor: '#06b6d4', // cyan-400
                 }}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1, transition: { type: "spring", stiffness: 180, damping: 18, delay: 0.1 } }}
-                exit={{ scale: 0.8, opacity: 0, transition: { duration: 0.2 } }}
+                initial={{ scale: 0.8, opacity: 0, boxShadow: '0 0 0 0px #67e8f9' }}
+                animate={{ scale: 1, opacity: 1, boxShadow: '0 0 0 8px #67e8f933, 0 8px 32px 0 rgba(34,42,53,0.10)', transition: { type: "spring", stiffness: 180, damping: 18, delay: 0.1 } }}
+                exit={{ scale: 0.8, opacity: 0, boxShadow: '0 0 0 0px #67e8f9', transition: { duration: 0.2 } }}
+                whileHover={{ scale: 1.05, boxShadow: '0 0 0 12px #67e8f966' }}
               >
                 <img src={testimonials[focus].avatar} alt={testimonials[focus].name} className="w-full h-full object-cover mx-auto" />
               </motion.div>
-              {/* Name */}
-              <div className="text-xl font-bold text-center mt-2 mb-2" style={{ color: '#1e293b', fontFamily: 'Inter, Poppins, Montserrat, sans-serif' }}>
-                {testimonials[focus].name}
-              </div>
+            </AnimatePresence>
+            <AnimatePresence mode="wait" initial={false}>
               <motion.div
-                className="text-2xl md:text-3xl font-extrabold text-center mb-4"
-                style={{ color: '#222', fontFamily: 'Inter, Poppins, Montserrat, sans-serif', lineHeight: 1.35, maxWidth: 440, margin: '0 auto' }}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0, transition: { delay: 0.15, type: "spring", stiffness: 120 } }}
-                exit={{ opacity: 0, y: -30, transition: { duration: 0.2 } }}
+                key={focus + '-name'}
+                className="text-2xl font-bold text-center mt-2 mb-2 tracking-tight"
+                style={{ color: '#1e293b', fontFamily: 'Poppins, Inter, Montserrat, sans-serif', letterSpacing: '-0.01em' }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1, transition: { delay: 0.12 } }}
+                exit={{ opacity: 0, transition: { duration: 0.1 } }}
+              >
+                {testimonials[focus].name}
+              </motion.div>
+            </AnimatePresence>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={focus + '-text'}
+                className="text-2xl md:text-3xl font-extrabold text-center mb-4 px-2"
+                style={{ color: '#222', fontFamily: 'Poppins, Inter, Montserrat, sans-serif', lineHeight: 1.4, maxWidth: 440, margin: '0 auto', letterSpacing: '-0.01em' }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1, transition: { delay: 0.15 } }}
+                exit={{ opacity: 0, transition: { duration: 0.1 } }}
               >
                 {testimonials[focus].text}
               </motion.div>
+            </AnimatePresence>
+            <AnimatePresence mode="wait" initial={false}>
               <motion.div
-                className="text-base text-slate-500 text-center mt-2 font-semibold"
-                style={{ fontFamily: 'Inter, Poppins, Montserrat, sans-serif', letterSpacing: '0.01em' }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0, transition: { delay: 0.22, type: "spring", stiffness: 120 } }}
-                exit={{ opacity: 0, y: 20, transition: { duration: 0.15 } }}
+                key={focus + '-meta'}
+                className="text-base text-slate-500 text-center mt-2 font-semibold italic"
+                style={{ fontFamily: 'Poppins, Inter, Montserrat, sans-serif', letterSpacing: '0.01em', paddingBottom: "20px" }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1, transition: { delay: 0.18 } }}
+                exit={{ opacity: 0, transition: { duration: 0.1 } }}
               >
                 {testimonials[focus].meta}
               </motion.div>
-            </motion.div>
-          </AnimatePresence>
-          {/* Side cards for 3D effect, always visible but not interactive */}
-          {[-1, 1].map((offset) => {
-            const idx = (focus + offset + testimonials.length) % testimonials.length;
-            return (
-              <motion.div
-                key={idx}
-                className="absolute flex flex-col items-center justify-center rounded-3xl border border-slate-200 backdrop-blur-xl bg-white/80 shadow-lg left-1/2 top-1/2"
-                style={{
-                  width: 'min(370px, 80vw)',
-                  minWidth: 220,
-                  maxWidth: 370,
-                  minHeight: 180,
-                  padding: '1.2rem 1.1rem',
-                  left: '50%',
-                  top: '50%',
-                  transform: `translate(-50%, -50%) translateX(${offset * 240}px) scale(0.92) rotateY(${offset * 24}deg)`,
-                  zIndex: 20,
-                  filter: 'blur(0.5px) grayscale(0.2)',
-                  opacity: 0.7,
-                  pointerEvents: 'none',
-                }}
-                tabIndex={-1}
-                aria-hidden="true"
-              >
-                <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-slate-200 shadow mb-2 bg-slate-100 flex items-center justify-center mx-auto">
-                  <img src={testimonials[idx].avatar} alt={testimonials[idx].name} className="w-full h-full object-cover mx-auto rounded-full" />
-                </div>
-                <div className="text-base font-semibold text-center mb-2" style={{ color: '#222', fontFamily: 'Inter, Poppins, Montserrat, sans-serif', lineHeight: 1.2, maxWidth: 260, margin: '0 auto', opacity: 0.7 }}>
-                  {testimonials[idx].text.slice(0, 60) + '...'}
-                </div>
-                <div className="text-xs text-slate-400 text-center mt-1" style={{ fontFamily: 'Inter, Poppins, Montserrat, sans-serif', letterSpacing: '0.01em' }}>{testimonials[idx].meta}</div>
-              </motion.div>
-            );
-          })}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
       {/* Name pills */}
-      <div className="w-full text-center mt-14 pb-4">
+      <div className="w-full text-center mt-32 md:mt-40 pb-4 pt-5">
         <div className="inline-block">
           <div className="flex flex-wrap justify-center gap-5">
             {testimonials.map((t, i) => (
@@ -228,10 +202,10 @@ export default function Testimonials() {
                 className={`px-6 py-2 rounded-full font-semibold text-base tracking-wide transition-all duration-300 whitespace-nowrap shadow-md focus:outline-none border
                   ${i === focus
                     ? 'bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white shadow-lg scale-110 ring-2 ring-cyan-400 border-transparent'
-                    : 'bg-slate-200 text-slate-800 border border-slate-300 shadow-sm hover:bg-slate-300 hover:text-cyan-700'}
+                    : 'bg-slate-200 text-slate-800 border border-slate-300 shadow-sm hover:bg-cyan-100 hover:text-cyan-700 hover:scale-105'}
                 `}
                 style={{
-                  fontFamily: 'Inter, Poppins, Montserrat, sans-serif',
+                  fontFamily: 'Poppins, Inter, Montserrat, sans-serif',
                   boxShadow: i === focus ? '0 4px 16px 0 rgba(34,211,238,0.15)' : undefined,
                   transition: 'box-shadow 0.2s, background 0.2s, color 0.2s, transform 0.2s',
                   fontWeight: 600,
@@ -240,9 +214,6 @@ export default function Testimonials() {
                 onClick={() => {
                   setFocus(i);
                   pause();
-                  setTimeout(() => {
-                    cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }, 50);
                 }}
                 aria-label={`Show testimonial from ${t.name}`}
               >
@@ -252,11 +223,7 @@ export default function Testimonials() {
           </div>
         </div>
       </div>
-      {/* Custom animations */}
-      <style>{`
-        ::-webkit-scrollbar { height: 6px; background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #e0e7ef; border-radius: 3px; }
-      `}</style>
+
     </section>
   );
-} 
+}

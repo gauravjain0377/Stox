@@ -5,7 +5,7 @@
   padding: 6rem 1rem;
   background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
   font-family: 'Inter', 'Poppins', sans-serif;
-  overflow: hidden; /* Prevent hover glow from spilling out */
+  overflow: hidden;
 }
 
 .stats-main-title {
@@ -33,13 +33,11 @@
   gap: 2.5rem;
   max-width: 1200px;
   margin: 0 auto;
-  /* ⬇️ ADDED THIS PROPERTY ⬇️ */
-  /* Creates the 3D space for the tilt effect */
   perspective: 1200px;
 }
 
 
-/* --- Card Styling (Glassmorphism + Aurora Hover) --- */
+/* --- Card Styling --- */
 .stat-card {
   background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(12px);
@@ -50,54 +48,19 @@
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
   display: flex;
   flex-direction: column;
-  /* Added a smooth transition for the transform property */
   transition: transform 0.2s ease-out, box-shadow 0.3s ease;
-  will-change: transform; /* Optimization for browsers */
+  will-change: transform;
 }
 
-/* We no longer need the ::before pseudo-element for the hover effect */
-
 .stat-card:hover {
-  /* The transform is now handled by JavaScript. 
-     We can slightly increase the shadow on hover for more depth. */
   box-shadow: 0 16px 40px 0 rgba(31, 38, 135, 0.2);
-}
-
-
-/* ⬇️ MODIFIED THIS RULE ⬇️ */
-/* Refined Spotlight Hover Effect */
-.stat-card::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    border-radius: inherit;
-    /* Changed to a subtle, larger, and softer white spotlight */
-    background: radial-gradient(
-        450px circle at var(--mouse-x) var(--mouse-y),
-        rgba(255, 255, 255, 0.15),
-        transparent 80%
-    );
-    opacity: 0;
-    transition: opacity 0.5s;
-}
-
-.stat-card:hover {
-  transform: translateY(-10px) scale(1.02);
-  box-shadow: 0 16px 40px 0 rgba(31, 38, 135, 0.15);
-}
-
-.stat-card:hover::before {
-    opacity: 1;
 }
 
 .card-header {
   display: flex;
   align-items: center;
   gap: 1.2rem;
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.5rem; /* Increased margin for better spacing */
 }
 
 .card-icon {
@@ -123,26 +86,19 @@
   font-size: 1rem;
   color: #64748b;
 }
-.card-subtitle.full-width {
-  width: 100%;
-  margin-bottom: 1.5rem;
-}
 
-/* --- Stock Ticker Styling --- */
+/* --- Stock Ticker Styling (Unchanged) --- */
 .stock-tickers {
   display: flex;
   flex-direction: column;
   gap: 1rem;
   margin-top: 0.5rem;
 }
-
 .ticker-item {
   background: rgba(241, 245, 249, 0.7);
   border-radius: 14px;
   padding: 1rem 1.4rem;
-  transition: background 0.3s ease;
 }
-
 .ticker-name {
   font-weight: 600;
   color: #334155;
@@ -150,70 +106,92 @@
   letter-spacing: 0.03em;
   margin-bottom: 0.3rem;
 }
-
 .ticker-details {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-
 .ticker-price {
   font-weight: 700;
   font-size: 1.25rem;
   color: #1e293b;
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
-
 .ticker-change {
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 0.3rem;
   font-size: 1rem;
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 .ticker-change.up { color: #16a34a; }
 .ticker-change.down { color: #dc2626; }
 
 
-/* --- Animated Chart Styling --- */
-.chart-container {
+/* --- REMOVED OLD CHART STYLES --- */
+
+/* --- NEW: F&O Open Interest Chart Styling --- */
+.fno-chart-container {
   flex-grow: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-end; /* Align bars to the bottom */
   justify-content: center;
+  gap: 2rem;
   background: #f8fafc;
   border-radius: 16px;
-  padding: 1rem;
+  padding: 1.5rem 1rem 0 1rem; /* Padding to make space for labels */
   min-height: 150px;
+  width: 100%;
 }
 
-.animated-chart path {
-  fill: none;
-  stroke: url(#chart-gradient);
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 500;
-  stroke-dashoffset: 500;
-  animation: draw 2s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
-  filter: drop-shadow(0px 2px 4px rgba(251, 146, 60, 0.5));
+.fno-bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
 }
 
-@keyframes draw {
+.fno-bar {
+  width: 50px;
+  border-radius: 8px 8px 0 0; /* Rounded top corners */
+  transform-origin: bottom; /* Animation starts from the bottom */
+  transform: scaleY(0); /* Initially hidden */
+}
+
+.fno-bar.green-bar {
+  height: 90px;
+  background: linear-gradient(180deg, #4ade80, #16a34a);
+}
+
+.fno-bar.red-bar {
+  height: 120px;
+  background: linear-gradient(180deg, #f87171, #dc2626);
+}
+
+/* F&O Bar Animation */
+@keyframes grow-bar {
   to {
-    stroke-dashoffset: 0;
+    transform: scaleY(1);
   }
 }
 
-/* --- Indicator Tags Styling --- */
+.stat-card.aos-animate .fno-bar {
+  animation: grow-bar 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.stat-card.aos-animate .fno-bar.red-bar {
+  animation-delay: 0.15s; /* Stagger the animation */
+}
+
+/* --- Indicator Tags Styling (Unchanged) --- */
 .indicator-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 0.8rem;
   margin-top: 1.8rem;
 }
-
 .tag {
   border-radius: 10px;
   padding: 0.4rem 1rem;
@@ -226,13 +204,13 @@
 .tag.gray { background-color: #f3f4f6; color: #4b5563; border-color: #e5e7eb; }
 .tag.green { background-color: #dcfce7; color: #166534; border-color: #bbf7d0; }
 
+
 /* --- Responsive Design --- */
 @media (max-width: 992px) {
   .stats-grid {
     grid-template-columns: 1fr;
   }
 }
-
 @media (max-width: 768px) {
   .stats-main-title {
     font-size: 2.2rem;

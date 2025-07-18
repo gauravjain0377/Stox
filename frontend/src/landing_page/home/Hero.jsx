@@ -16,23 +16,27 @@ function Hero() {
   return (
     <section className="hero-section">
       <div className="hero-bg" />
-      {/* --- The single animation is now applied to this parent container --- */}
+
+      {/* The main content container now has the SINGLE animation trigger */}
       <div className="hero-content" data-aos="fade-up">
-        
-        {/* All individual data-aos and data-aos-delay attributes have been removed from these elements */}
-        <div className="hero-lines">
-          <div className="hero-line" />
-          <div className="hero-line" />
-          <div className="hero-line" />
-          <div className="hero-line" />
-          <div className="hero-line" />
-          <div className="hero-line" />
+
+        {/* The data-aos attribute has been REMOVED from here */}
+        <div className="hero-badge-container">
+          
+          <div className="hero-lines">
+            <div className="hero-line" />
+            <div className="hero-line" />
+            <div className="hero-line" />
+            <div className="hero-line" />
+            <div className="hero-line" />
+          </div>
+
+          <button className="hero-badge">
+            Zero Hidden Charges <span>&rarr;</span>
+          </button>
         </div>
         
-        <button className="hero-badge">
-          Zero Hidden Charges <span>&rarr;</span>
-        </button>
-        
+        {/* The data-aos attributes have been REMOVED from these elements */}
         <h1 className="hero-title">
           Start Your Investment<br />Journey in Indian Markets
         </h1>
@@ -47,8 +51,6 @@ function Hero() {
           <span>2M+ Users</span>
           <span>&#8377;0 AMC Forever</span>
         </div>
-        
-        
       </div>
     </section>
   );

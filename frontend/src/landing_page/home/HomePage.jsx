@@ -4,6 +4,7 @@ import Stats from './Stats.jsx';
 import TrustedInvestors from './TrustedInvestors.jsx';
 import SmartPortfolio from './SmartPortfolio.jsx';
 import Testimonials from './Testimonials.jsx';
+import CallToAction from './CallToAction.jsx';
 import Navbar from '../Navbar.jsx';
 import Footer from '../Footer.jsx';
 
@@ -30,9 +31,12 @@ function HomePage() {
 
       <section style={{ paddingTop: '80px', paddingBottom: '50px' }}>
         <Testimonials />
+        </section>
+
+      <section style={{ paddingTop: '80px', paddingBottom: '50px' }}>
+      <CallToAction />
       </section>
 
-    
       <Footer />
     </div>
   );

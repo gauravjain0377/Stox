@@ -15,12 +15,11 @@ const initialStockData = [
 
 function Stats() {
   const [stocks, setStocks] = useState(initialStockData);
-  // The 'priceFlash' state has been removed.
   const cardRefs = useRef([]);
 
   // This useEffect handles the real-time data simulation.
   useEffect(() => {
-    AOS.init({ duration: 800, once: true });
+    AOS.init({ duration: 800, once: true, offset: 100 });
 
     const interval = setInterval(() => {
       setStocks(currentStocks => 
@@ -32,7 +31,6 @@ function Stats() {
           const newPercent = parseFloat(((newChange / stock.initialPrice) * 100).toFixed(2));
           const direction = newPrice >= oldPrice ? 'up' : 'down';
           
-          // Flash logic has been removed.
           return { ...stock, price: newPrice, change: newChange, percent: newPercent, trend: direction };
         })
       );
@@ -44,10 +42,8 @@ function Stats() {
   // This useEffect for the 3D Tilt Effect remains the same.
   useEffect(() => {
     const maxRotate = 8;
-
     cardRefs.current.forEach(card => {
         if (!card) return;
-
         card.onmousemove = e => {
             const rect = card.getBoundingClientRect();
             const width = rect.width;
@@ -60,7 +56,6 @@ function Stats() {
 
             card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
         };
-
         card.onmouseleave = () => {
             card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
         };
@@ -79,7 +74,7 @@ function Stats() {
         </p>
 
         <div className="stats-grid">
-          {/* Left Card: Real-time Market Data */}
+          {/* Left Card: Real-time Market Data (Unchanged) */}
           <div 
             className="stat-card" 
             data-aos="fade-up" 
@@ -98,11 +93,9 @@ function Stats() {
                 <div key={stock.name} className="ticker-item">
                   <div className="ticker-name">{stock.name}</div>
                   <div className="ticker-details">
-                    {/* ⬇️ MODIFIED THIS LINE ⬇️ */}
                     <span className="ticker-price">
                       ₹{stock.price.toLocaleString('en-IN')}
                     </span>
-                    {/* ⬇️ MODIFIED THIS LINE ⬇️ */}
                     <span className={`ticker-change ${stock.trend}`}>
                       {stock.change >= 0 ? '+' : ''}{stock.change.toFixed(2)} ({stock.percent.toFixed(2)}%) {stock.trend === 'up' ? '↗' : '↘'}
                     </span>
@@ -112,7 +105,7 @@ function Stats() {
             </div>
           </div>
 
-          {/* Right Card remains the same */}
+          {/* --- RIGHT CARD: UPDATED TO F&O HUB --- */}
           <div 
             className="stat-card" 
             data-aos="fade-up" 
@@ -121,27 +114,33 @@ function Stats() {
           >
             <div className="card-header">
               <span className="card-icon orange">📊</span>
-              <div className="card-title">Technical Analysis</div>
+              <div>
+                <div className="card-title">Futures & Options Hub</div>
+                <div className="card-subtitle">Analyse Open Interest, Option Chain & more.</div>
+              </div>
             </div>
-            <div className="card-subtitle full-width">Over 100+ powerful indicators</div>
-            <div className="chart-container">
-                <svg className="animated-chart" viewBox="0 0 100 40" preserveAspectRatio="none">
-                    <defs>
-                        <linearGradient id="chart-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stopColor="#fb923c" />
-                            <stop offset="100%" stopColor="#f97316" />
-                        </linearGradient>
-                    </defs>
-                    <path d="M 0,35 C 20,10 30,15 50,20 S 70,30 100,5" />
-                </svg>
+
+            {/* NEW: F&O Bar Chart Visual */}
+            <div className="fno-chart-container">
+                <div className="fno-bar-wrapper">
+                    <div className="fno-bar green-bar"></div>
+                    <span>Puts OI</span>
+                </div>
+                <div className="fno-bar-wrapper">
+                    <div className="fno-bar red-bar"></div>
+                    <span>Calls OI</span>
+                </div>
             </div>
+            
+            {/* NEW: F&O Related Tags */}
             <div className="indicator-tags">
-              <span className="tag blue">RSI</span>
-              <span className="tag red">MACD</span>
-              <span className="tag gray">Bollinger Bands</span>
-              <span className="tag green">SMA</span>
+              <span className="tag blue">Option Chain</span>
+              <span className="tag green">PCR Ratio</span>
+              <span className="tag red">Open Interest</span>
+              <span className="tag gray">Max Pain</span>
             </div>
           </div>
+
         </div>
       </div>
     </section>

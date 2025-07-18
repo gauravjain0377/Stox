@@ -1,0 +1,104 @@
+/* TrustedInvestors.css */
+
+.trusted-section {
+    background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 50%, #f0fdfa 100%);
+    padding: 5rem 1rem;
+    font-family: 'Inter', sans-serif;
+}
+
+.trusted-section .container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    text-align: center;
+    color: #00796b;
+    margin-bottom: 1rem;
+}
+
+.section-subtitle {
+    font-size: 1.15rem;
+    text-align: center;
+    color: #4a5568;
+    max-width: 700px;
+    margin: 0 auto 3rem auto;
+    line-height: 1.6;
+}
+
+.stats-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+}
+
+.stat-item {
+    background-color: #ffffff;
+    border-radius: 20px;
+    padding: 1.5rem;
+    text-align: center;
+    
+    /* CHANGED: Switched timing from 'ease' to 'ease-out' for a smoother feel */
+    transition: transform 0.25s ease-out, box-shadow 0.25s ease-out, border 0.25s ease-out;
+
+
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05), 
+                0 0 0 2px rgba(0, 121, 107, 0.1);
+}
+
+.stat-item:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow:
+        0 15px 16px rgba(0, 0, 0, 0.4),      /* softer drop shadow */
+        0 0 6px rgba(0, 121, 107, 0.15),     /* soft green glow */
+        0 0 0 3px rgba(0, 121, 107, 0.1);    /* subtle border effect */
+    border: 2px solid rgba(0, 150, 150, 8); /* faint border */
+}
+
+
+
+.stat-number {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: #00796b;
+    margin-bottom: 0.5rem;
+}
+
+.stat-number--orange {
+    color: #f97316;
+}
+
+.stat-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1d2b35;
+    margin-bottom: 0.5rem;
+}
+
+.stat-description {
+    font-size: 0.9rem;
+    color: #4a5568;
+    line-height: 1.5;
+}
+
+
+/* --- Responsive Design --- */
+@media (max-width: 992px) {
+    .stats-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .section-title {
+        font-size: 2rem;
+    }
+    .section-subtitle {
+        font-size: 1rem;
+    }
+    .stats-container {
+        grid-template-columns: 1fr;
+    }
+}

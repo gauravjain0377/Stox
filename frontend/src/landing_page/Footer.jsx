@@ -2,8 +2,8 @@ import React from "react";
 
 export default function Footer() {
   return (
-    <footer style={{ background: "#FAFAFA", fontFamily: 'Inter, Poppins, Montserrat, sans-serif', color: '#222' }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 24px 0 24px' }}>
+    <footer style={{ background: "#FAFAFA", fontFamily: 'Inter, Poppins, Montserrat, sans-serif', color: '#222', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 24px 0 24px', position: 'relative', zIndex: 1 }}>
         {/* Top: Logo, Brand, Tagline, Social Icons */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0, marginBottom: 36 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
@@ -13,12 +13,7 @@ export default function Footer() {
           <div style={{ color: '#444', fontSize: 17, marginBottom: 18, maxWidth: 520 }}>
             India's most trusted stock trading platform with zero brokerage equity delivery and transparent pricing.
           </div>
-          <div style={{ display: 'flex', gap: 18, fontSize: 22, color: '#222', marginBottom: 0 }}>
-            <a href="#" aria-label="Facebook" style={{ color: '#222', opacity: 0.7 }}><i className="fab fa-facebook-f"></i> <span style={{ fontSize: 0 }}>Facebook</span></a>
-            <a href="#" aria-label="Twitter" style={{ color: '#222', opacity: 0.7 }}><i className="fab fa-twitter"></i> <span style={{ fontSize: 0 }}>Twitter</span></a>
-            <a href="#" aria-label="LinkedIn" style={{ color: '#222', opacity: 0.7 }}><i className="fab fa-linkedin-in"></i> <span style={{ fontSize: 0 }}>LinkedIn</span></a>
-            <a href="#" aria-label="Instagram" style={{ color: '#222', opacity: 0.7 }}><i className="fab fa-instagram"></i> <span style={{ fontSize: 0 }}>Instagram</span></a>
-          </div>
+          
         </div>
         {/* Divider */}
         <div style={{ borderTop: '1px solid #ececec', margin: '0 0 0 0', width: '100%' }} />
@@ -60,10 +55,32 @@ export default function Footer() {
         </div>
         {/* Copyright */}
         <div style={{ borderTop: '1px solid #ececec', margin: '40px 0 0 0', width: '100%' }} />
-        <div style={{ color: '#888', fontSize: 15, textAlign: 'left', padding: '18px 0 8px 0', letterSpacing: 0.01 }}>
-          © 2024 TradePro. All rights reserved.
-        </div>
+        
       </div>
+      {/* Large bottom text */}
+      <div
+        style={{
+          width: '100%',
+          textAlign: 'center',
+          fontSize: '10vw',
+          fontWeight: 800,
+          color: '#cccccc',
+          opacity: 0.7,
+          userSelect: 'none',
+          whiteSpace: 'nowrap',
+          marginTop: 32,
+          marginBottom: 0,
+          lineHeight: 1.1,
+        }}
+        aria-hidden="true"
+      >
+        TradePlatform
+      </div>
+
+      <div style={{ color: '#888', fontSize: 15, textAlign: 'center', padding: '18px 0 8px 0', letterSpacing: 0.01 }}>
+          © 2025 TradePro. All rights reserved.
+        </div>
+
       {/* FontAwesome CDN for icons (if not already included globally) */}
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     </footer>
