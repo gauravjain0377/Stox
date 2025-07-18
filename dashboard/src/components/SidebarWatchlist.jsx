@@ -1,42 +1,103 @@
-import React, { useState, useEffect } from "react";
+console.log('SidebarWatchlist mounted');
+console.log('Layout mounted');
+
+import React, { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, ArrowUpRight, ArrowDownRight, ChevronUp, ChevronDown } from "lucide-react";
 import { Tooltip } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { DoughnutChart } from "./DoughnoutChart";
+import '../styles/WatchList.css';
+import { useSidebar } from '../context/SidebarContext';
 
 const indices = [
   { name: "NIFTY 50", value: 11504.95, change: -0.10, percent: -0.10 },
   { name: "SENSEX", value: 38845.82, change: -0.34, percent: -0.34 },
 ];
 
+const NSE_SYMBOLS = [
+  "ADANIPORTS.NS", "APOLLOHOSP.NS", "ASIANPAINT.NS", "AXISBANK.NS", "BAJAJ-AUTO.NS", "BAJFINANCE.NS", "BAJAJFINSV.NS", "BPCL.NS", "BHARTIARTL.NS", "BRITANNIA.NS", "CIPLA.NS", "COALINDIA.NS", "DIVISLAB.NS", "DRREDDY.NS", "EICHERMOT.NS", "GRASIM.NS", "HCLTECH.NS", "HDFCBANK.NS", "HDFCLIFE.NS", "HEROMOTOCO.NS", "HINDALCO.NS", "HINDUNILVR.NS", "ICICIBANK.NS", "ITC.NS", "INDUSINDBK.NS", "INFY.NS", "JSWSTEEL.NS", "KOTAKBANK.NS", "LTIM.NS", "LT.NS", "M&M.NS", "MARUTI.NS", "NTPC.NS", "NESTLEIND.NS", "ONGC.NS", "POWERGRID.NS", "RELIANCE.NS", "SBILIFE.NS", "SBIN.NS", "SUNPHARMA.NS", "TCS.NS", "TATACONSUM.NS", "TATAMOTORS.NS", "TATASTEEL.NS", "TECHM.NS", "TITAN.NS", "UPL.NS", "ULTRACEMCO.NS", "WIPRO.NS"];
+
 const SidebarWatchlist = () => {
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed, toggleSidebar } = useSidebar();
   const [currentPage, setCurrentPage] = useState(0);
   const stocksPerPage = 8;
   const navigate = useNavigate();
   const [stocks, setStocks] = useState([]);
+  const [previousStocks, setPreviousStocks] = useState([]);
+  const [priceChanges, setPriceChanges] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [hoveredIdx, setHoveredIdx] = useState(null);
+  const priceChangeTimeouts = useRef({});
 
+  // Only update collapsed state on user action
+  // Replace handleCollapseToggle with toggleSidebar
+  // const handleCollapseToggle = () => {
+  //   setCollapsed((c) => {
+  //     localStorage.setItem('sidebarCollapsed', JSON.stringify(!c));
+  //     return !c;
+  //   });
+  // };
+
+  // Fix: Only run fetch interval on mount
   useEffect(() => {
+    let intervalId;
     const fetchStocks = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:3000/api/stocks');
+        const symbolsParam = NSE_SYMBOLS.join(",");
+        const response = await fetch(`http://localhost:3000/api/stocks/data?symbols=${symbolsParam}`);
         if (!response.ok) {
           throw new Error('Failed to fetch stocks');
         }
-        const data = await response.json();
+        const result = await response.json();
+        console.log('Stock API result:', result); // Debug log
+        const data = Array.isArray(result.data)
+          ? result.data.map(stock => ({
+              symbol: stock.symbol ? stock.symbol.replace('.NS', '') : 'N/A',
+              price: stock.price || 0,
+              percent: stock.percentChange || 0,
+              volume: stock.volume ? stock.volume.toLocaleString() : '-',
+              marketCap: stock.marketCap ? stock.marketCap.toLocaleString() : '-',
+              name: stock.name || stock.symbol,
+            }))
+          : [];
+        // Detect price changes
+        const newPriceChanges = {};
+        data.forEach((stock, idx) => {
+          const prev = previousStocks.find(s => s.symbol === stock.symbol);
+          if (prev) {
+            if (stock.price > prev.price) newPriceChanges[stock.symbol] = 'up';
+            else if (stock.price < prev.price) newPriceChanges[stock.symbol] = 'down';
+          }
+        });
+        setPriceChanges(newPriceChanges);
+        setPreviousStocks(stocks); // Save current as previous for next fetch
         setStocks(data);
+        // Remove highlight after 1s
+        Object.keys(newPriceChanges).forEach(symbol => {
+          if (priceChangeTimeouts.current[symbol]) clearTimeout(priceChangeTimeouts.current[symbol]);
+          priceChangeTimeouts.current[symbol] = setTimeout(() => {
+            setPriceChanges(pc => {
+              const updated = { ...pc };
+              delete updated[symbol];
+              return updated;
+            });
+          }, 1000);
+        });
       } catch (err) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
-
     fetchStocks();
+    intervalId = setInterval(fetchStocks, 15000); // Poll every 15 seconds
+    return () => {
+      clearInterval(intervalId);
+      Object.values(priceChangeTimeouts.current).forEach(clearTimeout);
+    };
+  // Only run on mount/unmount
   }, []);
 
   const totalPages = Math.ceil(stocks.length / stocksPerPage);
@@ -125,7 +186,7 @@ const SidebarWatchlist = () => {
         </div>
         <button
           className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-          onClick={() => setCollapsed((c) => !c)}
+          onClick={toggleSidebar}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
@@ -189,7 +250,7 @@ const SidebarWatchlist = () => {
             </div>
 
             {/* 8 Stocks - No flex-1, no justify-center, just a normal list */}
-            <ul className="divide-y divide-gray-50">
+            <ul className="divide-y divide-gray-50" style={{ maxHeight: 400, overflowY: 'auto' }}>
               {currentStocks.map((stock, idx) => {
                 const percent = typeof stock.percent === "string" ? parseFloat(stock.percent) : stock.percent;
                 const isDown = percent < 0;
@@ -230,7 +291,9 @@ const SidebarWatchlist = () => {
                     {/* Right: Price and percent */}
                     <div className="flex flex-col items-end min-w-[80px]">
                       <Tooltip title={`Price: ₹${stock.price.toLocaleString()}`} arrow>
-                        <span className="font-bold text-lg text-black tabular-nums leading-tight" style={{ cursor: 'pointer' }}>
+                        <span className={`font-bold text-lg text-black tabular-nums leading-tight ${
+                          priceChanges[stock.symbol] === 'up' ? 'price-up' : priceChanges[stock.symbol] === 'down' ? 'price-down' : ''
+                        }`} style={{ cursor: 'pointer' }}>
                           ₹{stock.price.toLocaleString()}
                         </span>
                       </Tooltip>

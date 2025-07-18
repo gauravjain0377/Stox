@@ -1,3 +1,6 @@
+console.log = function () {};
+console.info =function(){};
+
 require("dotenv").config();
 
 const express = require("express");
@@ -11,6 +14,7 @@ const { HoldingsModel } = require("./model/HoldingsModel");
 const { PositionsModel } = require("./model/PositionsModel");
 const { OrdersModel } = require("./model/OrdersModel");
 const { UserModel } = require("./model/UserModel");
+const stockRoutes = require('./routes/stockRoutes');
 
 const PORT = process.env.PORT || 3000;
 const uri = process.env.MONGO_URL || "mongodb://localhost:27017/test";
@@ -558,42 +562,8 @@ app.post("/newOrder", async (req, res) => {
   }
 });
 
-// Updated stocks array with volume and marketCap
-const stocks = [
-  { symbol: "TCS", price: 3194.80, percent: -0.25, volume: "1.8M", marketCap: "11.7T" },
-  { symbol: "RELIANCE", price: 2745.30, percent: 0.42, volume: "3.2M", marketCap: "18.3T" },
-  { symbol: "INFY", price: 1567.90, percent: -1.15, volume: "2.1M", marketCap: "6.7T" },
-  { symbol: "HDFCBANK", price: 1578.40, percent: 0.75, volume: "2.9M", marketCap: "11.9T" },
-  { symbol: "ICICIBANK", price: 1076.20, percent: -0.60, volume: "4.3M", marketCap: "7.5T" },
-  { symbol: "BHARTIARTL", price: 1082.65, percent: 0.90, volume: "1.4M", marketCap: "6.1T" },
-  { symbol: "HCLTECH", price: 1372.15, percent: -0.33, volume: "950K", marketCap: "3.9T" },
-  { symbol: "WIPRO", price: 527.80, percent: 0.28, volume: "1.1M", marketCap: "2.8T" },
-  { symbol: "AXISBANK", price: 1078.90, percent: -0.12, volume: "3.6M", marketCap: "4.2T" },
-  { symbol: "KOTAKBANK", price: 1640.35, percent: 0.21, volume: "1.2M", marketCap: "4.8T" }
-];
-
-// Stocks endpoint for watchlist and sidebar
-app.get('/api/stocks', async (req, res) => {
-  try {
-    res.json(stocks);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch stocks" });
-  }
-});
-
-// Stock details endpoint for StockDetail.jsx
-app.get('/api/stocks/:symbol', async (req, res) => {
-  try {
-    const symbol = req.params.symbol.toUpperCase();
-    const stock = stocks.find(s => s.symbol === symbol);
-    if (!stock) {
-      return res.status(404).json({ error: "Stock not found" });
-    }
-    res.json(stock);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch stock details" });
-  }
-});
+// Register stockRoutes before the hardcoded endpoints
+app.use('/api/stocks', stockRoutes);
 
 app.post("/api/users/change-password", async (req, res) => {
   try {

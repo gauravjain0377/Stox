@@ -1,0 +1,8 @@
+.price-up {
+  background: #d1fae5;
+  transition: background 0.5s;
+}
+.price-down {
+  background: #fee2e2;
+  transition: background 0.5s;
+}

@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const stockController = require('../controllers/stockController');
+const { getStocks, getStocksData } = require('../controllers/stockController');
 
-router.get('/', stockController.getStocks);
-router.get('/:symbol', stockController.getStockBySymbol);
+router.get('/data', getStocksData);
+router.get('/', getStocks);
+router.get('/:symbol', getStocks);
 
 module.exports = router; 

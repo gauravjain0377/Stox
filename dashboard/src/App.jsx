@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext'; // Import useAuth here
 import { ThemeProvider } from './context/ThemeContext';
 import { GeneralContextProvider } from './components/GeneralContext';
 import Layout from './components/Layout';
@@ -16,12 +16,12 @@ import ProfileSettings from './components/ProfileSettings';
 import ProfileDetails from './components/ProfileDetails';
 import ProfileOverview from './components/ProfileOverview';
 import ProfileEdit from './components/ProfileEdit';
+import { SidebarProvider } from './context/SidebarContext';
 
-// Protected Route Component
+// ⬇️ MOVED ProtectedRoute OUTSIDE of the App component ⬇️
+// This ensures it's the same component on every render.
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  
-  console.log('🔒 ProtectedRoute check:', { user: !!user, loading });
   
   if (loading) {
     return (
@@ -35,11 +35,9 @@ const ProtectedRoute = ({ children }) => {
   }
   
   if (!user) {
-    console.log('❌ No user found, redirecting to frontend login...');
-    // Add a small delay to ensure AuthContext has processed URL parameters
-    setTimeout(() => {
-      window.location.href = 'http://localhost:5173/login';
-    }, 100);
+    // Note: A full page redirect is generally not ideal in a single-page app.
+    // Consider using the Navigate component from react-router-dom for client-side navigation.
+    window.location.href = 'http://localhost:5173/login';
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -50,105 +48,54 @@ const ProtectedRoute = ({ children }) => {
     );
   }
   
-  console.log('✅ User authenticated, rendering dashboard');
   return children;
 };
 
-// Dashboard Layout Wrapper
-const DashboardLayout = ({ children }) => (
-  <ProtectedRoute>
-    <GeneralContextProvider>
-      <Layout>
-        {children}
-      </Layout>
-    </GeneralContextProvider>
-  </ProtectedRoute>
-);
-
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <Router>
-          <div className="App">
-            <Routes>
-              {/* Dashboard Routes */}
-              <Route path="/" element={
-                <DashboardLayout>
-                  <ModernSummary />
-                </DashboardLayout>
-              } />
-              <Route path="/orders" element={
-                <DashboardLayout>
-                  <Orders />
-                </DashboardLayout>
-              } />
-              <Route path="/holdings" element={
-                <DashboardLayout>
-                  <Holdings />
-                </DashboardLayout>
-              } />
-              <Route path="/positions" element={
-                <DashboardLayout>
-                  <Positions />
-                </DashboardLayout>
-              } />
-              <Route path="/portfolio" element={
-                <DashboardLayout>
-                  <PortfolioAnalytics />
-                </DashboardLayout>
-              } />
-              <Route path="/watchlist" element={
-                <DashboardLayout>
-                  <PersonalWatchlist />
-                </DashboardLayout>
-              } />
-              <Route path="/settings" element={
-                <DashboardLayout>
-                  <Settings />
-                </DashboardLayout>
-              } />
-              <Route path="/orders/:orderId" element={
-                <DashboardLayout>
-                  <OrderDetail />
-                </DashboardLayout>
-              } />
-              <Route path="/profile/settings" element={
-                <DashboardLayout>
-                  <ProfileSettings />
-                </DashboardLayout>
-              } />
-              <Route path="/bank-details" element={<Navigate to="/profile/settings?tab=bank" replace />} />
-              <Route path="/reports" element={<Navigate to="/profile/settings?tab=reports" replace />} />
-              <Route path="/support" element={<Navigate to="/profile/settings?tab=support" replace />} />
-              <Route path="/profile/details" element={
-                <DashboardLayout>
-                  <ProfileDetails />
-                </DashboardLayout>
-              } />
-              <Route path="/profile/overview" element={
-                <DashboardLayout>
-                  <ProfileOverview />
-                </DashboardLayout>
-              } />
-              <Route path="/profile/edit" element={
-                <DashboardLayout>
-                  <ProfileEdit />
-                </DashboardLayout>
-              } />
-              
-              {/* Stock Detail Route */}
-              <Route path="/stock/:symbol" element={
-                <ProtectedRoute>
-                  <StockDetail />
-                </ProtectedRoute>
-              } />
-            </Routes>
-          </div>
-        </Router>
-      </AuthProvider>
-    </ThemeProvider>
+    // The order of providers here is now correct. AuthProvider wraps ProtectedRoute.
+    <AuthProvider>
+      <SidebarProvider>
+        <ThemeProvider>
+          <GeneralContextProvider>
+            <Router>
+              <Routes>
+                {/* Wrap all protected routes inside a single Route element */}
+                <Route
+                  path="/*"
+                  element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Routes>
+                          <Route path="/" element={<ModernSummary />} />
+                          <Route path="/orders" element={<Orders />} />
+                          <Route path="/holdings" element={<Holdings />} />
+                          <Route path="/positions" element={<Positions />} />
+                          <Route path="/portfolio" element={<PortfolioAnalytics />} />
+                          <Route path="/watchlist" element={<PersonalWatchlist />} />
+                          <Route path="/settings" element={<Settings />} />
+                          <Route path="/orders/:orderId" element={<OrderDetail />} />
+                          <Route path="/profile/settings" element={<ProfileSettings />} />
+                          <Route path="/bank-details" element={<Navigate to="/profile/settings?tab=bank" replace />} />
+                          <Route path="/reports" element={<Navigate to="/profile/settings?tab=reports" replace />} />
+                          <Route path="/support" element={<Navigate to="/profile/settings?tab=support" replace />} />
+                          <Route path="/profile/details" element={<ProfileDetails />} />
+                          <Route path="/profile/overview" element={<ProfileOverview />} />
+                          <Route path="/profile/edit" element={<ProfileEdit />} />
+                          <Route path="/stock/:symbol" element={<StockDetail />} />
+                        </Routes>
+                      </Layout>
+                    </ProtectedRoute>
+                  }
+                />
+                {/* You can add public routes (like login/signup) here if needed */}
+              </Routes>
+            </Router>
+          </GeneralContextProvider>
+        </ThemeProvider>
+      </SidebarProvider>
+    </AuthProvider>
   );
 }
 
-export default App; 
+export default App;
