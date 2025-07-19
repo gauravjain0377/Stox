@@ -24,7 +24,7 @@ function Hero() {
         }}>
           Trusted by 50,000+ Indian traders. <span style={{ color: '#ff6a1a', fontWeight: 700, cursor: 'pointer' }}>Join them <span style={{ fontSize: '1.2em', verticalAlign: 'middle' }}>&rarr;</span></span>
         </div>
-        <h1 className="hero-title" style={{ fontSize: '4rem', marginBottom: '1.2rem', color: '#000', fontWeight: 600, letterSpacing: '-0.03em', lineHeight: 1.08, background: 'none', WebkitBackgroundClip: 'unset', WebkitTextFillColor: 'unset' }}>
+        <h1 className="hero-title" style={{ fontSize: '4rem', marginBottom: '1.2rem', color: '#00796b', fontWeight: 600, letterSpacing: '-0.03em', lineHeight: 1.08, background: 'none', WebkitBackgroundClip: 'unset', WebkitTextFillColor: 'unset' }}>
           Building India's Most <br /> TransparentTrading Platform
         </h1>
         <div style={{ fontSize: '1.35rem', color: '#6b7280', fontWeight: 500, marginBottom: '2.2rem', maxWidth: 700, marginLeft: 'auto', marginRight: 'auto' }}>

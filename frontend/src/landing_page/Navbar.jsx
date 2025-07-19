@@ -20,7 +20,7 @@ function Navbar() {
         width: '100%',
         maxWidth: '100%',
         margin: '0',
-        background: 'transparent',
+        background: '#fafafa',
         boxShadow: 'none',
         borderRadius: '0',
         padding: '18px 40px',
@@ -32,7 +32,7 @@ function Navbar() {
     >
       <div className="navbar-logo modern-logo-area">
         <Link to="/">
-          <img src="media/images/logo1.png" alt="Logo" className="modern-logo-img" style={{ height: '60px' }} />
+          <img src="media/images/logo.png" alt="Logo" className="modern-logo-img" style={{ height: '60px' }} />
         </Link>
       </div>
       <div className="navbar-menu modern-navbar-menu">

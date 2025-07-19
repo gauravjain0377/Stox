@@ -14,8 +14,9 @@ export default function CallToAction() {
       <div className="w-full max-w-5xl flex flex-col items-center justify-center text-center mx-auto z-10">
         {/* Headline */}
         <h2
-          className="text-9xl md:text-[10rem] font-extrabold text-white mb-4 leading-none"
+          className="text-9xl md:text-[10rem] font-extrabold text-white mb-4 leading-none unified-heading"
           style={{ fontFamily: 'Inter, Poppins, Montserrat, sans-serif', letterSpacing: '-0.03em' }}
+          data-aos="fade-up"
         >
           Ready to Start Investing?
         </h2>
@@ -56,8 +57,8 @@ export default function CallToAction() {
             <Link
               to="/signup"
               style={{
-                background: '#fff',
-                color: '#ff6a1a',
+                background: '#fafafa',
+                color: '#00796b',
                 fontWeight: 900,
                 fontSize: '1.2rem',
                 borderRadius: '32px',

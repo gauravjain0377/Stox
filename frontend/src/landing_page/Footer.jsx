@@ -7,13 +7,22 @@ export default function Footer() {
         {/* Top: Logo, Brand, Tagline, Social Icons */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0, marginBottom: 36 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-            <div style={{ background: '#19c37d', color: '#fff', fontWeight: 700, fontSize: 22, borderRadius: 8, padding: '6px 14px', letterSpacing: 1 }}>TP</div>
+            <img src="/media/images/logo.png" alt="StockSathi Logo" style={{ height: 40, width: 40, borderRadius: 8, objectFit: 'cover', marginRight: 0 }} />
             <span style={{ fontWeight: 700, fontSize: 22, letterSpacing: 0.01 }}>StockSathi</span>
           </div>
           <div style={{ color: '#444', fontSize: 17, marginBottom: 18, maxWidth: 520 }}>
             India's most trusted stock trading platform with zero brokerage equity delivery and transparent pricing.
           </div>
-          
+          {/* Social Platforms Section */}
+          <div style={{ marginTop: 10, marginBottom: 10, width: '100%' }}>
+            <div style={{ fontWeight: 600, fontSize: 16, color: '#222', marginBottom: 8, letterSpacing: 0.01 }}>Contact Me</div>
+            <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
+              <a href="https://x.com/gauravjain0377" target="_blank" rel="noopener noreferrer" style={{ color: '#888', fontSize: 26, transition: 'color 0.2s' }} className="footer-social-icon"><i className="fab fa-x-twitter"></i></a>
+              <a href="https://www.instagram.com/gauravjain0377/" target="_blank" rel="noopener noreferrer" style={{ color: '#888', fontSize: 26, transition: 'color 0.2s' }} className="footer-social-icon"><i className="fab fa-instagram"></i></a>
+              <a href="https://www.linkedin.com/in/this-is-gaurav-jain/" target="_blank" rel="noopener noreferrer" style={{ color: '#888', fontSize: 26, transition: 'color 0.2s' }} className="footer-social-icon"><i className="fab fa-linkedin"></i></a>
+              <a href="https://github.com/gauravjain0377" target="_blank" rel="noopener noreferrer" style={{ color: '#888', fontSize: 26, transition: 'color 0.2s' }} className="footer-social-icon"><i className="fab fa-github"></i></a>
+            </div>
+          </div>
         </div>
         {/* Divider */}
         <div style={{ borderTop: '1px solid #ececec', margin: '0 0 0 0', width: '100%' }} />
@@ -46,12 +55,26 @@ export default function Footer() {
               <div>SEBI Registration</div>
             </div>
           </div>
-          <div style={{ minWidth: 220, maxWidth: 320 }}>
-            <div style={{ fontWeight: 700, marginBottom: 12 }}>Disclaimer</div>
-            <div style={{ color: '#888', fontWeight: 400, fontSize: 15, lineHeight: 1.7 }}>
-            StockSathi   is a SEBI registered broker. Securities investments are subject to market risks. Please read all related documents carefully before investing.
-            </div>
-          </div>
+        </div>
+        {/* Disclaimer - now full width and visually distinct */}
+        <div style={{
+          background: '#f5f5f5',
+          borderRadius: 12,
+          margin: '36px 0 0 0',
+          padding: '24px 32px',
+          color: '#888',
+          fontWeight: 400,
+          fontSize: 15,
+          lineHeight: 1.8,
+          textAlign: 'center',
+          boxShadow: '0 2px 12px 0 rgba(0,0,0,0.03)',
+          maxWidth: 900,
+          marginLeft: 'auto',
+          marginRight: 'auto',
+        }}>
+          <strong>Disclaimer:</strong> This website is a personal project created for educational and demonstration purposes only. It is not a real stock trading platform and does not provide any financial, investment, or brokerage services. This platform is not registered with SEBI, NSE, BSE, MCX, CDSL, NSDL, or any other regulatory authority.<br /><br />
+          All information and features on this site are for learning purposes and should not be interpreted as financial advice or a recommendation to buy or sell any securities. Always consult a SEBI-registered stockbroker or financial advisor for real investment decisions.<br /><br />
+          <strong>Note:</strong> No real transactions or user data are processed on this platform.
         </div>
         {/* Copyright */}
         <div style={{ borderTop: '1px solid #ececec', margin: '40px 0 0 0', width: '100%' }} />
@@ -78,7 +101,7 @@ export default function Footer() {
       </div>
 
       <div style={{ color: '#888', fontSize: 15, textAlign: 'center', padding: '18px 0 8px 0', letterSpacing: 0.01 }}>
-          © 2025 StockSathi. All rights reserved.
+          © 2023-2025 StockSathi. All rights reserved.
         </div>
 
       {/* FontAwesome CDN for icons (if not already included globally) */}

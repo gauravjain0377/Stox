@@ -78,7 +78,7 @@ export default function Testimonials() {
       width: '100%',
     }}
     >
-      <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-2" style={{ color: '#1e293b', fontFamily: 'Inter, Poppins, Montserrat, sans-serif', fontWeight: 900, letterSpacing: '-0.01em' }}>
+      <h2 className="text-5xl md:text-6xl font-extrabold text-center mb-2 unified-heading" style={{ fontFamily: 'Inter, Poppins, Montserrat, sans-serif', fontWeight: 900, letterSpacing: '-0.01em' }} data-aos="fade-up">
         Trusted by Indian Traders nationwide
       </h2>
       <p className="text-center text-lg text-slate-600 mb-5" style={{ fontWeight: 500 }}>
@@ -142,13 +142,13 @@ export default function Testimonials() {
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
-                  boxShadow: '0 0 0 8px rgba(34,211,238,0.10), 0 8px 32px 0 rgba(34,42,53,0.10)',
-                  borderColor: '#06b6d4', // cyan-400
+                  boxShadow: '#00796b',
+                  borderColor: '#00796b', // cyan-400
                 }}
-                initial={{ scale: 0.8, opacity: 0, boxShadow: '0 0 0 0px #67e8f9' }}
-                animate={{ scale: 1, opacity: 1, boxShadow: '0 0 0 8px #67e8f933, 0 8px 32px 0 rgba(34,42,53,0.10)', transition: { type: "spring", stiffness: 180, damping: 18, delay: 0.1 } }}
-                exit={{ scale: 0.8, opacity: 0, boxShadow: '0 0 0 0px #67e8f9', transition: { duration: 0.2 } }}
-                whileHover={{ scale: 1.05, boxShadow: '0 0 0 12px #67e8f966' }}
+                initial={{ scale: 0.8, opacity: 0, boxShadow: '0 0 0 0px #00796b' }}
+                animate={{ scale: 1, opacity: 1, boxShadow: '0 0 0 8px #00796b, 0 8px 32px 0 rgba(34,42,53,0.10)', transition: { type: "spring", stiffness: 180, damping: 18, delay: 0.1 } }}
+                exit={{ scale: 0.8, opacity: 0, boxShadow: '0 0 0 0px #00796b', transition: { duration: 0.2 } }}
+                whileHover={{ scale: 1.05, boxShadow: '0 0 0 10px #00796b' }}
               >
                 <img src={testimonials[focus].avatar} alt={testimonials[focus].name} className="w-full h-full object-cover mx-auto" />
               </motion.div>
