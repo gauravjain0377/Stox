@@ -32,7 +32,7 @@ function Navbar() {
     >
       <div className="navbar-logo modern-logo-area">
         <Link to="/">
-          <img src="media/images/logo.png" alt="Logo" className="modern-logo-img" style={{ height: '42px' }} />
+          <img src="media/images/logo1.png" alt="Logo" className="modern-logo-img" style={{ height: '60px' }} />
         </Link>
       </div>
       <div className="navbar-menu modern-navbar-menu">

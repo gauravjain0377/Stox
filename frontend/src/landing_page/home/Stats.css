@@ -3,7 +3,7 @@
 /* --- General Section Styling --- */
 .stats-section {
   padding: 6rem 1rem;
-  background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
+  background: #fafafa;
   font-family: 'Inter', 'Poppins', sans-serif;
   overflow: hidden;
 }
@@ -14,7 +14,7 @@
   text-align: center;
   margin-bottom: 0.75rem;
   letter-spacing: -0.03em;
-  color: #1a2333;
+  color: #00796b;
 }
 
 .stats-main-desc {

@@ -71,15 +71,15 @@ export default function Testimonials() {
   const minCardWidth = 320;
 
   return (
-    <section className="w-full flex flex-col items-center py-8 relative pb-40" style={{
-      background: 'linear-gradient(180deg, #f6fcfa 60%, #f3f6ff 100%)',
+    <section className="w-full flex flex-col items-center py-8 relative " style={{
+      background: '#fafafa',
       paddingLeft: '1rem',
       paddingRight: '1rem',
       width: '100%',
     }}
     >
-      <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-2" style={{ color: '#1e293b', fontFamily: 'Inter, Poppins, Montserrat, sans-serif' }}>
-        Trusted by Indian traders nationwide
+      <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-2" style={{ color: '#1e293b', fontFamily: 'Inter, Poppins, Montserrat, sans-serif', fontWeight: 900, letterSpacing: '-0.01em' }}>
+        Trusted by Indian Traders nationwide
       </h2>
       <p className="text-center text-lg text-slate-600 mb-5" style={{ fontWeight: 500 }}>
         Join thousands of successful traders making smart investment decisions.

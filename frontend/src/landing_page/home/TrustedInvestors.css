@@ -1,7 +1,7 @@
 /* TrustedInvestors.css */
 
 .trusted-section {
-    background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 50%, #f0fdfa 100%);
+    background: #fafafa
     padding: 5rem 1rem;
     font-family: 'Inter', sans-serif;
 }
@@ -60,7 +60,7 @@
 
 
 .stat-number {
-    font-size: 2.25rem;
+    font-size: 2rem;
     font-weight: 800;
     color: #00796b;
     margin-bottom: 0.5rem;

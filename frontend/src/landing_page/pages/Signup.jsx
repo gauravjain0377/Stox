@@ -132,10 +132,7 @@ const Signup = () => {
     setErrorMsg("Google signup not implemented yet");
   };
 
-  const handleGithubSignup = () => {
-    // For now, just show a message
-    setErrorMsg("GitHub signup not implemented yet");
-  };
+
 
     return (
     <>
@@ -155,7 +152,7 @@ const Signup = () => {
           <div style={{ flex: 1.2, padding: '48px 36px', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'white' }}>
             <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: 10 }}>
               <img src="/media/images/logo.png" alt="Logo" style={{ height: 36, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', background: '#fff' }} />
-              <span style={{ fontWeight: 700, fontSize: 20, color: '#222', letterSpacing: '-0.01em' }}>TradePro</span>
+              <span style={{ fontWeight: 700, fontSize: 20, color: '#222', letterSpacing: '-0.01em' }}>StockSathi</span>
             </div>
             <h2 style={{ fontSize: '2.2rem', fontWeight: 800, color: ACCENT, marginBottom: 8, fontFamily: 'Inter, Poppins, Montserrat, sans-serif' }}>Create Your Account</h2>
              <div style={{ margin: '18px 0 18px 0', display: 'flex', flexDirection: 'column', gap: 16 }}>

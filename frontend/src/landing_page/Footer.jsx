@@ -8,7 +8,7 @@ export default function Footer() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0, marginBottom: 36 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
             <div style={{ background: '#19c37d', color: '#fff', fontWeight: 700, fontSize: 22, borderRadius: 8, padding: '6px 14px', letterSpacing: 1 }}>TP</div>
-            <span style={{ fontWeight: 700, fontSize: 22, letterSpacing: 0.01 }}>TradePro</span>
+            <span style={{ fontWeight: 700, fontSize: 22, letterSpacing: 0.01 }}>StockSathi</span>
           </div>
           <div style={{ color: '#444', fontSize: 17, marginBottom: 18, maxWidth: 520 }}>
             India's most trusted stock trading platform with zero brokerage equity delivery and transparent pricing.
@@ -49,7 +49,7 @@ export default function Footer() {
           <div style={{ minWidth: 220, maxWidth: 320 }}>
             <div style={{ fontWeight: 700, marginBottom: 12 }}>Disclaimer</div>
             <div style={{ color: '#888', fontWeight: 400, fontSize: 15, lineHeight: 1.7 }}>
-              TradePro is a SEBI registered broker. Securities investments are subject to market risks. Please read all related documents carefully before investing.
+            StockSathi   is a SEBI registered broker. Securities investments are subject to market risks. Please read all related documents carefully before investing.
             </div>
           </div>
         </div>
@@ -74,11 +74,11 @@ export default function Footer() {
         }}
         aria-hidden="true"
       >
-        TradePlatform
+        StockSathi
       </div>
 
       <div style={{ color: '#888', fontSize: 15, textAlign: 'center', padding: '18px 0 8px 0', letterSpacing: 0.01 }}>
-          © 2025 TradePro. All rights reserved.
+          © 2025 StockSathi. All rights reserved.
         </div>
 
       {/* FontAwesome CDN for icons (if not already included globally) */}
