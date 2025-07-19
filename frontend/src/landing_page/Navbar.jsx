@@ -39,7 +39,6 @@ function Navbar() {
         <ul className={menuOpen ? "open" : ""}>
           <li><Link to="/about" className={location.pathname === '/about' ? 'active' : ''}>About</Link></li>
           <li><Link to="/pricing" className={location.pathname === '/pricing' ? 'active' : ''}>Pricing</Link></li>
-          <li><Link to="/products" className={location.pathname === '/products' ? 'active' : ''}>Products</Link></li>
           <li><Link to="/support" className={location.pathname === '/support' ? 'active' : ''}>Support</Link></li>
         </ul>
       </div>
