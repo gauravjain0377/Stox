@@ -159,11 +159,6 @@ const Login = () => {
     setErrorMsg("Google login not implemented yet");
   };
 
-  const handleGithubLogin = () => {
-    // For now, just show a message
-    setErrorMsg("GitHub login not implemented yet");
-  };
-
     return (
     <>
       <Navbar />
