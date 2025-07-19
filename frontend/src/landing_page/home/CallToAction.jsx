@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 export default function CallToAction() {
   return (
@@ -51,13 +52,30 @@ export default function CallToAction() {
           </div>
 
           {/* CTA Button */}
-         <a
-  href="/signup"
-  className="px-14 py-[10px] rounded-full font-bold text-2xl md:text-3xl shadow-lg min-w-[220px] text-center transition-all duration-200 bg-white text-[#007f7f] border border-[#e0e7ef] hover:bg-[#e0f2f1] hover:text-[#007f7f] hover:scale-105 outline-none focus:ring-4 focus:ring-[#007f7f]/20"
-  style={{ fontFamily: 'Inter, Poppins, Montserrat, sans-serif' }}
->
-  Signup
-</a>
+          <div className="flex justify-center w-full mt-8">
+            <Link
+              to="/signup"
+              style={{
+                background: '#fff',
+                color: '#ff6a1a',
+                fontWeight: 900,
+                fontSize: '1.2rem',
+                borderRadius: '32px',
+                padding: '20px 60px',
+                boxShadow: '0 8px 32px 0 rgba(255,106,26,0.18)',
+                border: 'none',
+                outline: 'none',
+                transition: 'all 0.2s',
+                letterSpacing: '-0.01em',
+                textDecoration: 'none',
+                marginTop: '20px',
+                display: 'inline-block',
+              }}
+              className="cta-signup-btn hover:scale-105 hover:shadow-lg focus:outline-none"
+            >
+              Sign Up Now
+            </Link>
+          </div>
         </div>
       </div>
     </section>
