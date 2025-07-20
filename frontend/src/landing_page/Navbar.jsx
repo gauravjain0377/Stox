@@ -40,6 +40,7 @@ function Navbar() {
           <li><Link to="/about" className={location.pathname === '/about' ? 'active' : ''}>About</Link></li>
           <li><Link to="/pricing" className={location.pathname === '/pricing' ? 'active' : ''}>Pricing</Link></li>
           <li><Link to="/support" className={location.pathname === '/support' ? 'active' : ''}>Support</Link></li>
+          <li><Link to="/utilities" className={location.pathname === '/utilities' ? 'active' : ''}>Utilities</Link></li>
         </ul>
       </div>
       <div className="navbar-actions modern-navbar-actions">

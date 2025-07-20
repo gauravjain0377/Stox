@@ -1,6 +1,7 @@
 import React from "react";
 import './AccountChargesTable.css';
 
+
 const AccountChargesTable = () => (
   <section className="account-charges-section">
     <h2 className="account-charges-title">Charges for account opening</h2>
@@ -63,5 +64,8 @@ const AccountChargesTable = () => (
     </div>
   </section>
 );
+
+
+
 
 export default AccountChargesTable; 

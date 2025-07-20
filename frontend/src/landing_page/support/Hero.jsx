@@ -1,38 +1,25 @@
 import React from "react";
 
 function Hero() {
+  const handleContactClick = () => {
+    const el = document.getElementById("get-in-touch-section");
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
-    <section className="container-fluid bg-dark" id="supportHero">
-      <div className="p-5" id="supportWrapper">
-        <h4>Support Portal</h4>
-        <a href="">Track Tickets</a>
+    <section className="support-hero-modern">
+      <div className="support-hero-badge">24/7 Customer Support Available</div>
+      <h1 className="support-hero-title">Get the Help<br />You Need</h1>
+      <p className="support-hero-subtitle">
+        Our dedicated support team is here to assist you with all your trading<br />
+        questions, technical issues, and account queries. Access resources,<br />
+        contact experts, or find answers instantly.
+      </p>
+      <div className="support-hero-actions">
+        <button className="support-hero-btn-primary" onClick={handleContactClick}>Contact Support</button>
       </div>
-      <div className="row p-5 m-3">
-        <div className="col-6 p-3">
-          <h1 className="fs-3">
-            Search for an answer or browse help topics to create a ticket
-          </h1>
-          <input class="form-control text-black"  placeholder="Eg. how do I activate F&O" />
-          <br />
-          <a href="">Track account opening</a>
-          <br></br>
-          <a href="">Track segment activation</a>
-          <br></br>
-          <a href="">Intraday margins</a>
-          <br></br>
-          <a href="">Kite user manual</a>
-        </div>
-        <div className="col-6 p-3">
-          <h1 className="fs-3">Featured</h1>
-          <ol>
-            <li>
-              <a href="">Current Takeovers and Delisting - January 2025</a>
-            </li>
-            <li>
-              <a href="">Latest Intraday leverages - MIS & CO</a>
-            </li>
-          </ol>
-        </div>
+      <div className="support-hero-footer-note">
+        SEBI Registered &bull; Trusted by 2M+ Traders &bull; 99.9% Uptime
       </div>
     </section>
   );

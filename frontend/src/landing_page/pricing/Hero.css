@@ -33,7 +33,7 @@
   .pricing-title {
     font-size: 3rem;
     font-weight: 700;
-    color: #111827;
+    color: #00796b;
     margin-bottom: 1rem;
     letter-spacing: -0.025em;
     line-height: 1.1;
@@ -235,7 +235,7 @@
   .pricing-bottom-title {
     font-size: 1.875rem;
     font-weight: 700;
-    color: #111827;
+    color: #00796b;
     margin-bottom: 0.75rem;
     line-height: 1.3;
   }
@@ -263,13 +263,15 @@
 .pricing-charges-title {
   font-size: 2rem;
   font-weight: 700;
-  color: #111827;
+  color: #00796b;
   margin-bottom: 1.5rem;
   text-align: left;
+  padding-top: 40px;
+  text-align: center;
 }
 
 .pricing-charges-table-container {
-  background: #fff;
+  background: #fafafa;
   border-radius: 1rem;
   box-shadow: 0 2px 12px 0 rgba(16, 185, 129, 0.04);
   border: 1px solid #e5e7eb;
