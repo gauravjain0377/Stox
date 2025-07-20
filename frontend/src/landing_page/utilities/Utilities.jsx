@@ -25,7 +25,7 @@ function Utilities() {
     <>
       <Navbar />
       <section className="utilities-section">
-        <h1 className="utilities-title">Financial Calculators 🛠️</h1>
+        <h1 className="utilities-title">Financial Calculators</h1>
         <div className="utilities-cards">
           {calculators.map((calc) => (
             <div key={calc.key} className={`utilities-card${open === calc.key ? " open" : ""}`}>

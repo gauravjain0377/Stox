@@ -10,7 +10,6 @@ const contacts = [
       { icon: <FaCheckCircle color="#ff6a1a" size={14} />, text: "Available 24/7" },
       { icon: <FaCheckCircle color="#ff6a1a" size={14} />, text: "Average response: 30 seconds" },
     ],
-    action: { label: "Start Chat", type: "primary" },
   },
   {
     icon: <FaPhoneAlt size={32} color="#ff6a1a" style={{ background: '#fff3e6', borderRadius: 8, padding: 6 }} />,
@@ -20,7 +19,6 @@ const contacts = [
       { icon: <FaCheckCircle color="#ff6a1a" size={14} />, text: "Mon-Fri: 8 AM - 8 PM IST" },
       { icon: <FaCheckCircle color="#ff6a1a" size={14} />, text: "Call: 1800-XXX-XXXX (Toll Free)" },
     ],
-    action: { label: "Call Now", type: "secondary" },
   },
   {
     icon: <FaEnvelope size={32} color="#ff6a1a" style={{ background: '#fff3e6', borderRadius: 8, padding: 6 }} />,
@@ -30,7 +28,6 @@ const contacts = [
       { icon: <FaCheckCircle color="#ff6a1a" size={14} />, text: "Response within 2-4 hours" },
       { icon: <FaCheckCircle color="#ff6a1a" size={14} />, text: "support@trading.com" },
     ],
-    action: { label: "Send Email", type: "secondary" },
   },
   {
     icon: <FaCrown size={32} color="#ff6a1a" style={{ background: '#fff3e6', borderRadius: 8, padding: 6 }} />,
@@ -40,7 +37,6 @@ const contacts = [
       { icon: <FaCheckCircle color="#ff6a1a" size={14} />, text: "Dedicated relationship manager" },
       { icon: <FaCheckCircle color="#ff6a1a" size={14} />, text: "Available for Pro+ accounts" },
     ],
-    action: { label: "Learn More", type: "primary" },
   },
 ];
 
@@ -60,7 +56,6 @@ function GetInTouch() {
                 <li key={j}>{d.icon} <span>{d.text}</span></li>
               ))}
             </ul>
-            <button className={`getintouch-btn ${c.action.type}`}>{c.action.label}</button>
           </div>
         ))}
       </div>

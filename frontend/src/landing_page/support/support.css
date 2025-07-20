@@ -164,7 +164,7 @@
 }
 .ticket-topic-card:hover {
   box-shadow: 0 8px 32px 0 rgba(25,118,210,0.13), 0 2px 16px rgba(0,121,107,0.10);
-  border: 2px solid var(--accent-blue);
+  border: 2px solid #00796b;
   transform: translateY(-4px) scale(1.03);
 }
 .ticket-topic-icon {
@@ -286,11 +286,11 @@
   line-height: 1.4;
 }
 .faq-modern-answer {
-  background: linear-gradient(90deg, #e3f0fc 60%, #fff3e6 100%);
+  background: #fff;
   border-radius: 8px;
   padding: 18px 24px;
   margin: 0 0 18px 50px;
-  color: #00796b;
+  color: #000;
   font-size: 1.08rem;
   font-weight: 500;
   box-shadow: 0 1px 6px 0 rgba(25,118,210,0.04);
@@ -404,13 +404,13 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  border: 1.5px solid #e3f0fc;
+  border: 1.5px solid #00796b;
   transition: box-shadow 0.18s, border 0.18s, transform 0.18s;
   will-change: transform, box-shadow;
 }
 .getintouch-card:hover {
   box-shadow: 0 8px 32px 0 rgba(25,118,210,0.13), 0 2px 16px rgba(0,121,107,0.10);
-  border: 2px solid var(--accent-teal);
+  border: 3px solid #00796b;
   transform: translateY(-4px) scale(1.03);
 }
 .getintouch-icon {
@@ -556,13 +556,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  border: 1.5px solid #e3f0fc;
+  border: 1.5px solid #00796b;
   transition: box-shadow 0.18s, border 0.18s, transform 0.18s;
   will-change: transform, box-shadow;
 }
 .compliance-card:hover {
   box-shadow: 0 8px 32px 0 rgba(25,118,210,0.13), 0 2px 16px rgba(0,121,107,0.10);
-  border: 2px solid var(--accent-blue);
+  border: 3px solid #00796b;
   transform: translateY(-4px) scale(1.03);
 }
 .compliance-icon {
