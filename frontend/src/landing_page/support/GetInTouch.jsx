@@ -7,7 +7,6 @@ const contacts = [
     title: "Live Chat",
     desc: "Get instant help from our team.",
     details: [
-      { icon: <FaCheckCircle color="#ff6a1a" size={14} />, text: "Available 24/7" },
       { icon: <FaCheckCircle color="#ff6a1a" size={14} />, text: "Average response: 30 seconds" },
     ],
   },
@@ -16,8 +15,7 @@ const contacts = [
     title: "Phone Support",
     desc: "Speak directly with our experts.",
     details: [
-      { icon: <FaCheckCircle color="#ff6a1a" size={14} />, text: "Mon-Fri: 8 AM - 8 PM IST" },
-      { icon: <FaCheckCircle color="#ff6a1a" size={14} />, text: "Call: 1800-XXX-XXXX (Toll Free)" },
+      { icon: <FaCheckCircle color="#ff6a1a" size={14} />, text: "Call: +91 8949956653" },
     ],
   },
   {
@@ -25,8 +23,7 @@ const contacts = [
     title: "Email Support",
     desc: "Send detailed queries and get comprehensive answers.",
     details: [
-      { icon: <FaCheckCircle color="#ff6a1a" size={14} />, text: "Response within 2-4 hours" },
-      { icon: <FaCheckCircle color="#ff6a1a" size={14} />, text: "support@trading.com" },
+      { icon: <FaCheckCircle color="#ff6a1a" size={14} />, text: "gjain0229@gmail.com" },
     ],
   },
   {
@@ -35,7 +32,6 @@ const contacts = [
     desc: "Premium support for Pro users.",
     details: [
       { icon: <FaCheckCircle color="#ff6a1a" size={14} />, text: "Dedicated relationship manager" },
-      { icon: <FaCheckCircle color="#ff6a1a" size={14} />, text: "Available for Pro+ accounts" },
     ],
   },
 ];

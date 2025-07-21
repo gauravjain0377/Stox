@@ -19,7 +19,7 @@ function Hero() {
         <button className="support-hero-btn-primary" onClick={handleContactClick}>Contact Support</button>
       </div>
       <div className="support-hero-footer-note">
-        SEBI Registered &bull; Trusted by 2M+ Traders &bull; 99.9% Uptime
+       NSE &bull; BSE &bull; Trusted by 2M+ Traders &bull; 99.9% Uptime
       </div>
     </section>
   );

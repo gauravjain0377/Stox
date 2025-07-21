@@ -15,7 +15,7 @@ function SipCalculator() {
 
     if (P > 0 && i > 0 && n > 0) {
       // Future Value (M) = P * {[(1 + i)^n - 1] / i} * (1 + i)
-      const futureValue = P * ((Math.pow(1 + i, n) - 1) / i);
+      const futureValue = P * ((Math.pow(1 + i, n) - 1) / i) * (1 + i);
       const totalInvestment = P * n;
       const wealthGained = futureValue - totalInvestment;
 

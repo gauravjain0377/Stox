@@ -9,6 +9,9 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const fetch = require('node-fetch');
+const session = require('express-session');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 const { HoldingsModel } = require("./model/HoldingsModel");
 const { PositionsModel } = require("./model/PositionsModel");
@@ -26,6 +29,74 @@ app.use(cors({
   credentials: true
 }));
 app.use(bodyParser.json());
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-session-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false } // Set to true if using HTTPS
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await UserModel.findById(id);
+    done(null, user);
+  } catch (err) {
+    done(err, null);
+  }
+});
+
+passport.use(new GoogleStrategy({
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: '/auth/google/callback',
+}, async (accessToken, refreshToken, profile, done) => {
+  try {
+    let user = await UserModel.findOne({ email: profile.emails[0].value });
+    if (!user) {
+      user = new UserModel({
+        username: profile.displayName,
+        email: profile.emails[0].value,
+        password: 'GOOGLE_OAUTH', // Placeholder, not used
+      });
+      await user.save();
+    }
+    return done(null, user);
+  } catch (err) {
+    return done(err, null);
+  }
+}));
+
+// Google Auth Routes
+app.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+app.get('/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/', session: true }),
+  (req, res) => {
+    // Redirect to frontend after successful login
+    res.redirect('http://localhost:5173');
+  }
+);
+
+app.get('/auth/logout', (req, res) => {
+  req.logout(() => {
+    res.redirect('http://localhost:5173');
+  });
+});
+
+app.get('/auth/me', (req, res) => {
+  if (req.isAuthenticated()) {
+    res.json({ user: req.user });
+  } else {
+    res.status(401).json({ user: null });
+  }
+});
 
 // Add test endpoint
 app.get("/api/test", (req, res) => {

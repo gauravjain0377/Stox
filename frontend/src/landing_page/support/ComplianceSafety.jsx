@@ -38,7 +38,7 @@ function ComplianceSafety() {
         ))}
       </div>
       <div className="compliance-disclaimer">
-        All investments are subject to market risks. Please read all scheme-related documents carefully before investing. SEBI Registration details are available on our regulatory page.
+        All investments are subject to market risks. Please read all scheme-related documents carefully before investing.
       </div>
     </section>
   );

@@ -29,7 +29,7 @@ const faqs = [
 ];
 
 function FAQ() {
-  const [openIndex, setOpenIndex] = useState(1); // Open the second FAQ by default
+  const [openIndex, setOpenIndex] = useState(null); // All FAQs closed by default
 
   const toggleFAQ = (idx) => {
     setOpenIndex(openIndex === idx ? null : idx);

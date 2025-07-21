@@ -80,7 +80,9 @@
   }
   
   .pricing-cta:hover {
-    background-color: #000;
+     background: #005f56;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0,121,107,0.15);
   }
   
   /* Cards container */
@@ -135,7 +137,7 @@
   
   /* Enhanced hover effects for different card types */
   .pricing-card--free:hover {
-    box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.15), 0 10px 10px -5px rgba(16, 185, 129, 0.08);
+    box-shadow: 0 40px 40px -5px rgba(16, 185, 129, 0.15), 0 10px 10px -5px rgba(16, 185, 129, 0.08);
     border-color: #10b981;
   }
   

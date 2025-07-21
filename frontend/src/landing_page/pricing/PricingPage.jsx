@@ -10,6 +10,7 @@ function PricingPage() {
     <>
       <Navbar />
       <Hero />
+      <ChargesTable />
       <AccountChargesTable />
       <Footer />
     </>

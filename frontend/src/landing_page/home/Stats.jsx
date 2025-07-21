@@ -124,11 +124,11 @@ function Stats() {
             <div className="fno-chart-container">
                 <div className="fno-bar-wrapper">
                     <div className="fno-bar green-bar"></div>
-                    <span>Puts OI</span>
+                    <span>Put OI</span>
                 </div>
                 <div className="fno-bar-wrapper">
                     <div className="fno-bar red-bar"></div>
-                    <span>Calls OI</span>
+                    <span>Call OI</span>
                 </div>
             </div>
             

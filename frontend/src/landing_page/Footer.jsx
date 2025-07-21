@@ -15,7 +15,7 @@ export default function Footer() {
           </div>
           {/* Social Platforms Section */}
           <div style={{ marginTop: 10, marginBottom: 10, width: '100%' }}>
-            <div style={{ fontWeight: 600, fontSize: 16, color: '#222', marginBottom: 8, letterSpacing: 0.01 }}>Contact Me</div>
+            <div style={{ fontWeight: 600, fontSize: 16, color: '#222', marginBottom: 8, letterSpacing: 0.01 }}>Contact</div>
             <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
               <a href="https://x.com/gauravjain0377" target="_blank" rel="noopener noreferrer" style={{ color: '#888', fontSize: 26, transition: 'color 0.2s' }} className="footer-social-icon"><i className="fab fa-x-twitter"></i></a>
               <a href="https://www.instagram.com/gauravjain0377/" target="_blank" rel="noopener noreferrer" style={{ color: '#888', fontSize: 26, transition: 'color 0.2s' }} className="footer-social-icon"><i className="fab fa-instagram"></i></a>

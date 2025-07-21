@@ -8,8 +8,8 @@ import Footer from "../Footer";
 import "./utilities.css";
 
 const calculators = [
-  { key: "sip", label: "SIP Calculator", component: <SipCalculator /> },
-  { key: "swp", label: "SWP Calculator", component: <SwpCalculator /> },
+  { key: "sip", label: "Systematic Investment Plan (SIP) Calculator", component: <SipCalculator /> },
+  { key: "swp", label: "Systematic Withdrawal Plan (SWP) Calculator", component: <SwpCalculator /> },
   { key: "brokerage", label: "Brokerage Calculator", component: <MarginCalculator /> },
   { key: "margin", label: "Margin Calculator", component: <MarginCalculator /> },
 ];

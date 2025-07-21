@@ -4,7 +4,7 @@ import './AccountChargesTable.css';
 
 const AccountChargesTable = () => (
   <section className="account-charges-section">
-    <h2 className="account-charges-title">Charges for account opening</h2>
+    <h2 className="account-charges-title">Charges for Account Opening</h2>
     <div className="account-charges-table-container">
       <table className="account-charges-table">
         <thead>
@@ -33,7 +33,7 @@ const AccountChargesTable = () => (
         </tbody>
       </table>
     </div>
-    <h2 className="account-charges-title" style={{marginTop: '3rem'}}>Charges for optional value added services</h2>
+    <h2 className="account-charges-title" style={{marginTop: '3rem'}}>Charges for Optional Value Added Services</h2>
     <div className="account-charges-table-container">
       <table className="account-charges-table">
         <thead>

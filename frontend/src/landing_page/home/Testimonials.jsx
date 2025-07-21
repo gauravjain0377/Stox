@@ -195,21 +195,22 @@ export default function Testimonials() {
       {/* Name pills */}
       <div className="w-full text-center mt-32 md:mt-40 pb-4 pt-5">
         <div className="inline-block">
-          <div className="flex flex-wrap justify-center gap-5">
+          <div className="flex flex-wrap justify-center gap-5 md:gap-8 lg:gap-10">
             {testimonials.map((t, i) => (
               <button
                 key={i}
                 className={`px-6 py-2 rounded-full font-semibold text-base tracking-wide transition-all duration-300 whitespace-nowrap shadow-md focus:outline-none border
                   ${i === focus
                     ? 'bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white shadow-lg scale-110 ring-2 ring-cyan-400 border-transparent'
-                    : 'bg-slate-200 text-slate-800 border border-slate-300 shadow-sm hover:bg-cyan-100 hover:text-cyan-700 hover:scale-105'}
+                    : 'bg-slate-200 text-slate-800 border border-slate-300 shadow-sm hover:bg-cyan-100 hover:text-cyan-700 hover:scale-105 hover:shadow-lg'}
                 `}
                 style={{
                   fontFamily: 'Poppins, Inter, Montserrat, sans-serif',
                   boxShadow: i === focus ? '0 4px 16px 0 rgba(34,211,238,0.15)' : undefined,
                   transition: 'box-shadow 0.2s, background 0.2s, color 0.2s, transform 0.2s',
                   fontWeight: 600,
-                  letterSpacing: '0.01em',
+                  letterSpacing: '0.05em',
+                  margin: '0 0.5rem 0.75rem 0.5rem', // extra margin for vertical spacing on wrap
                 }}
                 onClick={() => {
                   setFocus(i);

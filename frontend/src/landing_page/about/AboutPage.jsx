@@ -26,7 +26,7 @@ function MissionValues() {
             <div style={{ color: '#e0e0e0', fontSize: '1.08rem', marginBottom: 18, fontWeight: 400 }}>
               Every fee, every process, every decision – completely open. No hidden charges, no surprise costs.
             </div>
-            <a href="#transparency" style={{ color: '#fff', fontWeight: 600, textDecoration: 'none', fontSize: '1.05rem', opacity: 0.93, display: 'inline-block', transition: 'opacity 0.2s' }}>Learn more <span style={{ fontSize: '1.2em', verticalAlign: 'middle' }}>&rarr;</span></a>
+            
           </div>
           {/* Card 2 */}
           <div style={{ flex: '1 1 300px', minWidth: 260, maxWidth: 370, background: 'transparent', borderRadius: 18, padding: '0 0 0 0' }}>
@@ -39,7 +39,7 @@ function MissionValues() {
             <div style={{ color: '#e0e0e0', fontSize: '1.08rem', marginBottom: 18, fontWeight: 400 }}>
               Designed specifically for Indian markets, regulations, and investor needs. Local expertise, global standards.
             </div>
-            <a href="#made-for-india" style={{ color: '#fff', fontWeight: 600, textDecoration: 'none', fontSize: '1.05rem', opacity: 0.93, display: 'inline-block', transition: 'opacity 0.2s' }}>Learn more <span style={{ fontSize: '1.2em', verticalAlign: 'middle' }}>&rarr;</span></a>
+
           </div>
           {/* Card 3 */}
           <div style={{ flex: '1 1 300px', minWidth: 260, maxWidth: 370, background: 'transparent', borderRadius: 18, padding: '0 0 0 0' }}>
@@ -52,7 +52,7 @@ function MissionValues() {
             <div style={{ color: '#e0e0e0', fontSize: '1.08rem', marginBottom: 18, fontWeight: 400 }}>
               Your feedback shapes our roadmap. Direct access to the developer, constant improvements based on real user needs.
             </div>
-            <a href="#community" style={{ color: '#fff', fontWeight: 600, textDecoration: 'none', fontSize: '1.05rem', opacity: 0.93, display: 'inline-block', transition: 'opacity 0.2s' }}>Learn more <span style={{ fontSize: '1.2em', verticalAlign: 'middle' }}>&rarr;</span></a>
+
           </div>
         </div>
       </div>
