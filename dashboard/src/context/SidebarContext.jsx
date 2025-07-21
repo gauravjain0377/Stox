@@ -1,28 +1,28 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useState, useEffect, useContext } from "react";
 
+// 1. Create the context
 const SidebarContext = createContext();
 
+// 2. Create the provider component
 export const SidebarProvider = ({ children }) => {
-  // 1. Initialize state by reading directly from localStorage ONCE.
+  // Initialize state from localStorage, defaulting to 'true' (collapsed)
   const [collapsed, setCollapsed] = useState(() => {
-    // localStorage stores strings, so we check for the string 'true'.
-    return localStorage.getItem('sidebarCollapsed') === 'true';
+    const saved = localStorage.getItem('sidebarCollapsed');
+    // If a value is saved in localStorage, use it; otherwise, default to true.
+    return saved !== null ? JSON.parse(saved) : true;
   });
 
-  // 2. This effect runs ONLY when the `collapsed` state changes, syncing it TO localStorage.
-  // This prevents the feedback loop.
+  // Function to toggle the sidebar state
+  const toggleSidebar = () => {
+    setCollapsed(prev => !prev);
+  };
+
+  // Effect to save the state to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('sidebarCollapsed', collapsed);
+    localStorage.setItem('sidebarCollapsed', JSON.stringify(collapsed));
   }, [collapsed]);
 
-  // 3. The toggle function now only needs to update the React state.
-  // The useEffect above will handle saving it.
-  const toggleSidebar = useCallback(() => {
-    setCollapsed(prevCollapsed => !prevCollapsed);
-  }, []);
-
-  // We provide the state and the toggle function to the rest of the app.
-  // The 'setCollapsed' function is no longer needed in the value.
+  // The value that will be supplied to any consuming components
   const value = { collapsed, toggleSidebar };
 
   return (
@@ -32,5 +32,5 @@ export const SidebarProvider = ({ children }) => {
   );
 };
 
-// This hook remains the same.
+// 3. Custom hook to easily use the SidebarContext
 export const useSidebar = () => useContext(SidebarContext);

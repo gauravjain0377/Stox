@@ -61,8 +61,16 @@ passport.use(new GoogleStrategy({
       user = new UserModel({
         username: profile.displayName,
         email: profile.emails[0].value,
-        password: 'GOOGLE_OAUTH', // Placeholder, not used
+        provider: 'google',
+        googleId: profile.id,
+        avatar: profile.photos && profile.photos[0] ? profile.photos[0].value : undefined,
       });
+      await user.save();
+    } else if (!user.googleId) {
+      // If user exists but not linked to Google, update provider info
+      user.provider = 'google';
+      user.googleId = profile.id;
+      user.avatar = profile.photos && profile.photos[0] ? profile.photos[0].value : user.avatar;
       await user.save();
     }
     return done(null, user);
@@ -79,14 +87,25 @@ app.get('/auth/google',
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/', session: true }),
   (req, res) => {
-    // Redirect to frontend after successful login
-    res.redirect('http://localhost:5173');
+    // Create a simple token (or use session ID)
+    const token = Buffer.from(`${req.user._id}-${Date.now()}`).toString('base64');
+    // Pass user info and token as URL params
+    const params = new URLSearchParams({
+      token,
+      user: JSON.stringify({
+        id: req.user._id,
+        name: req.user.username,
+        email: req.user.email,
+      }),
+      isLoggedIn: 'true'
+    });
+    res.redirect(`http://localhost:5174/?${params.toString()}`);
   }
 );
 
 app.get('/auth/logout', (req, res) => {
   req.logout(() => {
-    res.redirect('http://localhost:5173');
+    res.redirect('http://localhost:5173'); // Redirect to main landing home page
   });
 });
 
@@ -362,7 +381,10 @@ app.get("/allPositions", async (req, res) => {
 // Authentication endpoints
 app.post("/api/users/register", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, provider } = req.body;
+    if (provider === 'google') {
+      return res.status(400).json({ success: false, message: "Google signup is not allowed here. Use 'Continue with Google' instead." });
+    }
     
     console.log("🔍 Registration attempt:", { name, email, password: password ? "PROVIDED" : "MISSING" });
     

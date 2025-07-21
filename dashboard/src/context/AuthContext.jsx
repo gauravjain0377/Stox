@@ -112,8 +112,8 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('isLoggedIn');
-    // Redirect to frontend login page
-    window.location.href = 'http://localhost:5173/login';
+    // Redirect to frontend home page
+    window.location.href = 'http://localhost:5173/';
   };
 
   const value = {

@@ -305,7 +305,7 @@ const StockDetail = () => {
             >
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900">₹{stock.price.toLocaleString()}</h2>
+                  <h2 className="text-3xl font-bold text-gray-900">₹{stock.price ? stock.price.toLocaleString() : 'N/A'}</h2>
                   <div className="flex items-center space-x-2 mt-2">
                     {stock.percent >= 0 ? (
                       <TrendingUp size={16} className="text-green-600" />
@@ -313,7 +313,7 @@ const StockDetail = () => {
                       <TrendingDown size={16} className="text-red-600" />
                     )}
                     <span className={`text-sm font-semibold ${stock.percent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {stock.percent >= 0 ? '+' : ''}{stock.percent.toFixed(2)}%
+                      {stock.percent >= 0 ? '+' : ''}{typeof stock.percent === 'number' ? stock.percent.toFixed(2) : 'N/A'}%
                     </span>
                   </div>
                 </div>
@@ -372,7 +372,7 @@ const StockDetail = () => {
                     <p className="text-gray-600">
                       {stock.fullName} is a leading company in the Indian market. The stock has shown 
                       {stock.percent >= 0 ? ' positive ' : ' negative '} 
-                      performance with a {Math.abs(stock.percent).toFixed(2)}% change today.
+                      performance with a {typeof stock.percent === 'number' ? stock.percent.toFixed(2) : 'N/A'}% change today.
                     </p>
                     <div className="grid grid-cols-2 gap-4 mt-6">
                       <div>
@@ -488,15 +488,15 @@ const StockDetail = () => {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Open</span>
-                  <span className="font-semibold">₹{stock.price.toLocaleString()}</span>
+                  <span className="font-semibold">₹{stock.price ? stock.price.toLocaleString() : 'N/A'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">High</span>
-                  <span className="font-semibold">₹{(stock.price * 1.02).toLocaleString()}</span>
+                  <span className="font-semibold">₹{stock.price ? (stock.price * 1.02).toLocaleString() : 'N/A'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Low</span>
-                  <span className="font-semibold">₹{(stock.price * 0.98).toLocaleString()}</span>
+                  <span className="font-semibold">₹{stock.price ? (stock.price * 0.98).toLocaleString() : 'N/A'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Market Cap</span>

@@ -155,8 +155,7 @@ const Login = () => {
   };
 
   const handleGoogleLogin = () => {
-    // For now, just show a message
-    setErrorMsg("Google login not implemented yet");
+    window.location.href = "http://localhost:3000/auth/google";
   };
 
     return (
@@ -197,7 +196,10 @@ const Login = () => {
             </div>
             <h2 style={{ fontSize: '2.2rem', fontWeight: 800, color: ACCENT, marginBottom: 8, fontFamily: 'Inter, Poppins, Montserrat, sans-serif' }}>Sign in to StockSathi</h2>
             <div style={{ margin: '18px 0 18px 0', display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <button style={{ display: 'flex', alignItems: 'center', gap: 14, background: '#f5f6fa', border: '1.5px solid #e0e7ef', borderRadius: 16, padding: '0 20px', height: 48, fontWeight: 600, fontSize: 17, color: '#222', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', cursor: 'pointer', width: '100%', maxWidth: '100%', justifyContent: 'center', transition: 'background 0.18s' }}>
+              <button
+                onClick={handleGoogleLogin}
+                style={{ display: 'flex', alignItems: 'center', gap: 14, background: '#f5f6fa', border: '1.5px solid #e0e7ef', borderRadius: 16, padding: '0 20px', height: 48, fontWeight: 600, fontSize: 17, color: '#222', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', cursor: 'pointer', width: '100%', maxWidth: '100%', justifyContent: 'center', transition: 'background 0.18s' }}
+              >
                 <img src="/media/images/google-logo.png" alt="Google" style={{ width: 24, height: 24, background: 'none', borderRadius: 0, display: 'block' }} />
                 <span style={{ fontWeight: 600, fontSize: 17 }}>Continue with Google</span>
               </button>
