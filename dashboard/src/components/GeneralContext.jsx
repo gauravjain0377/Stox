@@ -27,6 +27,7 @@ export const GeneralContextProvider = ({ children }) => {
   const [usingFallbackData, setUsingFallbackData] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
+  const [selectedStock, setSelectedStock] = useState(null);
 
   // Functions to open and close the buy window
   const handleOpenBuyWindow = (uid) => {
@@ -131,11 +132,13 @@ export const GeneralContextProvider = ({ children }) => {
     closeBuyWindow: handleCloseBuyWindow,
     openSellWindow: handleOpenSellWindow,
     closeSellWindow: handleCloseSellWindow,
+    selectedStock,
+    setSelectedStock,
   };
 
   // Check authentication on mount
   useEffect(() => {
-    console.log("🔄 Dashboard mounting - checking authentication...");
+    console.log("�� Dashboard mounting - checking authentication...");
     
     // Monitor localStorage changes
     const originalSetItem = localStorage.setItem;
@@ -279,7 +282,17 @@ export const GeneralContextProvider = ({ children }) => {
   }
 
   return (
-    <GeneralContext.Provider value={mockData}>
+    <GeneralContext.Provider value={{
+      user,
+      holdings,
+      holdingsLoading,
+      openBuyWindow: handleOpenBuyWindow,
+      closeBuyWindow: handleCloseBuyWindow,
+      openSellWindow: handleOpenSellWindow,
+      closeSellWindow: handleCloseSellWindow,
+      selectedStock,
+      setSelectedStock,
+    }}>
       {children}
       {isBuyWindowOpen && <BuyActionWindow uid={selectedStockUID} />}
       {isSellWindowOpen && selectedSellStock && (

@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { DoughnutChart } from "./DoughnoutChart";
 import '../styles/WatchList.css';
 import { useSidebar } from '../context/SidebarContext';
+import { useGeneralContext } from './GeneralContext';
 
 const indices = [
   { name: "NIFTY 50", value: 11504.95, change: -0.10, percent: -0.10 },
@@ -17,6 +18,7 @@ const NSE_SYMBOLS = [
 
 const SidebarWatchlist = () => {
   const { collapsed, toggleSidebar } = useSidebar();
+  const { setSelectedStock } = useGeneralContext();
   const [currentPage, setCurrentPage] = useState(0);
   const stocksPerPage = 8;
   const navigate = useNavigate();
@@ -115,7 +117,9 @@ const SidebarWatchlist = () => {
   };
   
   return (
-    <aside className={`h-full bg-white shadow-lg rounded-xl flex flex-col transition-all duration-300 ease-in-out ${collapsed ? 'w-20' : 'w-80'}`}>
+ <aside className={`h-full bg-white shadow-lg rounded-xl flex flex-col overflow-y-auto transition-all duration-300 ease-in-out ${collapsed ? 'w-20' : 'w-80'}`}>
+
+
       <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
         {!collapsed && (
           <div className="flex items-center gap-2 animate-fade-in">
@@ -129,7 +133,8 @@ const SidebarWatchlist = () => {
       </div>
 
       {!collapsed && (
-        <div className="flex-1 flex flex-col overflow-y-auto scrollbar-hide animate-fade-in">
+        <div className="flex-1 flex flex-col animate-fade-in">
+
           <div className="flex items-center gap-4 px-4 py-3 border-b border-gray-50 bg-gray-50">
             {indices.map((idx) => (
               <div key={idx.name} className="flex flex-col items-start text-xs">
@@ -164,7 +169,8 @@ const SidebarWatchlist = () => {
                   ))}
               </div>
             ) : (
-                <ul className="divide-y divide-gray-50" style={{ maxHeight: 400, overflowY: 'auto' }}>
+                <ul className="divide-y divide-gray-50">
+
                     {currentStocks.map((stock) => {
                         const fullName = fullNameMap[stock.symbol] || stock.name;
                         const isDown = stock.percent < 0;
@@ -174,7 +180,10 @@ const SidebarWatchlist = () => {
                             <li
                                 key={stock.symbol}
                                 className="flex items-center justify-between px-4 py-3 group hover:bg-gray-50 transition-all cursor-pointer border-l-2 border-transparent hover:border-blue-200"
-                                onClick={() => navigate(`/stock/${encodeURIComponent(stock.symbol)}`)}
+                                onClick={() => {
+                                    setSelectedStock(stock);
+                                    navigate(`/stock/${encodeURIComponent(stock.symbol)}`, { replace: true });
+                                }}
                             >
                                 <div className="flex-1 min-w-0">
                                     <Tooltip title={fullName} arrow>

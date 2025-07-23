@@ -28,9 +28,12 @@ const Layout = ({ children }) => {
         {/* Top Navbar */}
         <TopNavbar />
         {/* Main Content */}
-        <main className="flex-1 overflow-auto">
-          {children}
-        </main>
+        <main className="flex-1 overflow-hidden">
+  <div className="h-full overflow-y-auto">
+    {children}
+  </div>
+</main>
+
       </div>
     </div>
   );

@@ -55,4 +55,36 @@ exports.getStocksData = async (req, res) => {
     console.error('General error in getStocksData:', error.message); // Log general error
     res.status(500).json({ data: [], error: error.message });
   }
+};
+
+// Get static stock info (name, symbol, etc.) from MongoDB
+exports.getStockInfo = async (req, res, next) => {
+  try {
+    const stock = await Stock.findOne({ symbol: req.params.symbol.toUpperCase() });
+    if (!stock) return res.status(404).json({ error: 'Stock not found' });
+    res.json({ symbol: stock.symbol, name: stock.fullName });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Get live price and percent from Yahoo Finance
+exports.getStockPrice = async (req, res, next) => {
+  try {
+    const data = await yahooFinance.quote(req.params.symbol);
+    res.json({ price: data.regularMarketPrice, percent: data.regularMarketChangePercent });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch price' });
+  }
+};
+
+// Get historical chart data from Yahoo Finance
+exports.getStockHistory = async (req, res, next) => {
+  const { range = '1d', interval = '5m' } = req.query;
+  try {
+    const result = await yahooFinance._chart(req.params.symbol, { range, interval });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch history' });
+  }
 }; 

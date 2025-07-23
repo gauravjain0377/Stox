@@ -13,6 +13,10 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import { CandlestickController, CandlestickElement } from 'chartjs-chart-financial';
+import { Chart } from 'react-chartjs-2';
+import 'chartjs-adapter-date-fns';
+import { useGeneralContext } from './GeneralContext';
 
 ChartJS.register(
   CategoryScale,
@@ -21,7 +25,9 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  CandlestickController,
+  CandlestickElement
 );
 
 // Simple seeded pseudo-random generator
@@ -129,385 +135,384 @@ const generateMockChartData = (range, price, symbol, percent) => {
   return { labels, data };
 };
 
+// Realistic monotonic random walk for smooth, natural price action, with optimal point count and spacing
+function generateRealisticLineData(range, price, symbol, percent) {
+  const now = new Date();
+  let labels = [];
+  let data = [];
+  let points = 0;
+  const seed = getSeedFromSymbol(symbol || "");
+  let rand = (i) => seededRandom(seed + i);
+  let base = price;
+  let interval = 1;
+  let volatility = 0.012 + Math.abs(percent) * 0.006;
+  let clampLow = 0.8, clampHigh = 1.2;
+  switch (range) {
+    case '1D': points = 90; interval = Math.floor(376 / 90); volatility = 0.012 + Math.abs(percent) * 0.006; clampLow = 0.8; clampHigh = 1.2; break;
+    case '1W': points = 60; interval = Math.floor(240 / 60); volatility = 0.015 + Math.abs(percent) * 0.008; clampLow = 0.8; clampHigh = 1.2; break;
+    case '1M': points = 120; interval = Math.floor(120 / 120); volatility = 0.025 + Math.abs(percent) * 0.012; clampLow = 0.75; clampHigh = 1.25; break;
+    case '1Y': points = 52; interval = Math.floor(260 / 52); volatility = 0.03 + Math.abs(percent) * 0.015; clampLow = 0.7; clampHigh = 1.3; break;
+    case '5Y': points = 60; interval = 1; volatility = 0.10 + Math.abs(percent) * 0.05; clampLow = 0.5; clampHigh = 1.5; break;
+    case 'All': points = 60; interval = 1; volatility = 0.15 + Math.abs(percent) * 0.08; clampLow = 0.4; clampHigh = 1.6; break;
+    default: points = 60; interval = 1; break;
+  }
+  let last = base;
+  for (let i = 0; i < points; i++) {
+    let maxStep = base * volatility;
+    let step = (rand(i) - 0.5) * 2 * maxStep;
+    let trend = (percent / 100) * (i / points) * base * 0.5;
+    let next = last + step + trend;
+    // Clamp for realism
+    next = Math.max(base * clampLow, Math.min(base * clampHigh, next));
+    last = next;
+    data.push(Number(last.toFixed(2)));
+    let d = new Date(now);
+    if (range === '1D') {
+      d.setHours(9, 15, 0, 0);
+      d.setMinutes(d.getMinutes() + i * Math.floor(376 / points));
+    } else if (range === '1W') {
+      d.setDate(now.getDate() - (points - i - 1));
+    } else if (range === '1M') {
+      d.setDate(now.getDate() - (points - i - 1));
+    } else if (range === '1Y') {
+      d.setDate(now.getDate() - (points - i - 1) * Math.floor(365 / points));
+    } else if (range === '5Y') {
+      d.setMonth(now.getMonth() - (points - i - 1)); // ~1 month apart
+    } else if (range === 'All') {
+      d.setMonth(now.getMonth() - (points - i - 1) * 2); // ~2 months apart
+    }
+    labels.push(d);
+  }
+  return { labels, data };
+}
+
+// Generate realistic OHLC data for candlestick chart
+function generateOHLCData(range, price, symbol, percent) {
+  const now = new Date();
+  let data = [];
+  let points = 0;
+  const seed = getSeedFromSymbol(symbol || "");
+  let rand = (i) => seededRandom(seed + i);
+  let base = price;
+  switch (range) {
+    case '1W': points = 7; break;
+    case '1M': points = 30; break;
+    case '1Y': points = 52; break;
+    case '5Y': points = 60; break;
+    case 'All': points = 60; break;
+    default: points = 30;
+  }
+  let prevClose = base;
+  for (let i = 0; i < points; i++) {
+    let open = prevClose;
+    let trend = (percent / 100) * (i / points) * base * 0.5;
+    let close = open * (1 + (rand(i) - 0.5) * 0.08 + trend / base);
+    let high = Math.max(open, close) * (1 + rand(i + 1) * 0.04);
+    let low = Math.min(open, close) * (1 - rand(i + 2) * 0.04);
+    high = Math.min(high, base * 1.2);
+    low = Math.max(low, base * 0.8);
+    let d = new Date(now);
+    if (range === '1W') {
+      d.setDate(now.getDate() - (points - i - 1));
+    } else if (range === '1M') {
+      d.setDate(now.getDate() - (points - i - 1));
+    } else if (range === '1Y') {
+      d.setDate(now.getDate() - (points - i - 1) * 7);
+    } else {
+      d.setFullYear(now.getFullYear() - (points - i - 1));
+    }
+    data.push({ x: d, o: Number(open.toFixed(2)), h: Number(high.toFixed(2)), l: Number(low.toFixed(2)), c: Number(close.toFixed(2)) });
+    prevClose = close;
+  }
+  return data;
+}
+
 const StockDetail = () => {
-  const { symbol } = useParams();
+  const { selectedStock } = useGeneralContext();
   const navigate = useNavigate();
-  const [stock, setStock] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedRange, setSelectedRange] = useState('1D');
+  const [tradeAlert, setTradeAlert] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  // Time range options for candlestick chart
+  const timeRanges = [
+    { label: '1D', points: 60, trend: 0.002 },
+    { label: '1W', points: 7, trend: 0.01 },
+    { label: '1M', points: 30, trend: 0.02 },
+    { label: '1Y', points: 52, trend: 0.05 },
+    { label: '5Y', points: 60, trend: 0.1 },
+    { label: 'All', points: 100, trend: 0.15 },
+  ];
+  const [selectedRange, setSelectedRange] = useState(timeRanges[0]);
 
-  useEffect(() => {
-    const fetchStock = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`http://localhost:3000/api/stocks/${symbol}`);
-        if (!response.ok) {
-          throw new Error('Stock not found');
-        }
-        const data = await response.json();
-        setStock(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStock();
-  }, [symbol]);
+  // Generate random OHLC data for candlestick with real Date objects
+  function generateRandomOHLC(base, points = 60, trendStrength = 0.004) {
+    let arr = [];
+    let prevClose = base;
+    const trend = (Math.random() - 0.5) * trendStrength;
+    const now = new Date();
+    for (let i = 0; i < points; i++) {
+      let open = prevClose;
+      let close = open * (1 + (Math.random() - 0.5) * 0.02 + trend);
+      let high = Math.max(open, close) * (1 + Math.random() * 0.01);
+      let low = Math.min(open, close) * (1 - Math.random() * 0.01);
+      // Clamp for realism
+      high = Math.min(high, base * 1.1);
+      low = Math.max(low, base * 0.9);
+      // Date: go back (points - i - 1) days from now
+      let date = new Date(now);
+      date.setDate(now.getDate() - (points - i - 1));
+      arr.push({ x: date, o: Number(open.toFixed(2)), h: Number(high.toFixed(2)), l: Number(low.toFixed(2)), c: Number(close.toFixed(2)) });
+      prevClose = close;
+    }
+    return arr;
+  }
 
-  // Chart data using mock generator
-  const chartData = stock ? (() => {
-    const mock = generateMockChartData(selectedRange, stock.price, stock.symbol || stock.name, stock.percent);
+  // Generate line chart data for selected range (use improved generator)
+  const lineChartData = React.useMemo(() => {
+    if (!selectedStock) return { labels: [], datasets: [] };
+    const { label } = selectedRange;
+    const { labels, data } = generateRealisticLineData(label, selectedStock.price, selectedStock.symbol, selectedStock.percent);
+    // Use percent if available, otherwise fallback to price comparison
+    let isGain = false;
+    if (typeof selectedStock.percent === 'number') {
+      isGain = selectedStock.percent >= 0;
+    } else {
+      isGain = data.length > 1 && data[data.length - 1] >= data[0];
+    }
+    const lineColor = isGain ? '#22c55e' : '#ef4444';
+    const areaStart = isGain ? 'rgba(34,197,94,0.10)' : 'rgba(239,68,68,0.10)';
+    const areaEnd = isGain ? 'rgba(34,197,94,0.00)' : 'rgba(239,68,68,0.00)';
     return {
-      labels: mock.labels,
+      labels,
       datasets: [
         {
-          label: 'Price',
-          data: mock.data,
-          borderColor: stock.percent >= 0 ? '#00b386' : '#e74c3c',
-          borderWidth: 2,
-          tension: 0.6,
-          fill: false,
+          label: '',
+          data,
+          borderColor: (ctx) => {
+            if (!ctx || !ctx.chart || !ctx.chart.chartArea) return lineColor;
+            const chart = ctx.chart;
+            const {ctx: c, chartArea} = chart;
+            const gradient = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+            gradient.addColorStop(0, lineColor);
+            gradient.addColorStop(1, lineColor);
+            return gradient;
+          },
+          borderWidth: 3.5,
           pointRadius: 0,
-          pointHoverRadius: 4,
+          fill: true,
+          backgroundColor: (ctx) => {
+            if (!ctx || !ctx.chart || !ctx.chart.chartArea) return areaStart;
+            const chart = ctx.chart;
+            const {ctx: c, chartArea} = chart;
+            const gradient = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+            gradient.addColorStop(0, areaStart);
+            gradient.addColorStop(1, areaEnd);
+            return gradient;
+          },
+          tension: 0.25,
+          shadowBlur: 8,
+          shadowColor: lineColor,
         },
       ],
     };
-  })() : { labels: [], datasets: [] };
+  }, [selectedStock, selectedRange]);
 
-  // Chart options as before
-  const chartOptions = stock ? (() => {
-    const mock = generateMockChartData(selectedRange, stock.price, stock.symbol || stock.name, stock.percent);
-    const min = Math.min(...mock.data);
-    const max = Math.max(...mock.data);
-    const buffer = (max - min) * 0.02 || 1; // 2% buffer or at least 1
-    return {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          enabled: true,
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          titleColor: '#fff',
-          bodyColor: '#fff',
-          borderColor: '#fff',
-          borderWidth: 1,
-          cornerRadius: 8,
-          callbacks: {
-            label: (context) => `₹${context.parsed.y?.toFixed(2)}`,
-            title: (context) => context[0].label,
-          },
-        },
-      },
-      interaction: { mode: 'index', intersect: false },
-      scales: {
-        x: {
-          display: false,
-          grid: { display: false, drawBorder: false },
-          ticks: { display: false },
-        },
-        y: {
-          display: false,
-          grid: { display: false, drawBorder: false },
-          ticks: { display: false },
-          min: min - buffer,
-          max: max + buffer,
-        },
-      },
-      elements: { point: { radius: 0, hoverRadius: 4 } },
-    };
-  })() : {};
+  const ohlcData = React.useMemo(() => {
+    if (!selectedStock || selectedRange.label === '1D') return null;
+    return generateOHLCData(selectedRange.label, selectedStock.price, selectedStock.symbol, selectedStock.percent);
+  }, [selectedStock, selectedRange]);
 
-  const timeRanges = ['1D', '2D', '1W', '1M', '1Y', '5Y', 'All'];
+  // Trade simulation
+  const handleTrade = (type) => {
+    setTradeAlert(`Simulated: ${type === 'buy' ? 'Bought' : 'Sold'} ${quantity} shares of ${symbol}`);
+    setTimeout(() => setTradeAlert(null), 2000);
+  };
 
-  if (loading) {
+  if (!selectedStock) {
     return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="min-h-screen bg-gray-50 flex items-center justify-center"
-      >
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading stock details...</p>
-        </div>
-      </motion.div>
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <h2 className="text-2xl font-bold mb-4">No Stock Selected</h2>
+        <button onClick={() => navigate('/')} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">Go Back</button>
+      </div>
     );
   }
 
-  if (error) {
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="min-h-screen bg-gray-50 flex items-center justify-center"
-      >
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Stock Not Found</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <button
-            onClick={() => navigate(-1)}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Go Back
-          </button>
-        </div>
-      </motion.div>
-    );
-  }
+  const price = selectedStock.price;
+  const name = selectedStock.name;
+  const symbol = selectedStock.symbol;
+  const percent = selectedStock.percent;
 
-  if (!stock) return null;
+  const chartType = selectedRange.label === '1D' ? 'line' : 'candlestick';
+  const isLine = chartType === 'line';
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen bg-gray-50"
-    >
-      {/* Header */}
+    <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate(-1)}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <ArrowLeft size={20} />
+              <button onClick={() => navigate('/')} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                &#8592;
               </button>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">{stock.symbol}</h1>
-                <p className="text-sm text-gray-500">{stock.fullName}</p>
+                <h1 className="text-xl font-bold text-gray-900">{name}</h1>
+                <p className="text-sm text-gray-500">{symbol}</p>
               </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                Add to Watchlist
-              </button>
             </div>
           </div>
         </div>
       </div>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Price Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white rounded-xl shadow-sm p-6"
-            >
+            <div className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900">₹{stock.price ? stock.price.toLocaleString() : 'N/A'}</h2>
+                  <h2 className="text-3xl font-bold text-gray-900">₹{price ? price.toLocaleString() : 'N/A'}</h2>
                   <div className="flex items-center space-x-2 mt-2">
-                    {stock.percent >= 0 ? (
-                      <TrendingUp size={16} className="text-green-600" />
-                    ) : (
-                      <TrendingDown size={16} className="text-red-600" />
-                    )}
-                    <span className={`text-sm font-semibold ${stock.percent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {stock.percent >= 0 ? '+' : ''}{typeof stock.percent === 'number' ? stock.percent.toFixed(2) : 'N/A'}%
-                    </span>
+                    <span className={`text-sm font-semibold ${percent >= 0 ? 'text-green-600' : 'text-red-600'}`}>{percent >= 0 ? '+' : ''}{typeof percent === 'number' ? percent.toFixed(2) : 'N/A'}%</span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-500">Volume</p>
-                  <p className="font-semibold">{stock.volume}</p>
-                </div>
               </div>
-              
-              {/* Chart */}
               <div className="h-64">
                 <div className="flex gap-2 my-4">
                   {timeRanges.map((r) => (
                     <button
-                      key={r}
-                      className={`px-3 py-1 rounded ${selectedRange === r ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+                      key={r.label}
+                      className={`px-3 py-1 rounded ${selectedRange.label === r.label ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
                       onClick={() => setSelectedRange(r)}
                     >
-                      {r}
+                      {r.label}
                     </button>
                   ))}
                 </div>
-                <Line data={chartData} options={chartOptions} />
+                {/* Chart rendering */}
+                <Line
+                  data={{
+                    labels: lineChartData.labels,
+                    datasets: lineChartData.datasets,
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                      mode: 'index',
+                      intersect: false,
+                      axis: 'x',
+                    },
+                    plugins: {
+                      legend: { display: false },
+                      tooltip: {
+                        enabled: true,
+                        backgroundColor: '#222',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: '#222',
+                        borderWidth: 1,
+                        cornerRadius: 6,
+                        padding: 12,
+                        callbacks: {
+                          label: ctx => {
+                            const price = ctx.parsed.y;
+                            const idx = ctx.dataIndex;
+                            const range = selectedRange.label;
+                            const dateObj = ctx.chart.data.labels[idx];
+                            let dateStr = '';
+                            if (range === '1D') {
+                              dateStr = `${dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}, ${dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+                            } else if (range === '1W' || range === '1M') {
+                              dateStr = dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+                            } else {
+                              dateStr = dateObj.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+                            }
+                            return `₹${price} | ${dateStr}`;
+                          },
+                        },
+                        displayColors: false,
+                        caretSize: 0,
+                        yAlign: 'bottom',
+                        mode: 'index',
+                        intersect: false,
+                      },
+                    },
+                    scales: {
+                      x: {
+                        display: false,
+                        grid: { display: false },
+                        ticks: { display: false },
+                        type: 'time',
+                        time: {
+                          tooltipFormat: 'PPpp',
+                        },
+                      },
+                      y: {
+                        display: false,
+                        grid: { display: false },
+                        ticks: { display: false },
+                        min: lineChartData.datasets[0]?.data ? Math.min(...lineChartData.datasets[0].data) * 0.98 : undefined,
+                        max: lineChartData.datasets[0]?.data ? Math.max(...lineChartData.datasets[0].data) * 1.02 : undefined,
+                      },
+                    },
+                    layout: {
+                      padding: {
+                        left: 10,
+                        right: 10,
+                        top: 30,
+                        bottom: 20,
+                      },
+                    },
+                  }}
+                  height={250}
+                />
               </div>
-            </motion.div>
-
-            {/* Tabs */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white rounded-xl shadow-sm"
-            >
+            </div>
+            <div className="bg-white rounded-xl shadow-sm">
               <div className="border-b border-gray-200">
                 <nav className="flex space-x-8 px-6">
                   {['overview', 'financials', 'news', 'history'].map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => setActiveTab(tab)}
-                      className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
-                        activeTab === tab
-                          ? 'border-blue-500 text-blue-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                      }`}
-                    >
-                      {tab}
-                    </button>
+                    <button key={tab} onClick={() => setActiveTab(tab)} className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${activeTab === tab ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>{tab}</button>
                   ))}
                 </nav>
               </div>
-              
               <div className="p-6">
-                {activeTab === 'overview' && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Company Overview</h3>
-                    <p className="text-gray-600">
-                      {stock.fullName} is a leading company in the Indian market. The stock has shown 
-                      {stock.percent >= 0 ? ' positive ' : ' negative '} 
-                      performance with a {typeof stock.percent === 'number' ? stock.percent.toFixed(2) : 'N/A'}% change today.
-                    </p>
-                    <div className="grid grid-cols-2 gap-4 mt-6">
-                      <div>
-                        <p className="text-sm text-gray-500">Market Cap</p>
-                        <p className="font-semibold">{stock.marketCap}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Volume</p>
-                        <p className="font-semibold">{stock.volume}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {activeTab === 'financials' && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Financial Metrics</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <p className="text-sm text-gray-500">P/E Ratio</p>
-                        <p className="font-semibold">25.4</p>
-                      </div>
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <p className="text-sm text-gray-500">EPS</p>
-                        <p className="font-semibold">₹125.6</p>
-                      </div>
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <p className="text-sm text-gray-500">ROE</p>
-                        <p className="font-semibold">18.2%</p>
-                      </div>
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <p className="text-sm text-gray-500">Debt/Equity</p>
-                        <p className="font-semibold">0.3</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {activeTab === 'news' && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Latest News</h3>
-                    <div className="space-y-4">
-                      <div className="border-l-4 border-blue-500 pl-4">
-                        <h4 className="font-medium text-gray-900">Company Reports Strong Q3 Results</h4>
-                        <p className="text-sm text-gray-600 mt-1">2 hours ago</p>
-                      </div>
-                      <div className="border-l-4 border-green-500 pl-4">
-                        <h4 className="font-medium text-gray-900">New Product Launch Announced</h4>
-                        <p className="text-sm text-gray-600 mt-1">1 day ago</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {activeTab === 'history' && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Trading History</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-sm text-gray-600">52 Week High</span>
-                        <span className="font-semibold">₹3,450</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-sm text-gray-600">52 Week Low</span>
-                        <span className="font-semibold">₹2,890</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-sm text-gray-600">Average Volume</span>
-                        <span className="font-semibold">2.1M</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <div className="text-gray-500">(Tab content placeholder)</div>
               </div>
-            </motion.div>
+            </div>
           </div>
-
-          {/* Sidebar */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            className="space-y-6"
-          >
-            {/* Buy/Sell Card */}
+          <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Trade</h3>
+              {tradeAlert && <div className="mb-2 p-2 bg-green-100 text-green-700 rounded">{tradeAlert}</div>}
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
-                  <input
-                    type="number"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter quantity"
-                  />
+                  <input type="number" min={1} value={quantity} onChange={e => setQuantity(Number(e.target.value))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter quantity" />
+                </div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-gray-500">Total Cost</span>
+                  <span className="font-semibold">₹{price && quantity ? (price * quantity).toLocaleString() : '0'}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <button className="bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2">
-                    <Plus size={16} />
-                    <span>Buy</span>
-                  </button>
-                  <button className="bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center space-x-2">
-                    <Minus size={16} />
-                    <span>Sell</span>
-                  </button>
+                  <button className="bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2" onClick={() => handleTrade('buy')}><span>Buy</span></button>
+                  <button className="bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center space-x-2" onClick={() => handleTrade('sell')}><span>Sell</span></button>
                 </div>
               </div>
             </div>
-
-            {/* Market Stats */}
             <div className="bg-white rounded-xl shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Market Stats</h3>
               <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Open</span>
-                  <span className="font-semibold">₹{stock.price ? stock.price.toLocaleString() : 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">High</span>
-                  <span className="font-semibold">₹{stock.price ? (stock.price * 1.02).toLocaleString() : 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Low</span>
-                  <span className="font-semibold">₹{stock.price ? (stock.price * 0.98).toLocaleString() : 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Market Cap</span>
-                  <span className="font-semibold">{stock.marketCap}</span>
-                </div>
+                <div className="flex justify-between"><span className="text-sm text-gray-600">Open</span><span className="font-semibold">-</span></div>
+                <div className="flex justify-between"><span className="text-sm text-gray-600">High</span><span className="font-semibold">-</span></div>
+                <div className="flex justify-between"><span className="text-sm text-gray-600">Low</span><span className="font-semibold">-</span></div>
+                <div className="flex justify-between"><span className="text-sm text-gray-600">Market Cap</span><span className="font-semibold">-</span></div>
+                <div className="flex justify-between"><span className="text-sm text-gray-600">Volume</span><span className="font-semibold">-</span></div>
+                <div className="flex justify-between"><span className="text-sm text-gray-600">Dividend Yield</span><span className="font-semibold">-</span></div>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
