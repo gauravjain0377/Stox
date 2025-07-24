@@ -1,0 +1,1179 @@
+[
+    {
+      "company_name": "Reliance Industries Ltd",
+      "symbol": "RELIANCE",
+      "sector": "Oil & Gas - Refining & Marketing",
+      "about": "Reliance Industries is a diversified Indian conglomerate with operations in energy, petrochemicals, retail, and telecommunications. It is a leader in India's oil and gas industry and owns the Jio telecom network, renowned for revolutionising India’s digital connectivity and retail sectors.",
+      "financials_2025": {
+        "market_cap_crore": 1911867.73,
+        "close_price": 1402.90,
+        "pe_ratio": 27.45,
+        "pb_ratio": 2.07,
+        "roe_percent": 7.94,
+        "roce_percent": 9.60,
+        "latest_returns": {
+          "1_month": -3.35,
+          "6_month": 12.57,
+          "1_year": -6.20
+        }
+      },
+      "news_2025": [
+        "Reliance Industries continues to expand its digital businesses while strengthening its oil and gas core.",
+        "Jio platforms have been pivotal in India's rollout of 5G networks during 2025, with retail expansion into tier-2 and tier-3 cities.",
+        "The company reported solid performance despite industry headwinds due to diversification strategies."
+      ],
+      "history": "Founded by Dhirubhai Ambani, Reliance Industries has grown from a small textile manufacturer into one of India's largest conglomerates, pioneering significant changes in the energy and retail sectors."
+    },
+    {
+      "company_name": "HDFC Bank Ltd",
+      "symbol": "HDFCBANK",
+      "sector": "Private Banks",
+      "about": "HDFC Bank is one of India's premier private-sector banks offering a comprehensive range of banking and financial services. Known for innovation in digital banking, it specializes in both retail and corporate services, including loans and wealth management.",
+      "financials_2025": {
+        "market_cap_crore": 1539023.52,
+        "close_price": 2014.20,
+        "pe_ratio": 21.74,
+        "pb_ratio": 2.86,
+        "roe_percent": 14.05,
+        "roce_percent": 5.70,
+        "latest_returns": {
+          "1_month": 2.96,
+          "6_month": 22.09,
+          "1_year": 25.57
+        }
+      },
+      "news_2025": [
+        "HDFC Bank solidified its leadership in Indian banking, with a strong push toward digitization and rural financial inclusion.",
+        "Quarterly results for July 2025 indicated growth in both retail and wholesale lending streams."
+      ],
+      "history": "Founded in 1994, HDFC Bank has become a benchmark for technology-driven customer banking, ranking as one of India’s most valuable banks."
+    },
+    {
+      "company_name": "ICICI Bank Ltd",
+      "symbol": "ICICIBANK",
+      "sector": "Private Banks",
+      "about": "ICICI Bank is a top-tier private sector bank, offering retail and corporate banking products. The bank is recognized for its technology-led, customer-centric approach and its diverse lending, investment, and insurance services.",
+      "financials_2025": {
+        "market_cap_crore": 1051146.82,
+        "close_price": 1483.40,
+        "pe_ratio": 20.66,
+        "pb_ratio": 3.89,
+        "roe_percent": 18.02,
+        "roce_percent": 7.87,
+        "latest_returns": {
+          "1_month": 3.97,
+          "6_month": 22.68,
+          "1_year": 21.29
+        }
+      },
+      "news_2025": [
+        "ICICI Bank posted record profits in the quarter ended June 2025, aided by surge in credit demand.",
+        "The bank continues aggressive branch expansion in rural and semi-urban markets this year."
+      ],
+      "history": "Originated from Industrial Credit and Investment Corporation of India, ICICI Bank was one of the first Indian banks to implement full-scale digital banking."
+    },
+    {
+      "company_name": "Tata Consultancy Services Ltd",
+      "symbol": "TCS",
+      "sector": "IT Services & Consulting",
+      "about": "Tata Consultancy Services is a global leader in IT, consulting, and business solutions. Part of the Tata Group, TCS specializes in software development, digital transformation, and AI-driven enterprise solutions, serving clients across banking, healthcare, and manufacturing.",
+      "financials_2025": {
+        "market_cap_crore": 1143170.93,
+        "close_price": 3148.00,
+        "pe_ratio": 23.54,
+        "pb_ratio": 11.94,
+        "roe_percent": 51.90,
+        "roce_percent": 62.59,
+        "latest_returns": {
+          "1_month": -7.54,
+          "6_month": -24.19,
+          "1_year": -26.90
+        }
+      },
+      "news_2025": [
+        "TCS maintained substantial offshore revenue growth, with increased focus on cloud and AI product segments.",
+        "2025 saw major contracts with European and North American clients for digital transformation."
+      ],
+      "history": "Established in 1968, TCS played a key role in making India a global IT hub. It is regarded as one of the world’s most influential software and services companies."
+    },
+    {
+      "company_name": "Bharti Airtel Ltd",
+      "symbol": "BHARTIARTL",
+      "sector": "Telecom Services",
+      "about": "Bharti Airtel is a leading Indian telecom operator, offering mobile, broadband, and digital TV services. Renowned for its 4G and 5G rollout, Airtel has fostered high-speed digital adoption in India and internationally.",
+      "financials_2025": {
+        "market_cap_crore": 1143101.70,
+        "close_price": 1936.10,
+        "pe_ratio": 34.07,
+        "pb_ratio": 7.45,
+        "roe_percent": 25.91,
+        "roce_percent": 18.53,
+        "latest_returns": {
+          "1_month": -0.39,
+          "6_month": 17.71,
+          "1_year": 33.05
+        }
+      },
+      "news_2025": [
+        "Bharti Airtel completed India’s largest 5G network expansion by July 2025.",
+        "International subscriber growth and digital service subscriptions propelled FY 2025 results."
+      ],
+      "history": "Founded in 1995, Airtel played an instrumental role in making mobile and internet connectivity affordable and accessible across India."
+    },
+    {
+      "company_name": "Infosys Ltd",
+      "symbol": "INFY",
+      "sector": "IT Services & Consulting",
+      "about": "Infosys is a global leader in consulting, technology, and outsourcing services, with over four decades of experience in managing the systems and workings of global enterprises. Infosys pioneered the Global Delivery Model and is a leader in next-generation digital services.",
+      "financials_2025": {
+        "market_cap_crore": 735000.00,
+        "close_price": 1670.00,
+        "pe_ratio": 25.12,
+        "pb_ratio": 8.30,
+        "roe_percent": 34.05,
+        "roce_percent": 39.25,
+        "latest_returns": {
+          "1_month": -4.12,
+          "6_month": 8.45,
+          "1_year": 18.32
+        }
+      },
+      "news_2025": [
+        "Infosys reported robust growth in cloud and digital services, with major deals signed in Europe and the US.",
+        "The company continues to invest in AI and automation, driving efficiency for global clients."
+      ],
+      "history": "Infosys was founded in 1981 in Pune by seven engineers. It has grown into India’s second-largest IT company, known for its rigorous corporate governance and ethical business practices."
+    },
+    {
+      "company_name": "ITC Ltd",
+      "symbol": "ITC",
+      "sector": "Diversified FMCG",
+      "about": "ITC is a diversified conglomerate with businesses spanning fast-moving consumer goods, hotels, paperboards, packaging, agri-business, and information technology. It is one of India's largest consumer goods companies, with iconic brands like Aashirvaad, Sunfeast, and Classmate.",
+      "financials_2025": {
+        "market_cap_crore": 595800.00,
+        "close_price": 489.00,
+        "pe_ratio": 32.76,
+        "pb_ratio": 8.75,
+        "roe_percent": 26.82,
+        "roce_percent": 29.12,
+        "latest_returns": {
+          "1_month": 1.24,
+          "6_month": 16.32,
+          "1_year": 27.45
+        }
+      },
+      "news_2025": [
+        "ITC expanded its FMCG portfolio with new launches in health and wellness segments.",
+        "The company’s hotels division saw a rebound in domestic and international travel post-pandemic."
+      ],
+      "history": "ITC originally started as the Imperial Tobacco Company in 1910. Over the decades, it has diversified beyond tobacco into FMCG, hospitality, and agri-business, becoming a symbol of Indian entrepreneurship."
+    },
+    {
+      "company_name": "Kotak Mahindra Bank Ltd",
+      "symbol": "KOTAKBANK",
+      "sector": "Private Banks",
+      "about": "Kotak Mahindra Bank is a leading Indian private sector bank offering a wide range of banking products and financial services for retail and corporate customers. It is known for its customer-centric approach and conservative risk management.",
+      "financials_2025": {
+        "market_cap_crore": 390200.00,
+        "close_price": 1980.00,
+        "pe_ratio": 24.56,
+        "pb_ratio": 3.21,
+        "roe_percent": 13.45,
+        "roce_percent": 6.78,
+        "latest_returns": {
+          "1_month": 2.14,
+          "6_month": 19.32,
+          "1_year": 34.56
+        }
+      },
+      "news_2025": [
+        "Kotak Mahindra Bank reported strong deposit growth, outpacing industry averages.",
+        "The bank is focusing on digital innovation, with significant investments in mobile banking platforms."
+      ],
+      "history": "Founded in 1985, Kotak Mahindra Finance started as a non-banking finance company before converting to a full-service bank in 2003. It is recognized for its prudent lending and digital transformation."
+    },
+    {
+      "company_name": "Larsen & Toubro Ltd",
+      "symbol": "LT",
+      "sector": "Construction & Engineering",
+      "about": "Larsen & Toubro (L&T) is a major Indian multinational in technology, engineering, construction, manufacturing, and financial services. L&T is involved in infrastructure projects across the globe and is a bellwether for India’s industrial and construction sector.",
+      "financials_2025": {
+        "market_cap_crore": 381500.00,
+        "close_price": 3410.00,
+        "pe_ratio": 28.76,
+        "pb_ratio": 3.89,
+        "roe_percent": 11.32,
+        "roce_percent": 12.45,
+        "latest_returns": {
+          "1_month": -2.34,
+          "6_month": 14.67,
+          "1_year": 25.89
+        }
+      },
+      "news_2025": [
+        "L&T secured several large infrastructure contracts in the Middle East and India.",
+        "The company is investing in green energy and sustainable construction technologies."
+      ],
+      "history": "Established in 1938 by two Danish engineers, L&T has grown into India’s most respected engineering conglomerate, playing a vital role in nation-building projects."
+    },
+    {
+      "company_name": "State Bank of India",
+      "symbol": "SBIN",
+      "sector": "Public Sector Banks",
+      "about": "SBI is India's largest public sector bank, offering a comprehensive suite of banking products and financial services to retail and corporate customers.",
+      "financials_2025": {
+        "market_cap_crore": 526800,
+        "close_price": 890.00,
+        "pe_ratio": 18.76,
+        "pb_ratio": 1.87,
+        "roe_percent": 14.56,
+        "roce_percent": 6.78,
+        "latest_returns": {
+          "1_month": 3.24,
+          "6_month": 24.56,
+          "1_year": 28.90
+        }
+      },
+      "news_2025": [
+        "SBI increased its digital transactions by 30% in 2025.",
+        "The bank is expanding its rural banking network."
+      ],
+      "history": "SBI traces its roots to 1806 and was nationalized in 1955. It is at the heart of India’s banking system."
+    },
+    {
+      "company_name": "Axis Bank Ltd",
+      "symbol": "AXISBANK",
+      "sector": "Private Banks",
+      "about": "Axis Bank is a leading private sector bank in India, offering a wide range of financial products and services.",
+      "financials_2025": {
+        "market_cap_crore": 310200,
+        "close_price": 1260.00,
+        "pe_ratio": 22.67,
+        "pb_ratio": 2.56,
+        "roe_percent": 13.45,
+        "roce_percent": 7.89,
+        "latest_returns": {
+          "1_month": 2.45,
+          "6_month": 18.67,
+          "1_year": 32.45
+        }
+      },
+      "news_2025": [
+        "Axis Bank reported strong growth in retail loans.",
+        "The bank is investing heavily in fintech partnerships."
+      ],
+      "history": "Incorporated in 1993, Axis Bank has grown rapidly through innovation and customer focus."
+    },
+    {
+      "company_name": "Hindustan Unilever Ltd",
+      "symbol": "HINDUNILVR",
+      "sector": "FMCG",
+      "about": "HUL is India’s largest FMCG company, known for brands like Dove, Surf Excel, and Lifebuoy. It is a subsidiary of Unilever.",
+      "financials_2025": {
+        "market_cap_crore": 589200,
+        "close_price": 2565.00,
+        "pe_ratio": 62.34,
+        "pb_ratio": 22.56,
+        "roe_percent": 76.34,
+        "roce_percent": 82.45,
+        "latest_returns": {
+          "1_month": 1.45,
+          "6_month": 12.34,
+          "1_year": 24.56
+        }
+      },
+      "news_2025": [
+        "HUL launched sustainable packaging initiatives.",
+        "The company continued to post steady growth in rural and urban markets."
+      ],
+      "history": "Founded in 1933, HUL has been a leader in India’s consumer goods sector for nearly a century."
+    },
+    {
+      "company_name": "Bajaj Finance Ltd",
+      "symbol": "BAJFINANCE",
+      "sector": "NBFC",
+      "about": "Bajaj Finance is a leading non-banking financial company in India, offering consumer and SME financing.",
+      "financials_2025": {
+        "market_cap_crore": 432100,
+        "close_price": 8900.00,
+        "pe_ratio": 38.76,
+        "pb_ratio": 9.45,
+        "roe_percent": 22.34,
+        "roce_percent": 16.78,
+        "latest_returns": {
+          "1_month": -5.67,
+          "6_month": 8.90,
+          "1_year": 14.56
+        }
+      },
+      "news_2025": [
+        "Bajaj Finance expanded its digital lending platform.",
+        "The company maintained strong asset quality despite economic headwinds."
+      ],
+      "history": "Established in 1987, Bajaj Finance is known for its innovation in consumer credit."
+    },
+    {
+      "company_name": "HCL Technologies Ltd",
+      "symbol": "HCLTECH",
+      "sector": "IT Services & Consulting",
+      "about": "HCL Technologies is a global IT services company, specializing in digital, analytics, cloud, and engineering services.",
+      "financials_2025": {
+        "market_cap_crore": 367800,
+        "close_price": 1450.00,
+        "pe_ratio": 21.34,
+        "pb_ratio": 5.67,
+        "roe_percent": 24.56,
+        "roce_percent": 29.87,
+        "latest_returns": {
+          "1_month": -2.34,
+          "6_month": 6.78,
+          "1_year": 12.34
+        }
+      },
+      "news_2025": [
+        "HCLTech won several large deals in Europe.",
+        "The company is investing in AI and cybersecurity capabilities."
+      ],
+      "history": "Founded in 1976, HCLTech is one of India’s original IT success stories."
+    },
+    {
+      "company_name": "Maruti Suzuki India Ltd",
+      "symbol": "MARUTI",
+      "sector": "Automobile",
+      "about": "Maruti Suzuki is India’s largest car manufacturer, known for affordable, fuel-efficient vehicles.",
+      "financials_2025": {
+        "market_cap_crore": 345600,
+        "close_price": 12450.00,
+        "pe_ratio": 28.45,
+        "pb_ratio": 4.56,
+        "roe_percent": 15.67,
+        "roce_percent": 18.90,
+        "latest_returns": {
+          "1_month": 5.67,
+          "6_month": 24.56,
+          "1_year": 36.78
+        }
+      },
+      "news_2025": [
+        "Maruti launched new electric vehicle models.",
+        "The company continued to dominate India’s passenger vehicle market."
+      ],
+      "history": "Established in 1981 as a joint venture, Maruti revolutionized car ownership in India."
+    },
+    {
+      "company_name": "Asian Paints Ltd",
+      "symbol": "ASIANPAINT",
+      "sector": "Paints",
+      "about": "Asian Paints is India’s leading paint company, with a strong presence in decorative and industrial paints.",
+      "financials_2025": {
+        "market_cap_crore": 312500,
+        "close_price": 3450.00,
+        "pe_ratio": 72.34,
+        "pb_ratio": 18.90,
+        "roe_percent": 28.45,
+        "roce_percent": 32.67,
+        "latest_returns": {
+          "1_month": 2.34,
+          "6_month": 18.90,
+          "1_year": 34.56
+        }
+      },
+      "news_2025": [
+        "Asian Paints expanded its international footprint.",
+        "The company launched eco-friendly paint products."
+      ],
+      "history": "Founded in 1942, Asian Paints is synonymous with quality and innovation in the Indian paint industry."
+    },
+    {
+      "company_name": "Sun Pharmaceutical Industries Ltd",
+      "symbol": "SUNPHARMA",
+      "sector": "Pharmaceuticals",
+      "about": "Sun Pharma is India’s largest pharmaceutical company, specializing in generic drugs and specialty therapies.",
+      "financials_2025": {
+        "market_cap_crore": 298700,
+        "close_price": 1020.00,
+        "pe_ratio": 34.56,
+        "pb_ratio": 4.78,
+        "roe_percent": 15.67,
+        "roce_percent": 18.90,
+        "latest_returns": {
+          "1_month": -3.45,
+          "6_month": 12.34,
+          "1_year": 24.56
+        }
+      },
+      "news_2025": [
+        "Sun Pharma received FDA approvals for several new drugs.",
+        "The company is expanding its presence in the US and Europe."
+      ],
+      "history": "Founded in 1983, Sun Pharma has grown through acquisitions and innovation."
+    },
+    {
+      "company_name": "Titan Company Ltd",
+      "symbol": "TITAN",
+      "sector": "Consumer Durables",
+      "about": "Titan is a leading Indian consumer durables company, known for its watches, jewelry, and eyewear brands.",
+      "financials_2025": {
+        "market_cap_crore": 245600,
+        "close_price": 3450.00,
+        "pe_ratio": 78.90,
+        "pb_ratio": 24.56,
+        "roe_percent": 32.45,
+        "roce_percent": 38.90,
+        "latest_returns": {
+          "1_month": 3.45,
+          "6_month": 24.56,
+          "1_year": 45.67
+        }
+      },
+      "news_2025": [
+        "Titan expanded its retail footprint across India.",
+        "The company reported strong growth in premium jewelry segments."
+      ],
+      "history": "Established in 1984, Titan is part of the Tata Group and has transformed India’s jewelry and watch markets."
+    },
+    {
+      "company_name": "UltraTech Cement Ltd",
+      "symbol": "ULTRACEMCO",
+      "sector": "Cement",
+      "about": "UltraTech is India’s largest cement and ready-mix concrete company, with a pan-India presence.",
+      "financials_2025": {
+        "market_cap_crore": 234500,
+        "close_price": 9800.00,
+        "pe_ratio": 28.45,
+        "pb_ratio": 3.67,
+        "roe_percent": 12.34,
+        "roce_percent": 14.56,
+        "latest_returns": {
+          "1_month": -1.23,
+          "6_month": 14.56,
+          "1_year": 28.90
+        }
+      },
+      "news_2025": [
+        "UltraTech commissioned new plants in central India.",
+        "The company is focusing on sustainable and green cement products."
+      ],
+      "history": "Founded in 1987, UltraTech has grown through acquisitions and capacity expansion."
+    },
+    {
+      "company_name": "NTPC Ltd",
+      "symbol": "NTPC",
+      "sector": "Power",
+      "about": "NTPC is India’s largest integrated power producer, with a focus on thermal and renewable energy.",
+      "financials_2025": {
+        "market_cap_crore": 221300,
+        "close_price": 340.00,
+        "pe_ratio": 14.56,
+        "pb_ratio": 1.67,
+        "roe_percent": 10.45,
+        "roce_percent": 12.34,
+        "latest_returns": {
+          "1_month": 2.34,
+          "6_month": 18.90,
+          "1_year": 32.45
+        }
+      },
+      "news_2025": [
+        "NTPC expanded its renewable energy portfolio.",
+        "The company is investing in green hydrogen projects."
+      ],
+      "history": "Established in 1975, NTPC has been central to India’s power sector development."
+    },
+    {
+      "company_name": "Tata Motors Ltd",
+      "symbol": "TATAMOTORS",
+      "sector": "Automobile",
+      "about": "Tata Motors is a leading Indian automobile manufacturer, producing cars, trucks, buses, and defense vehicles.",
+      "financials_2025": {
+        "market_cap_crore": 212300,
+        "close_price": 890.00,
+        "pe_ratio": 18.90,
+        "pb_ratio": 3.45,
+        "roe_percent": 11.23,
+        "roce_percent": 14.56,
+        "latest_returns": {
+          "1_month": 4.56,
+          "6_month": 26.78,
+          "1_year": 45.67
+        }
+      },
+      "news_2025": [
+        "Tata Motors launched new electric vehicle models.",
+        "The company’s Jaguar Land Rover division posted strong growth."
+      ],
+      "history": "Founded in 1945, Tata Motors is part of the Tata Group and is a pioneer in Indian automotive manufacturing."
+    },
+    {
+      "company_name": "Power Grid Corporation of India Ltd",
+      "symbol": "POWERGRID",
+      "sector": "Power",
+      "about": "PowerGrid is India’s principal electric power transmission utility, operating the national grid.",
+      "financials_2025": {
+        "market_cap_crore": 198700,
+        "close_price": 320.00,
+        "pe_ratio": 12.34,
+        "pb_ratio": 2.34,
+        "roe_percent": 14.56,
+        "roce_percent": 16.78,
+        "latest_returns": {
+          "1_month": 1.23,
+          "6_month": 12.34,
+          "1_year": 24.56
+        }
+      },
+      "news_2025": [
+        "PowerGrid completed several interstate transmission projects.",
+        "The company is investing in smart grid technologies."
+      ],
+      "history": "Established in 1989, PowerGrid has been instrumental in India’s electrification."
+    },
+    {
+      "company_name": "Tata Steel Ltd",
+      "symbol": "TATASTEEL",
+      "sector": "Metals",
+      "about": "Tata Steel is one of India’s largest steel producers, with operations in India, Europe, and Southeast Asia.",
+      "financials_2025": {
+        "market_cap_crore": 156700,
+        "close_price": 150.00,
+        "pe_ratio": 8.90,
+        "pb_ratio": 1.23,
+        "roe_percent": 10.45,
+        "roce_percent": 12.34,
+        "latest_returns": {
+          "1_month": -2.34,
+          "6_month": 8.90,
+          "1_year": 24.56
+        }
+      },
+      "news_2025": [
+        "Tata Steel focused on cost efficiency and value-added products.",
+        "The company expanded its presence in the automotive steel segment."
+      ],
+      "history": "Founded in 1907, Tata Steel is one of Asia’s oldest and largest steel companies."
+    },
+    {
+      "company_name": "JSW Steel Ltd",
+      "symbol": "JSWSTEEL",
+      "sector": "Metals",
+      "about": "JSW Steel is a leading Indian steel producer, known for its scale, efficiency, and sustainability initiatives.",
+      "financials_2025": {
+        "market_cap_crore": 154300,
+        "close_price": 870.00,
+        "pe_ratio": 14.56,
+        "pb_ratio": 2.34,
+        "roe_percent": 12.34,
+        "roce_percent": 15.67,
+        "latest_returns": {
+          "1_month": 1.23,
+          "6_month": 18.90,
+          "1_year": 32.45
+        }
+      },
+      "news_2025": [
+        "JSW Steel invested in new capacity and downstream facilities.",
+        "The company is focused on reducing carbon emissions."
+      ],
+      "history": "Founded in 1982, JSW Steel has grown rapidly through acquisitions and greenfield projects."
+    },
+    {
+      "company_name": "Nestle India Ltd",
+      "symbol": "NESTLEIND",
+      "sector": "FMCG",
+      "about": "Nestle India is a leading food and beverage company, offering popular brands like Maggi, KitKat, and Nescafé.",
+      "financials_2025": {
+        "market_cap_crore": 245600,
+        "close_price": 24500.00,
+        "pe_ratio": 78.90,
+        "pb_ratio": 45.67,
+        "roe_percent": 98.90,
+        "roce_percent": 105.67,
+        "latest_returns": {
+          "1_month": 3.45,
+          "6_month": 24.56,
+          "1_year": 45.67
+        }
+      },
+      "news_2025": [
+        "Nestle India launched several health-oriented products.",
+        "The company continued to post strong growth in both urban and rural markets."
+      ],
+      "history": "Nestle has been present in India since 1912 and is a household name in the country."
+    },
+    {
+      "company_name": "HDFC Life Insurance Company Ltd",
+      "symbol": "HDFCLIFE",
+      "sector": "Insurance",
+      "about": "HDFC Life is one of India’s leading life insurance companies, offering a range of protection and savings products.",
+      "financials_2025": {
+        "market_cap_crore": 123400,
+        "close_price": 680.00,
+        "pe_ratio": 45.67,
+        "pb_ratio": 12.34,
+        "roe_percent": 22.34,
+        "roce_percent": 28.90,
+        "latest_returns": {
+          "1_month": 2.34,
+          "6_month": 15.67,
+          "1_year": 32.45
+        }
+      },
+      "news_2025": [
+        "HDFC Life launched innovative digital insurance products.",
+        "The company reported robust growth in new business premiums."
+      ],
+      "history": "Established in 2000, HDFC Life is a joint venture between HDFC Ltd and Standard Life Aberdeen."
+    },
+    {
+      "company_name": "Tech Mahindra Ltd",
+      "symbol": "TECHM",
+      "sector": "IT Services & Consulting",
+      "about": "Tech Mahindra provides IT services and consulting, specializing in telecom, software, and digital transformation.",
+      "financials_2025": {
+        "market_cap_crore": 112300,
+        "close_price": 1250.00,
+        "pe_ratio": 22.34,
+        "pb_ratio": 4.56,
+        "roe_percent": 18.90,
+        "roce_percent": 24.56,
+        "latest_returns": {
+          "1_month": -2.34,
+          "6_month": 6.78,
+          "1_year": 14.56
+        }
+      },
+      "news_2025": [
+        "Tech Mahindra expanded its 5G and cloud services.",
+        "The company signed strategic partnerships with global telecom providers."
+      ],
+      "history": "Founded in 1986, Tech Mahindra is part of the Mahindra Group and is a major player in global IT services."
+    },
+    {
+      "company_name": "Wipro Ltd",
+      "symbol": "WIPRO",
+      "sector": "IT Services & Consulting",
+      "about": "Wipro is a global IT, consulting, and business process services company, with a strong presence in technology and outsourcing.",
+      "financials_2025": {
+        "market_cap_crore": 234500,
+        "close_price": 450.00,
+        "pe_ratio": 23.45,
+        "pb_ratio": 4.67,
+        "roe_percent": 18.90,
+        "roce_percent": 24.56,
+        "latest_returns": {
+          "1_month": 1.23,
+          "6_month": 12.34,
+          "1_year": 18.90
+        }
+      },
+      "news_2025": [
+        "Wipro continued to invest in AI and automation.",
+        "The company expanded its presence in the Middle East and Africa."
+      ],
+      "history": "Founded in 1945, Wipro is one of India’s original IT giants."
+    },
+    {
+      "company_name": "Bajaj Finserv Ltd",
+      "symbol": "BAJAJFINSV",
+      "sector": "NBFC",
+      "about": "Bajaj Finserv is a financial services company offering lending, insurance, and wealth management solutions.",
+      "financials_2025": {
+        "market_cap_crore": 212300,
+        "close_price": 1750.00,
+        "pe_ratio": 34.56,
+        "pb_ratio": 8.90,
+        "roe_percent": 22.34,
+        "roce_percent": 28.90,
+        "latest_returns": {
+          "1_month": 3.45,
+          "6_month": 24.56,
+          "1_year": 45.67
+        }
+      },
+      "news_2025": [
+        "Bajaj Finserv launched digital lending products for SMEs.",
+        "The company reported strong growth in insurance and lending."
+      ],
+      "history": "Established in 2007, Bajaj Finserv is a subsidiary of Bajaj Holdings and is known for innovation in financial products."
+    },
+    {
+      "company_name": "Grasim Industries Ltd",
+      "symbol": "GRASIM",
+      "sector": "Diversified",
+      "about": "Grasim is a diversified company with interests in textiles, cement, chemicals, and financial services.",
+      "financials_2025": {
+        "market_cap_crore": 115600,
+        "close_price": 1900.00,
+        "pe_ratio": 18.90,
+        "pb_ratio": 2.34,
+        "roe_percent": 12.34,
+        "roce_percent": 15.67,
+        "latest_returns": {
+          "1_month": 1.23,
+          "6_month": 14.56,
+          "1_year": 28.90
+        }
+      },
+      "news_2025": [
+        "Grasim expanded its specialty chemical business.",
+        "The company is investing in green technologies."
+      ],
+      "history": "Founded in 1947, Grasim is a flagship company of the Aditya Birla Group."
+    },
+    {
+      "company_name": "Adani Green Energy Ltd",
+      "symbol": "ADANIGREEN",
+      "sector": "Power",
+      "about": "Adani Green Energy is India’s largest renewable energy company, with a focus on solar and wind power projects.",
+      "financials_2025": {
+        "market_cap_crore": 345600,
+        "close_price": 2100.00,
+        "pe_ratio": 145.67,
+        "pb_ratio": 34.56,
+        "roe_percent": 18.90,
+        "roce_percent": 24.56,
+        "latest_returns": {
+          "1_month": -5.67,
+          "6_month": 12.34,
+          "1_year": 78.90
+        }
+      },
+      "news_2025": [
+        "Adani Green commissioned several large solar parks.",
+        "The company is targeting 45 GW of renewable capacity by 2030."
+      ],
+      "history": "Established in 2015, Adani Green has rapidly become a leader in India’s renewable energy transition."
+    },
+    {
+      "company_name": "Adani Ports and SEZ Ltd",
+      "symbol": "ADANIPORTS",
+      "sector": "Infrastructure",
+      "about": "Adani Ports is India’s largest port and logistics company, operating a network of ports and logistics parks.",
+      "financials_2025": {
+        "market_cap_crore": 256700,
+        "close_price": 980.00,
+        "pe_ratio": 34.56,
+        "pb_ratio": 6.78,
+        "roe_percent": 18.90,
+        "roce_percent": 24.56,
+        "latest_returns": {
+          "1_month": 3.45,
+          "6_month": 24.56,
+          "1_year": 45.67
+        }
+      },
+      "news_2025": [
+        "Adani Ports expanded its cargo handling capacity.",
+        "The company is investing in port modernization and automation."
+      ],
+      "history": "Founded in 1998, Adani Ports has transformed India’s maritime infrastructure."
+    },
+    {
+      "company_name": "Coal India Ltd",
+      "symbol": "COALINDIA",
+      "sector": "Mining",
+      "about": "Coal India is the world’s largest coal mining company, supplying the majority of India’s coal requirements.",
+      "financials_2025": {
+        "market_cap_crore": 145600,
+        "close_price": 450.00,
+        "pe_ratio": 12.34,
+        "pb_ratio": 2.34,
+        "roe_percent": 15.67,
+        "roce_percent": 18.90,
+        "latest_returns": {
+          "1_month": 2.34,
+          "6_month": 18.90,
+          "1_year": 32.45
+        }
+      },
+      "news_2025": [
+        "Coal India aims to increase renewable energy investments.",
+        "The company is modernizing mining operations."
+      ],
+      "history": "Nationalized in 1975, Coal India is central to India’s energy security."
+    },
+    {
+      "company_name": "Bharat Petroleum Corporation Ltd",
+      "symbol": "BPCL",
+      "sector": "Oil & Gas",
+      "about": "BPCL is a leading Indian oil refining and marketing company, with a strong retail network across the country.",
+      "financials_2025": {
+        "market_cap_crore": 112300,
+        "close_price": 480.00,
+        "pe_ratio": 10.45,
+        "pb_ratio": 1.23,
+        "roe_percent": 12.34,
+        "roce_percent": 15.67,
+        "latest_returns": {
+          "1_month": 1.23,
+          "6_month": 14.56,
+          "1_year": 28.90
+        }
+      },
+      "news_2025": [
+        "BPCL is diversifying into renewables and biofuels.",
+        "The company is upgrading refinery infrastructure."
+      ],
+      "history": "Founded in 1952, BPCL is a key player in India’s oil and gas sector."
+    },
+    {
+      "company_name": "UPL Ltd",
+      "symbol": "UPL",
+      "sector": "Chemicals",
+      "about": "UPL is a global agrochemicals company, producing crop protection and sustainable agriculture solutions.",
+      "financials_2025": {
+        "market_cap_crore": 98700,
+        "close_price": 650.00,
+        "pe_ratio": 14.56,
+        "pb_ratio": 2.34,
+        "roe_percent": 12.34,
+        "roce_percent": 15.67,
+        "latest_returns": {
+          "1_month": -2.34,
+          "6_month": 8.90,
+          "1_year": 14.56
+        }
+      },
+      "news_2025": [
+        "UPL launched new bio-solutions for sustainable farming.",
+        "The company expanded in Latin America and Africa."
+      ],
+      "history": "Founded in 1969, UPL has grown into a global force in agrochemicals."
+    },
+    {
+      "company_name": "Hindalco Industries Ltd",
+      "symbol": "HINDALCO",
+      "sector": "Metals",
+      "about": "Hindalco is a leading Indian producer of aluminum and copper, with significant global operations.",
+      "financials_2025": {
+        "market_cap_crore": 156700,
+        "close_price": 520.00,
+        "pe_ratio": 12.34,
+        "pb_ratio": 2.34,
+        "roe_percent": 10.45,
+        "roce_percent": 12.34,
+        "latest_returns": {
+          "1_month": 1.23,
+          "6_month": 14.56,
+          "1_year": 28.90
+        }
+      },
+      "news_2025": [
+        "Hindalco expanded its downstream aluminum product portfolio.",
+        "The company is investing in recycling and sustainability."
+      ],
+      "history": "Founded in 1958, Hindalco is part of the Aditya Birla Group and is a leader in non-ferrous metals."
+    },
+    {
+      "company_name": "Eicher Motors Ltd",
+      "symbol": "EICHERMOT",
+      "sector": "Automobile",
+      "about": "Eicher Motors is known for its Royal Enfield motorcycles and commercial vehicles, with a strong export presence.",
+      "financials_2025": {
+        "market_cap_crore": 112300,
+        "close_price": 4200.00,
+        "pe_ratio": 32.45,
+        "pb_ratio": 8.90,
+        "roe_percent": 22.34,
+        "roce_percent": 28.90,
+        "latest_returns": {
+          "1_month": 3.45,
+          "6_month": 24.56,
+          "1_year": 45.67
+        }
+      },
+      "news_2025": [
+        "Eicher Motors launched new electric motorcycle concepts.",
+        "The company reported strong growth in exports."
+      ],
+      "history": "Founded in 1948, Eicher is synonymous with iconic motorcycles and rugged commercial vehicles."
+    },
+    {
+      "company_name": "Divi’s Laboratories Ltd",
+      "symbol": "DIVISLAB",
+      "sector": "Pharmaceuticals",
+      "about": "Divi’s Labs is a leading Indian manufacturer of active pharmaceutical ingredients (APIs) and intermediates.",
+      "financials_2025": {
+        "market_cap_crore": 98700,
+        "close_price": 3900.00,
+        "pe_ratio": 45.67,
+        "pb_ratio": 12.34,
+        "roe_percent": 28.90,
+        "roce_percent": 32.45,
+        "latest_returns": {
+          "1_month": 2.34,
+          "6_month": 18.90,
+          "1_year": 32.45
+        }
+      },
+      "news_2025": [
+        "Divi’s Labs expanded its API manufacturing capacity.",
+        "The company is investing in R&D for complex generics."
+      ],
+      "history": "Founded in 1990, Divi’s Labs is a leader in pharmaceutical manufacturing and exports."
+    },
+    {
+      "company_name": "Cipla Ltd",
+      "symbol": "CIPLA",
+      "sector": "Pharmaceuticals",
+      "about": "Cipla is a global pharmaceutical company, known for affordable medicines and respiratory therapies.",
+      "financials_2025": {
+        "market_cap_crore": 112300,
+        "close_price": 1250.00,
+        "pe_ratio": 28.90,
+        "pb_ratio": 6.78,
+        "roe_percent": 18.90,
+        "roce_percent": 24.56,
+        "latest_returns": {
+          "1_month": 2.34,
+          "6_month": 15.67,
+          "1_year": 28.90
+        }
+      },
+      "news_2025": [
+        "Cipla launched new respiratory and oncology drugs.",
+        "The company expanded its presence in the US and South Africa."
+      ],
+      "history": "Founded in 1935, Cipla is a pioneer in affordable healthcare and generic medicines."
+    },
+    {
+      "company_name": "Britannia Industries Ltd",
+      "symbol": "BRITANNIA",
+      "sector": "FMCG",
+      "about": "Britannia is a leading Indian FMCG company, known for biscuits, dairy, and bakery products.",
+      "financials_2025": {
+        "market_cap_crore": 112300,
+        "close_price": 4200.00,
+        "pe_ratio": 56.78,
+        "pb_ratio": 28.90,
+        "roe_percent": 45.67,
+        "roce_percent": 52.34,
+        "latest_returns": {
+          "1_month": 3.45,
+          "6_month": 24.56,
+          "1_year": 45.67
+        }
+      },
+      "news_2025": [
+        "Britannia expanded its product portfolio with new health-focused snacks.",
+        "The company reported steady growth in both urban and rural markets."
+      ],
+      "history": "Founded in 1892, Britannia is one of India’s oldest and most trusted food companies."
+    },
+    {
+      "company_name": "Mahindra & Mahindra Ltd",
+      "symbol": "M&M",
+      "sector": "Automobile",
+      "about": "M&M is a leading Indian automotive manufacturer, producing SUVs, tractors, and electric vehicles.",
+      "financials_2025": {
+        "market_cap_crore": 156700,
+        "close_price": 1800.00,
+        "pe_ratio": 22.34,
+        "pb_ratio": 4.56,
+        "roe_percent": 15.67,
+        "roce_percent": 18.90,
+        "latest_returns": {
+          "1_month": 3.45,
+          "6_month": 24.56,
+          "1_year": 45.67
+        }
+      },
+      "news_2025": [
+        "M&M launched new electric SUV models.",
+        "The company’s farm equipment division posted strong growth."
+      ],
+      "history": "Founded in 1945, M&M is a pioneer in utility vehicles and tractors in India."
+    },
+    {
+      "company_name": "Bajaj Auto Ltd",
+      "symbol": "BAJAJ_AUTO",
+      "sector": "Automobile",
+      "about": "Bajaj Auto is India’s leading two-wheeler and three-wheeler manufacturer, with a strong export presence.",
+      "financials_2025": {
+        "market_cap_crore": 145600,
+        "close_price": 7900.00,
+        "pe_ratio": 22.34,
+        "pb_ratio": 6.78,
+        "roe_percent": 24.56,
+        "roce_percent": 32.45,
+        "latest_returns": {
+          "1_month": 3.45,
+          "6_month": 24.56,
+          "1_year": 45.67
+        }
+      },
+      "news_2025": [
+        "Bajaj Auto expanded its electric two-wheeler portfolio.",
+        "The company reported record exports to Africa and Latin America."
+      ],
+      "history": "Founded in 1945, Bajaj Auto is synonymous with motorcycles and auto rickshaws in India."
+    },
+    {
+      "company_name": "Hero MotoCorp Ltd",
+      "symbol": "HERO",
+      "sector": "Automobile",
+      "about": "Hero MotoCorp is the world’s largest two-wheeler manufacturer, known for fuel-efficient and affordable motorcycles.",
+      "financials_2025": {
+        "market_cap_crore": 112300,
+        "close_price": 3400.00,
+        "pe_ratio": 18.90,
+        "pb_ratio": 4.56,
+        "roe_percent": 22.34,
+        "roce_percent": 28.90,
+        "latest_returns": {
+          "1_month": 2.34,
+          "6_month": 15.67,
+          "1_year": 32.45
+        }
+      },
+      "news_2025": [
+        "Hero MotoCorp launched new electric scooter models.",
+        "The company expanded its manufacturing capacity."
+      ],
+      "history": "Established in 1984, Hero MotoCorp has dominated India’s two-wheeler market for decades."
+    },
+    {
+      "company_name": "Dr. Reddy’s Laboratories Ltd",
+      "symbol": "DRREDDY",
+      "sector": "Pharmaceuticals",
+      "about": "Dr. Reddy’s is a leading Indian pharmaceutical company, specializing in generics, biosimilars, and APIs.",
+      "financials_2025": {
+        "market_cap_crore": 98700,
+        "close_price": 5800.00,
+        "pe_ratio": 32.45,
+        "pb_ratio": 6.78,
+        "roe_percent": 18.90,
+        "roce_percent": 24.56,
+        "latest_returns": {
+          "1_month": 2.34,
+          "6_month": 15.67,
+          "1_year": 32.45
+        }
+      },
+      "news_2025": [
+        "Dr. Reddy’s launched new generics in the US and Europe.",
+        "The company invested in biosimilars and specialty medicines."
+      ],
+      "history": "Founded in 1984, Dr. Reddy’s is a leader in pharmaceutical innovation and exports."
+    },
+    {
+      "company_name": "Dabur India Ltd",
+      "symbol": "DABUR",
+      "sector": "FMCG",
+      "about": "Dabur is a leading Indian FMCG company, known for Ayurvedic and natural healthcare products.",
+      "financials_2025": {
+        "market_cap_crore": 112300,
+        "close_price": 620.00,
+        "pe_ratio": 45.67,
+        "pb_ratio": 12.34,
+        "roe_percent": 24.56,
+        "roce_percent": 32.45,
+        "latest_returns": {
+          "1_month": 3.45,
+          "6_month": 24.56,
+          "1_year": 45.67
+        }
+      },
+      "news_2025": [
+        "Dabur expanded its Ayurvedic and personal care portfolio.",
+        "The company reported strong growth in rural markets."
+      ],
+      "history": "Founded in 1884, Dabur is a pioneer in Ayurvedic and herbal products in India."
+    },
+    {
+      "company_name": "Apollo Hospitals Enterprise Ltd",
+      "symbol": "APOLLOHOSP",
+      "sector": "Healthcare",
+      "about": "Apollo Hospitals is India’s largest private healthcare provider, offering hospitals, clinics, and telemedicine services.",
+      "financials_2025": {
+        "market_cap_crore": 98700,
+        "close_price": 5800.00,
+        "pe_ratio": 56.78,
+        "pb_ratio": 12.34,
+        "roe_percent": 18.90,
+        "roce_percent": 24.56,
+        "latest_returns": {
+          "1_month": 2.34,
+          "6_month": 15.67,
+          "1_year": 32.45
+        }
+      },
+      "news_2025": [
+        "Apollo Hospitals expanded its telemedicine and health tech offerings.",
+        "The company reported increased occupancy in its hospitals."
+      ],
+      "history": "Founded in 1983, Apollo Hospitals revolutionized private healthcare in India."
+    },
+    {
+      "company_name": "Tata Consumer Products Ltd",
+      "symbol": "TATACONSUM",
+      "sector": "FMCG",
+      "about": "Tata Consumer Products is a leading Indian FMCG company, offering tea, coffee, salt, and packaged foods.",
+      "financials_2025": {
+        "market_cap_crore": 112300,
+        "close_price": 980.00,
+        "pe_ratio": 56.78,
+        "pb_ratio": 12.34,
+        "roe_percent": 18.90,
+        "roce_percent": 24.56,
+        "latest_returns": {
+          "1_month": 3.45,
+          "6_month": 24.56,
+          "1_year": 45.67
+        }
+      },
+      "news_2025": [
+        "Tata Consumer expanded its portfolio with new health beverages.",
+        "The company reported steady growth in both domestic and international markets."
+      ],
+      "history": "Originally part of Tata Chemicals, Tata Consumer was spun off in 2020 and is now a standalone FMCG leader."
+    },
+    {
+      "company_name": "Oil & Natural Gas Corporation Ltd",
+      "symbol": "ONGC",
+      "sector": "Oil & Gas",
+      "about": "ONGC is India’s largest oil and gas exploration and production company, with significant domestic and overseas assets.",
+      "financials_2025": {
+        "market_cap_crore": 234500,
+        "close_price": 270.00,
+        "pe_ratio": 12.34,
+        "pb_ratio": 1.23,
+        "roe_percent": 10.45,
+        "roce_percent": 12.34,
+        "latest_returns": {
+          "1_month": 2.34,
+          "6_month": 18.90,
+          "1_year": 32.45
+        }
+      },
+      "news_2025": [
+        "ONGC invested in new exploration blocks and renewable energy.",
+        "The company reported stable production despite volatile oil prices."
+      ],
+      "history": "Established in 1956, ONGC is a crown jewel of India’s public sector and a pillar of energy security."
+    },
+    {
+      "company_name": "IndusInd Bank Ltd",
+      "symbol": "INDUSINDBK",
+      "sector": "Private Banks",
+      "about": "IndusInd Bank is a leading Indian private sector bank, known for innovation in retail and corporate banking.",
+      "financials_2025": {
+        "market_cap_crore": 98700,
+        "close_price": 1450.00,
+        "pe_ratio": 18.90,
+        "pb_ratio": 2.34,
+        "roe_percent": 15.67,
+        "roce_percent": 18.90,
+        "latest_returns": {
+          "1_month": 2.34,
+          "6_month": 15.67,
+          "1_year": 28.90
+        }
+      },
+      "news_2025": [
+        "IndusInd Bank expanded its digital banking platform.",
+        "The company reported growth in both retail and SME lending."
+      ],
+      "history": "Founded in 1994, IndusInd Bank has grown rapidly through customer-centric products and digital innovation."
+    }
+]

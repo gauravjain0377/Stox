@@ -1,5 +1,6 @@
 const Stock = require('../model/StockModel');
 const yahooFinance = require('yahoo-finance2').default;
+const CompanyInfo = require('../model/CompanyInfoModel');
 
 exports.getStocks = async (req, res, next) => {
   try {
@@ -86,5 +87,48 @@ exports.getStockHistory = async (req, res, next) => {
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch history' });
+  }
+};
+
+// Remove company info logic from Yahoo Finance overview controller
+// Only keep real-time price and trading logic in this file
+// (No company info logic here)
+
+// Alpha Vantage: Financials
+exports.getCompanyFinancials = async (req, res) => {
+  try {
+    const data = await fetchCompanyFinancials(req.params.symbol);
+    res.json(data);
+  } catch (err) {
+    res.status(404).json({ error: err.message });
+  }
+};
+
+// Alpha Vantage: News
+exports.getCompanyNews = async (req, res) => {
+  try {
+    const data = await fetchCompanyNews(req.params.symbol);
+    res.json(data);
+  } catch (err) {
+    res.status(404).json({ error: err.message });
+  }
+};
+
+// Alpha Vantage: History
+exports.getCompanyHistory = async (req, res) => {
+  try {
+    const data = await fetchCompanyHistory(req.params.symbol);
+    res.json(data);
+  } catch (err) {
+    res.status(404).json({ error: err.message });
+  }
+};
+
+exports.getCompanyInfo = async (req, res) => {
+  const info = await CompanyInfo.findOne({ symbol: req.params.symbol });
+  if (info) {
+    res.json(info);
+  } else {
+    res.status(404).json({ error: 'No company info found.' });
   }
 }; 

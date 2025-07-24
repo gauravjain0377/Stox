@@ -17,6 +17,7 @@ import { CandlestickController, CandlestickElement } from 'chartjs-chart-financi
 import { Chart } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
 import { useGeneralContext } from './GeneralContext';
+import StockInfoTabs from './StockInfoTabs';
 
 ChartJS.register(
   CategoryScale,
@@ -475,7 +476,7 @@ const StockDetail = () => {
                 </nav>
               </div>
               <div className="p-6">
-                <div className="text-gray-500">(Tab content placeholder)</div>
+                <StockInfoTabs symbol={symbol + '.BSE'} />
               </div>
             </div>
           </div>
