@@ -16,7 +16,7 @@ const stocks = [
 ];
 
 // Use default URI if environment variable is not set
-const mongoUri = process.env.MONGO_URI || "mongodb://localhost:27017/test";
+const mongoUri = process.env.MONGO_URL || "mongodb://localhost:27017/test";
 
 console.log('Connecting to MongoDB...');
 console.log('URI:', mongoUri);
@@ -35,6 +35,6 @@ mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
     console.log('\nTo fix this:');
     console.log('1. Make sure MongoDB is running');
     console.log('2. Create a .env file in the backend folder with:');
-    console.log('   MONGO_URI=mongodb://localhost:27017/stockdb');
+    console.log('   MONGO_URL=mongodb://localhost:27017/test');
     process.exit(1);
   }); 

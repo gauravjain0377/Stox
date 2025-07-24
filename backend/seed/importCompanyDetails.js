@@ -1,12 +1,13 @@
 const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
+require('dotenv').config();
 const CompanyInfo = require('../model/CompanyInfoModel');
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/stockdb';
+const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017/test';
 
 async function main() {
-  await mongoose.connect(MONGO_URI);
+  await mongoose.connect(MONGO_URL);
   const filePath = path.join(__dirname, 'companyDetails.json');
   const companies = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
   for (const company of companies) {

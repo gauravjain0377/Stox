@@ -131,4 +131,9 @@ exports.getCompanyInfo = async (req, res) => {
   } else {
     res.status(404).json({ error: 'No company info found.' });
   }
+};
+
+exports.getAllCompanyInfo = async (req, res) => {
+  const all = await CompanyInfo.find({});
+  res.json(all);
 }; 

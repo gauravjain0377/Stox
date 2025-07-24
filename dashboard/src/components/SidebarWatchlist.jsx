@@ -12,10 +12,6 @@ const indices = [
   { name: "SENSEX", value: 38845.82, change: -0.34, percent: -0.34 },
 ];
 
-const NSE_SYMBOLS = [
-  "ADANIPORTS.NS", "APOLLOHOSP.NS", "ASIANPAINT.NS", "AXISBANK.NS", "BAJAJ-AUTO.NS", "BAJFINANCE.NS", "BAJAJFINSV.NS", "BPCL.NS", "BHARTIARTL.NS", "BRITANNIA.NS", "CIPLA.NS", "COALINDIA.NS", "DIVISLAB.NS", "DRREDDY.NS", "EICHERMOT.NS", "GRASIM.NS", "HCLTECH.NS", "HDFCBANK.NS", "HDFCLIFE.NS", "HEROMOTOCO.NS", "HINDALCO.NS", "HINDUNILVR.NS", "ICICIBANK.NS", "ITC.NS", "INDUSINDBK.NS", "INFY.NS", "JSWSTEEL.NS", "KOTAKBANK.NS", "LTIM.NS", "LT.NS", "M&M.NS", "MARUTI.NS", "NTPC.NS", "NESTLEIND.NS", "ONGC.NS", "POWERGRID.NS", "RELIANCE.NS", "SBILIFE.NS", "SBIN.NS", "SUNPHARMA.NS", "TCS.NS", "TATACONSUM.NS", "TATAMOTORS.NS", "TATASTEEL.NS", "TECHM.NS", "TITAN.NS", "UPL.NS", "ULTRACEMCO.NS", "WIPRO.NS"
-];
-
 const SidebarWatchlist = () => {
   const { collapsed, toggleSidebar } = useSidebar();
   const { setSelectedStock } = useGeneralContext();
@@ -28,15 +24,28 @@ const SidebarWatchlist = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const priceChangeTimeouts = useRef({});
+  const [companyInfoMap, setCompanyInfoMap] = useState({});
 
+  // Fetch all company info on mount
   useEffect(() => {
+    fetch('http://localhost:3000/api/stocks/allcompanyinfo')
+      .then(res => res.json())
+      .then(data => {
+        const map = {};
+        data.forEach(info => { map[info.symbol] = info; });
+        setCompanyInfoMap(map);
+      });
+  }, []);
+
+  // Fetch stocks only after companyInfoMap is loaded
+  useEffect(() => {
+    const companySymbols = Object.keys(companyInfoMap);
+    if (companySymbols.length === 0) return;
+
     const fetchStocks = async () => {
       try {
-        if (stocks.length === 0) {
-          setLoading(true);
-        }
-        
-        const symbolsParam = NSE_SYMBOLS.join(",");
+        setLoading(true);
+        const symbolsParam = companySymbols.join(",");
         const response = await fetch(`http://localhost:3000/api/stocks/data?symbols=${symbolsParam}`);
         if (!response.ok) {
           throw new Error('Failed to fetch stocks');
@@ -84,17 +93,19 @@ const SidebarWatchlist = () => {
       }
     };
 
-    // Data is now fetched only once when the component mounts.
     fetchStocks();
 
     // The cleanup function only needs to clear timeouts now.
     return () => {
       Object.values(priceChangeTimeouts.current).forEach(clearTimeout);
     };
-  }, []);
+  }, [companyInfoMap]);
 
-  const totalPages = Math.ceil(stocks.length / stocksPerPage);
-  const currentStocks = stocks.slice(currentPage * stocksPerPage, (currentPage + 1) * stocksPerPage);
+  // Only show stocks that exist in companyInfoMap
+  const filteredStocks = stocks.filter(stock => companyInfoMap[stock.symbol]);
+
+  const totalPages = Math.ceil(filteredStocks.length / stocksPerPage);
+  const currentStocks = filteredStocks.slice(currentPage * stocksPerPage, (currentPage + 1) * stocksPerPage);
 
   const nextPage = () => setCurrentPage(p => Math.min(p + 1, totalPages - 1));
   const prevPage = () => setCurrentPage(p => Math.max(p - 1, 0));
@@ -172,7 +183,7 @@ const SidebarWatchlist = () => {
                 <ul className="divide-y divide-gray-50">
 
                     {currentStocks.map((stock) => {
-                        const fullName = fullNameMap[stock.symbol] || stock.name;
+                        const fullName = companyInfoMap[stock.symbol]?.company_name || stock.name;
                         const isDown = stock.percent < 0;
                         const formattedPercent = stock.percent.toFixed(2);
 
@@ -225,7 +236,7 @@ const SidebarWatchlist = () => {
                 </div>
                 {currentStocks.length > 0 && (
                   <div className="mt-4 text-xs text-gray-500 text-center">
-                      Showing {currentPage * stocksPerPage + 1}-{Math.min((currentPage + 1) * stocksPerPage, stocks.length)} of {stocks.length}
+                      Showing {currentPage * stocksPerPage + 1}-{Math.min((currentPage + 1) * stocksPerPage, filteredStocks.length)} of {filteredStocks.length}
                   </div>
                 )}
             </div>

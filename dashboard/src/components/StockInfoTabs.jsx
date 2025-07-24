@@ -9,7 +9,9 @@ export default function StockInfoTabs({ symbol }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const getEndpoint = (tab) => `/api/stocks/${symbol}/companyinfo`;
+  // Remove .NS or .BSE for company info lookup
+  const cleanSymbol = symbol.replace(/\.(NS|BSE)$/i, '');
+  const getEndpoint = (tab) => `/api/stocks/${cleanSymbol}/companyinfo`;
 
   useEffect(() => {
     setLoading(true);
