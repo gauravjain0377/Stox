@@ -14,74 +14,94 @@ export default function StockInfoTabs({ symbol }) {
   const getEndpoint = (tab) => `/api/stocks/${cleanSymbol}/companyinfo`;
 
   useEffect(() => {
+    console.log('Requesting company info for:', cleanSymbol, 'Endpoint:', getEndpoint(activeTab));
     setLoading(true);
     setError('');
     setData(null);
     axios.get(getEndpoint(activeTab))
-      .then(res => setData(res.data))
+      .then(res => {
+        console.log('Company info data:', res.data); // Debug: log the received data
+        setData(res.data);
+      })
       .catch(err => setError(err.response?.data?.error || 'Failed to fetch data'))
       .finally(() => setLoading(false));
   }, [activeTab, symbol]);
 
   return (
-    <div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+    <div style={{ maxWidth: 700, margin: '0 auto', background: '#fff', borderRadius: 16, boxShadow: '0 2px 16px rgba(0,0,0,0.07)', padding: 0, border: '1px solid #e5e7eb' }}>
+      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #e5e7eb', background: '#f9fafb', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}>
         {TABS.map(tab => (
           <button
             key={tab}
             style={{
-              padding: '8px 16px',
+              flex: 1,
+              padding: '14px 0',
               border: 'none',
-              borderBottom: activeTab === tab ? '2px solid #007bff' : '2px solid transparent',
-              background: 'none',
-              fontWeight: activeTab === tab ? 'bold' : 'normal',
+              background: activeTab === tab ? '#fff' : 'transparent',
+              color: activeTab === tab ? '#2563eb' : '#6b7280',
+              fontWeight: activeTab === tab ? 700 : 500,
+              fontSize: 17,
+              borderBottom: activeTab === tab ? '3px solid #2563eb' : '3px solid transparent',
+              borderTopLeftRadius: tab === TABS[0] ? 16 : 0,
+              borderTopRightRadius: tab === TABS[TABS.length-1] ? 16 : 0,
+              transition: 'all 0.18s cubic-bezier(.4,0,.2,1)',
               cursor: 'pointer',
+              outline: 'none',
+              boxShadow: activeTab === tab ? '0 2px 8px rgba(37,99,235,0.04)' : 'none',
             }}
             onClick={() => setActiveTab(tab)}
+            onMouseOver={e => e.currentTarget.style.background = '#f3f4f6'}
+            onMouseOut={e => e.currentTarget.style.background = activeTab === tab ? '#fff' : 'transparent'}
+            aria-selected={activeTab === tab}
+            aria-label={tab}
           >
             {tab}
           </button>
         ))}
       </div>
-      <div style={{ minHeight: 200 }}>
-        {loading && <div>Loading...</div>}
-        {error && <div style={{ color: 'red' }}>{error}</div>}
+      <div style={{ minHeight: 220, padding: '32px 32px 24px 32px', borderBottomLeftRadius: 16, borderBottomRightRadius: 16, background: '#fff' }}>
+        {loading && <div style={{ color: '#2563eb', fontWeight: 500 }}>Loading...</div>}
+        {error && <div style={{ color: '#ef4444', fontWeight: 500 }}>{error}</div>}
         {!loading && !error && data && (
           <>
             {activeTab === 'Overview' && (
               <div>
-                <h2>{data.company_name}</h2>
-                <p><b>Sector:</b> {data.sector}</p>
-                <p><b>About:</b> {data.about}</p>
-                <p><b>History:</b> {data.history}</p>
+                <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>{data.company_name || <span style={{color: 'gray'}}>No Name</span>}</h2>
+                <p style={{ fontSize: 16, color: '#2563eb', fontWeight: 600, marginBottom: 8 }}><b>Sector:</b> {data.sector || <span style={{color: 'gray'}}>N/A</span>}</p>
+                <p style={{ fontSize: 16, marginBottom: 16 }}><b>About:</b> {data.about || <span style={{color: 'gray'}}>N/A</span>}</p>
+                <p style={{ fontSize: 15, color: '#374151' }}><b>History:</b> {data.history || <span style={{color: 'gray'}}>N/A</span>}</p>
               </div>
             )}
             {activeTab === 'Financials' && (
-              <div>
-                <p><b>Market Cap (Cr):</b> {data.financials_2025?.market_cap_crore}</p>
-                <p><b>Close Price:</b> {data.financials_2025?.close_price}</p>
-                <p><b>PE Ratio:</b> {data.financials_2025?.pe_ratio}</p>
-                <p><b>PB Ratio:</b> {data.financials_2025?.pb_ratio}</p>
-                <p><b>ROE (%):</b> {data.financials_2025?.roe_percent}</p>
-                <p><b>ROCE (%):</b> {data.financials_2025?.roce_percent}</p>
-                <p>
-                  <b>Latest Returns:</b>
-                  1M: {data.financials_2025?.latest_returns?.['1_month']}%,{' '}
-                  6M: {data.financials_2025?.latest_returns?.['6_month']}%,{' '}
-                  1Y: {data.financials_2025?.latest_returns?.['1_year']}%
-                </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+                <div><b>Market Cap (Cr):</b><br />{data.financials_2025?.market_cap_crore ?? <span style={{color: 'gray'}}>N/A</span>}</div>
+                <div><b>Close Price:</b><br />{data.financials_2025?.close_price ?? <span style={{color: 'gray'}}>N/A</span>}</div>
+                <div><b>PE Ratio:</b><br />{data.financials_2025?.pe_ratio ?? <span style={{color: 'gray'}}>N/A</span>}</div>
+                <div><b>PB Ratio:</b><br />{data.financials_2025?.pb_ratio ?? <span style={{color: 'gray'}}>N/A</span>}</div>
+                <div><b>ROE (%):</b><br />{data.financials_2025?.roe_percent ?? <span style={{color: 'gray'}}>N/A</span>}</div>
+                <div><b>ROCE (%):</b><br />{data.financials_2025?.roce_percent ?? <span style={{color: 'gray'}}>N/A</span>}</div>
+                <div style={{ gridColumn: '1 / span 2', marginTop: 8 }}>
+                  <b>Latest Returns:</b><br />
+                  1M: {data.financials_2025?.latest_returns?.['1_month'] ?? <span style={{color: 'gray'}}>N/A</span>}%, {' '}
+                  6M: {data.financials_2025?.latest_returns?.['6_month'] ?? <span style={{color: 'gray'}}>N/A</span>}%, {' '}
+                  1Y: {data.financials_2025?.latest_returns?.['1_year'] ?? <span style={{color: 'gray'}}>N/A</span>}%
+                </div>
               </div>
             )}
             {activeTab === 'News' && (
-              <ul>
-                {data.news_2025?.map((n, i) => (
-                  <li key={i} style={{ marginBottom: 12 }}>{n}</li>
-                ))}
+              <ul style={{ paddingLeft: 0, listStyle: 'none' }}>
+                {Array.isArray(data.news_2025) && data.news_2025.length > 0 ? (
+                  data.news_2025.map((n, i) => (
+                    <li key={i} style={{ marginBottom: 16, background: '#f3f4f6', borderRadius: 8, padding: '12px 16px', color: '#374151', fontSize: 15 }}>{n}</li>
+                  ))
+                ) : (
+                  <li style={{color: 'gray'}}>No news available.</li>
+                )}
               </ul>
             )}
             {activeTab === 'History' && (
-              <div>
-                <p>{data.history}</p>
+              <div style={{ fontSize: 15, color: '#374151' }}>
+                <p>{data.history || <span style={{color: 'gray'}}>N/A</span>}</p>
               </div>
             )}
           </>

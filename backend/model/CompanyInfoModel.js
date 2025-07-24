@@ -1,17 +1,13 @@
 const mongoose = require('mongoose');
 
 const CompanyInfoSchema = new mongoose.Schema({
+  company_name: String,
   symbol: { type: String, required: true, unique: true },
-  name: String,
   sector: String,
-  industry: String,
-  description: String,
-  marketCap: mongoose.Schema.Types.Mixed,
-  peRatio: mongoose.Schema.Types.Mixed,
-  eps: mongoose.Schema.Types.Mixed,
-  dividendYield: mongoose.Schema.Types.Mixed,
-  financials: mongoose.Schema.Types.Mixed,
-  notes: String
+  about: String,
+  financials_2025: mongoose.Schema.Types.Mixed,
+  news_2025: [mongoose.Schema.Types.Mixed],
+  history: String
 });
 
 module.exports = mongoose.model('CompanyInfo', CompanyInfoSchema); 
