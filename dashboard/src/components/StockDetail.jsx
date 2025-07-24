@@ -322,6 +322,17 @@ const StockDetail = () => {
     return generateOHLCData(selectedRange.label, selectedStock.price, selectedStock.symbol, selectedStock.percent);
   }, [selectedStock, selectedRange]);
 
+  // Calculate real absolute and percent change for the selected range
+  const [absChange, percentChange] = React.useMemo(() => {
+    if (!lineChartData.datasets[0] || !lineChartData.datasets[0].data || lineChartData.datasets[0].data.length < 2) return [0, 0];
+    const dataArr = lineChartData.datasets[0].data;
+    const first = dataArr[0];
+    const last = dataArr[dataArr.length - 1];
+    const abs = last - first;
+    const percent = first !== 0 ? ((last - first) / first) * 100 : 0;
+    return [abs, percent];
+  }, [lineChartData]);
+
   // Trade simulation
   const handleTrade = (type) => {
     setTradeAlert(`Simulated: ${type === 'buy' ? 'Bought' : 'Sold'} ${quantity} shares of ${symbol}`);
@@ -344,6 +355,14 @@ const StockDetail = () => {
 
   const chartType = selectedRange.label === '1D' ? 'line' : 'candlestick';
   const isLine = chartType === 'line';
+
+  // Use real-time price, previousClose, and percentChange from selectedStock (as in sidebar)
+  const realPrice = selectedStock?.price;
+  const realPrevClose = selectedStock?.previousClose;
+  const realPercent = selectedStock?.percent;
+  const realAbsChange = (typeof realPrice === 'number' && typeof realPrevClose === 'number') ? realPrice - realPrevClose : 0;
+  const realIsDown = realPercent < 0;
+  const realFormattedPercent = typeof realPercent === 'number' ? Math.abs(realPercent).toFixed(2) : 'N/A';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -368,9 +387,14 @@ const StockDetail = () => {
             <div className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900">₹{price ? price.toLocaleString() : 'N/A'}</h2>
+                  <h2 className="text-3xl font-bold text-gray-900">₹{realPrice ? realPrice.toLocaleString() : 'N/A'}</h2>
                   <div className="flex items-center space-x-2 mt-2">
-                    <span className={`text-sm font-semibold ${percent >= 0 ? 'text-green-600' : 'text-red-600'}`}>{percent >= 0 ? '+' : ''}{typeof percent === 'number' ? percent.toFixed(2) : 'N/A'}%</span>
+                    <span className={`flex items-center gap-1 text-lg font-semibold ${realIsDown ? 'text-red-600' : 'text-green-600'}`}
+                      title={`${realIsDown ? 'Loss' : 'Profit'}: ${realAbsChange < 0 ? '' : '+'}${realAbsChange.toFixed(2)} (${realFormattedPercent}%)`}>
+                      {realIsDown ? <TrendingDown size={18}/> : <TrendingUp size={18}/>}
+                      {realAbsChange < 0 ? '' : '+'}{realAbsChange.toFixed(2)}
+                      <span>({realFormattedPercent}%)</span>
+                    </span>
                   </div>
                 </div>
               </div>

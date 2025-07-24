@@ -57,7 +57,8 @@ const SidebarWatchlist = () => {
               price: stock.price || 0,
               percent: stock.percentChange || 0,
               volume: stock.volume ? stock.volume.toLocaleString() : '-',
-              marketCap: stock.marketCap ? stock.marketCap.toLocaleString() : '-',
+              previousClose: stock.previousClose || 0, // Add previousClose
+             
               name: stock.name || stock.symbol,
             }))
           : [];
@@ -185,8 +186,12 @@ const SidebarWatchlist = () => {
                     {currentStocks.map((stock) => {
                         const fullName = companyInfoMap[stock.symbol]?.company_name || stock.name;
                         const isDown = stock.percent < 0;
-                        const formattedPercent = stock.percent.toFixed(2);
-
+                        const formattedPercent = typeof stock.percent === 'number' ? Math.abs(stock.percent).toFixed(2) : 'N/A';
+                        // Use previousClose for accurate absolute change
+                        const absChange = (typeof stock.price === 'number' && typeof stock.previousClose === 'number')
+                          ? stock.price - stock.previousClose
+                          : 0;
+                        const tooltipText = `${isDown ? 'Loss' : 'Profit'}: ${absChange < 0 ? '' : '+'}${absChange.toFixed(2)} (${formattedPercent}%)`;
                         return (
                             <li
                                 key={stock.symbol}
@@ -200,20 +205,19 @@ const SidebarWatchlist = () => {
                                     <Tooltip title={fullName} arrow>
                                         <span className="font-bold text-sm text-gray-900 tabular-nums block">{stock.symbol}</span>
                                     </Tooltip>
-                                    <Tooltip title={`Volume: ${stock.volume} • Market Cap: ${stock.marketCap}`} arrow>
-                                        <span className="text-xs text-gray-500 block cursor-pointer">{stock.volume} • {stock.marketCap}</span>
+                                    <Tooltip title={`Volume: ${stock.volume} `} arrow>
+                                        <span className="text-xs text-gray-500 block cursor-pointer">{stock.volume} </span>
                                     </Tooltip>
                                 </div>
-                                <div className="flex flex-col items-end min-w-[80px]">
+                                <div className="flex flex-col items-end min-w-[100px]">
                                     <Tooltip title={`Price: ₹${stock.price.toLocaleString()}`} arrow>
-                                        <span className={`font-bold text-lg text-black tabular-nums leading-tight ${priceChanges[stock.symbol] === 'up' ? 'price-up' : priceChanges[stock.symbol] === 'down' ? 'price-down' : ''}`}>
-                                            ₹{stock.price.toLocaleString()}
-                                        </span>
+                                        <span className={`font-bold text-lg text-black tabular-nums leading-tight ${priceChanges[stock.symbol] === 'up' ? 'price-up' : priceChanges[stock.symbol] === 'down' ? 'price-down' : ''}`}>₹{stock.price.toLocaleString()}</span>
                                     </Tooltip>
-                                    <Tooltip title={`${isDown ? 'Loss' : 'Profit'}: ${stock.percent > 0 ? '+' : ''}${formattedPercent}%`} arrow>
-                                        <span className={`flex items-center gap-1 text-xs font-semibold ${isDown ? "text-red-500" : "text-green-600"}`}>
-                                            {isDown ? <ArrowDownRight size={12}/> : <ArrowUpRight size={12}/>}
-                                            {stock.percent > 0 ? '+' : ''}{formattedPercent}%
+                                    <Tooltip title={tooltipText} arrow>
+                                        <span className={`flex items-center gap-1 text-sm font-semibold ${isDown ? 'text-red-500' : 'text-green-600'}`} style={{ marginTop: 2 }}>
+                                            {isDown ? <ArrowDownRight size={14}/> : <ArrowUpRight size={14}/>}
+                                            {absChange < 0 ? '' : '+'}{absChange.toFixed(2)}
+                                            <span>({formattedPercent}%)</span>
                                         </span>
                                     </Tooltip>
                                 </div>

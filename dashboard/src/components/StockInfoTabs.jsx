@@ -3,11 +3,34 @@ import axios from 'axios';
 
 const TABS = ['Overview', 'Financials', 'News', 'History'];
 
+// Add CSS for smooth tab transitions
+const tabContentStyle = {
+  transition: 'opacity 0.35s cubic-bezier(.4,0,.2,1), transform 0.35s cubic-bezier(.4,0,.2,1)',
+  opacity: 1,
+  transform: 'translateY(0px)'
+};
+const tabContentHiddenStyle = {
+  opacity: 0,
+  transform: 'translateY(24px)'
+};
+
 export default function StockInfoTabs({ symbol }) {
   const [activeTab, setActiveTab] = useState('Overview');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showingTab, setShowingTab] = useState(activeTab);
+  const [tabVisible, setTabVisible] = useState(true);
+
+  // Animate tab change
+  useEffect(() => {
+    setTabVisible(false);
+    const timeout = setTimeout(() => {
+      setShowingTab(activeTab);
+      setTabVisible(true);
+    }, 180); // fade out, then fade in
+    return () => clearTimeout(timeout);
+  }, [activeTab]);
 
   // Remove .NS or .BSE for company info lookup
   const cleanSymbol = symbol.replace(/\.(NS|BSE)$/i, '');
@@ -63,8 +86,11 @@ export default function StockInfoTabs({ symbol }) {
         {loading && <div style={{ color: '#2563eb', fontWeight: 500 }}>Loading...</div>}
         {error && <div style={{ color: '#ef4444', fontWeight: 500 }}>{error}</div>}
         {!loading && !error && data && (
-          <>
-            {activeTab === 'Overview' && (
+          <div
+            key={showingTab}
+            style={tabVisible ? tabContentStyle : tabContentHiddenStyle}
+          >
+            {showingTab === 'Overview' && (
               <div>
                 <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>{data.company_name || <span style={{color: 'gray'}}>No Name</span>}</h2>
                 <p style={{ fontSize: 16, color: '#2563eb', fontWeight: 600, marginBottom: 8 }}><b>Sector:</b> {data.sector || <span style={{color: 'gray'}}>N/A</span>}</p>
@@ -72,7 +98,7 @@ export default function StockInfoTabs({ symbol }) {
                 <p style={{ fontSize: 15, color: '#374151' }}><b>History:</b> {data.history || <span style={{color: 'gray'}}>N/A</span>}</p>
               </div>
             )}
-            {activeTab === 'Financials' && (
+            {showingTab === 'Financials' && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
                 <div><b>Market Cap (Cr):</b><br />{data.financials_2025?.market_cap_crore ?? <span style={{color: 'gray'}}>N/A</span>}</div>
                 <div><b>Close Price:</b><br />{data.financials_2025?.close_price ?? <span style={{color: 'gray'}}>N/A</span>}</div>
@@ -88,7 +114,7 @@ export default function StockInfoTabs({ symbol }) {
                 </div>
               </div>
             )}
-            {activeTab === 'News' && (
+            {showingTab === 'News' && (
               <ul style={{ paddingLeft: 0, listStyle: 'none' }}>
                 {Array.isArray(data.news_2025) && data.news_2025.length > 0 ? (
                   data.news_2025.map((n, i) => (
@@ -99,12 +125,12 @@ export default function StockInfoTabs({ symbol }) {
                 )}
               </ul>
             )}
-            {activeTab === 'History' && (
+            {showingTab === 'History' && (
               <div style={{ fontSize: 15, color: '#374151' }}>
                 <p>{data.history || <span style={{color: 'gray'}}>N/A</span>}</p>
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>

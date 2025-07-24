@@ -39,6 +39,7 @@ exports.getStocksData = async (req, res) => {
             name: data.shortName,
             price: data.regularMarketPrice,
             percentChange: data.regularMarketChangePercent,
+            previousClose: data.regularMarketPreviousClose, // <-- add this
             volume: data.regularMarketVolume,
             marketCap: data.marketCap,
           };
