@@ -781,13 +781,13 @@
 }
 
 .modern-watchlist {
-  background: #fff;
+  background: var(--bg-white);
   border-radius: 18px;
   box-shadow: 0 4px 24px 0 rgba(30, 41, 59, 0.08);
   padding: 2.5rem 2rem;
   max-width: 900px;
   margin: 40px auto;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', 'Poppins', 'Montserrat', sans-serif;
 }
 
 /* Watchlist Tabs */
@@ -800,7 +800,7 @@
 }
 .watchlist-tab {
   background: #e6f9f0;
-  color: #22a06b;
+  color: var(--accent-green);
   font-weight: 600;
   font-size: 1.08rem;
   border-radius: 999px;
@@ -814,7 +814,7 @@
   position: relative;
 }
 .watchlist-tab.active {
-  background: #22a06b;
+  background: var(--accent-green);
   color: #fff;
 }
 .watchlist-tab:hover:not(.active) {
@@ -845,16 +845,16 @@
   border-radius: 999px;
   padding: 0.3rem 1rem;
   background: #f8fafc;
-  color: #22a06b;
+  color: var(--accent-green);
   outline: none;
   min-width: 120px;
   transition: border 0.15s;
 }
 .add-watchlist-input:focus {
-  border-color: #22a06b;
+  border-color: var(--accent-green);
 }
 .add-watchlist-btn {
-  background: #22a06b;
+  background: var(--accent-green);
   color: #fff;
   border: none;
   border-radius: 50%;

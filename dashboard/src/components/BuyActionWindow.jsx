@@ -35,7 +35,7 @@ const BuyActionWindow = ({ uid, onClose }) => {
       }
     }
     fetchLivePrice();
-    interval = setInterval(fetchLivePrice, 3000); // Poll every 5 seconds
+    // interval = setInterval(fetchLivePrice, 3000); // Poll every 5 seconds
     return () => {
       isMounted = false;
       clearInterval(interval);

@@ -3,7 +3,7 @@
   padding: 2.5rem 2rem 2rem 2rem;
   max-width: 1400px;
   margin: 0 auto;
-  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-family: 'Inter', 'Poppins', 'Montserrat', sans-serif;
 }
 
 /* Indices Ticker */
@@ -26,12 +26,12 @@
   min-width: 160px;
 }
 .index-name {
-  color: #222;
+  color: var(--text-main);
   font-weight: 600;
   letter-spacing: 0.5px;
 }
 .index-value {
-  color: #222;
+  color: var(--text-main);
   font-weight: 500;
 }
 .index-change {
@@ -63,7 +63,7 @@
   font-size: 1.2rem;
   font-weight: 600;
   margin-bottom: 1rem;
-  color: #222;
+  color: var(--text-main);
 }
 
 /* Most Traded Stocks */
@@ -73,8 +73,9 @@
   margin-bottom: 1.25rem;
   flex-wrap: wrap;
 }
+/* Ensure hover effects are isolated to individual cards */
 .most-traded-card {
-  background: #fff;
+  background: var(--bg-white);
   border: 1.5px solid #e5e7eb;
   border-radius: 14px;
   padding: 1.25rem 1.5rem;
@@ -85,17 +86,41 @@
   flex-direction: column;
   align-items: flex-start;
   box-shadow: 0 2px 8px #0001;
-  transition: box-shadow 0.2s, border 0.2s;
+  transition: all 0.3s ease-in-out;
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
 }
 .most-traded-card:hover {
-  border-color: #6366f1;
-  box-shadow: 0 4px 16px #6366f122;
+  border-color: #3b82f6;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+  transform: translateY(-2px) scale(1.02);
+  z-index: 2;
+  background-color: rgba(219, 234, 254, 0.3);
+}
+.most-traded-card:hover .stock-logo {
+  background-color: #dbeafe;
+}
+.most-traded-card:hover .stock-title {
+  color: #1e40af;
+}
+.most-traded-card:hover .stock-price {
+  color: #1e40af;
+}
+.most-traded-card:hover .stock-logo span {
+  color: #1d4ed8;
 }
 .stock-logo {
   width: 36px;
   height: 36px;
   object-fit: contain;
   margin-bottom: 0.5rem;
+  background: #f3f4f6;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
 }
 .stock-title {
   font-size: 1.05rem;
@@ -197,7 +222,7 @@
   flex-direction: column;
 }
 .returns-pos { color: #16a34a; font-size: 1.5rem; font-weight: 700; }
-.returns-label { color: #888; font-size: 1rem; font-weight: 500; margin-left: 0.5rem; }
+.returns-label { color: var(--text-muted); font-size: 1rem; font-weight: 500; margin-left: 0.5rem; }
 .investments-value {
   font-size: 1.3rem;
   font-weight: 700;
@@ -248,7 +273,7 @@
   border: 1px solid #e5e7eb;
 }
 .watchlist-name { font-weight: 600; }
-.watchlist-count { color: #888; font-size: 0.98rem; font-weight: 500; }
+.watchlist-count { color: var(--text-muted); font-size: 0.98rem; font-weight: 500; }
 .create-watchlist-btn {
   background: none;
   border: 1.5px dashed #16a34a;

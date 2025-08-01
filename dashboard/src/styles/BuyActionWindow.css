@@ -19,7 +19,7 @@
 
 .container .header {
   width: 100%;
-  background: #4184f3;
+  background: var(--accent-blue);
   box-sizing: border-box;
   padding: 16px;
   border-top-left-radius: var(--radius);
@@ -71,7 +71,7 @@
   border: none;
   padding: 14px 16px;
   background: transparent;
-  color: #4184f3;
+  color: var(--accent-blue);
   font-weight: 400;
   font-size: 0.8rem;
   cursor: pointer;
@@ -143,7 +143,7 @@
 }
 
 .options span {
-  color: #4184f3;
+  color: var(--accent-blue);
   font-size: 0.8rem;
   cursor: pointer;
 }
@@ -178,7 +178,7 @@
 }
 
 .btn-blue {
-  background: #4184f3;
+  background: var(--accent-blue);
 }
 
 /* sudo selectors */
@@ -188,7 +188,7 @@
   height: 3px;
   display: none;
   margin-top: 10px;
-  background-color: #4184f3;
+  background-color: var(--accent-blue);
 }
 
 .inputs fieldset:focus {

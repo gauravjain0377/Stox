@@ -6,6 +6,7 @@ import { DoughnutChart } from "./DoughnoutChart";
 import '../styles/WatchList.css';
 import { useSidebar } from '../context/SidebarContext';
 import { useGeneralContext } from './GeneralContext';
+import { stockService } from '../services/stockService';
 
 const indices = [
   { name: "NIFTY 50", value: 11504.95, change: -0.10, percent: -0.10 },
@@ -28,95 +29,183 @@ const SidebarWatchlist = () => {
 
   // Fetch all company info on mount
   useEffect(() => {
-    fetch('http://localhost:3000/api/stocks/allcompanyinfo')
-      .then(res => res.json())
-      .then(data => {
-        const map = {};
-        data.forEach(info => { map[info.symbol] = info; });
-        setCompanyInfoMap(map);
-      });
-  }, []);
-
-  // Fetch stocks only after companyInfoMap is loaded
-  useEffect(() => {
-    const companySymbols = Object.keys(companyInfoMap);
-    if (companySymbols.length === 0) return;
-
-    const fetchStocks = async () => {
+    const fetchCompanyInfo = async () => {
       try {
-        setLoading(true);
-        const symbolsParam = companySymbols.join(",");
-        const response = await fetch(`http://localhost:3000/api/stocks/data?symbols=${symbolsParam}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch stocks');
-        }
-        const result = await response.json();
-        const data = Array.isArray(result.data)
-          ? result.data.map(stock => ({
-              symbol: stock.symbol ? stock.symbol.replace('.NS', '') : 'N/A',
-              price: stock.price || 0,
-              percent: stock.percentChange || 0,
-              volume: stock.volume ? stock.volume.toLocaleString() : '-',
-              previousClose: stock.previousClose || 0, // Add previousClose
-             
-              name: stock.name || stock.symbol,
-            }))
-          : [];
-
-        const newPriceChanges = {};
-        data.forEach((stock) => {
-          const prev = previousStocks.find(s => s.symbol === stock.symbol);
-          if (prev) {
-            if (stock.price > prev.price) newPriceChanges[stock.symbol] = 'up';
-            else if (stock.price < prev.price) newPriceChanges[stock.symbol] = 'down';
-          }
+        const companyData = await stockService.getCompanyInfo();
+        
+        const map = {};
+        companyData.forEach(info => { 
+          map[info.symbol] = info; 
         });
-
-        setPriceChanges(newPriceChanges);
-        setPreviousStocks(stocks);
-        setStocks(data);
-
-        Object.keys(newPriceChanges).forEach(symbol => {
-          if (priceChangeTimeouts.current[symbol]) clearTimeout(priceChangeTimeouts.current[symbol]);
-          priceChangeTimeouts.current[symbol] = setTimeout(() => {
-            setPriceChanges(pc => {
-              const updated = { ...pc };
-              delete updated[symbol];
-              return updated;
-            });
-          }, 1000);
-        });
-
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+        setCompanyInfoMap(map);
+      } catch (error) {
+        console.error('SidebarWatchlist: Error fetching company info:', error);
       }
     };
+    
+    fetchCompanyInfo();
+  }, []);
 
-    fetchStocks();
-
-    // The cleanup function only needs to clear timeouts now.
-    return () => {
-      Object.values(priceChangeTimeouts.current).forEach(clearTimeout);
+  // Fetch stocks only once on mount
+  useEffect(() => {
+    let isMounted = true;
+    
+    const fetchStocks = async () => {
+      try {
+        if (!isMounted) return;
+        setLoading(true);
+        
+        console.log('SidebarWatchlist: Starting to fetch stocks...');
+        
+        // First try to get all stocks from the service
+        const allStocks = await stockService.getAllStocks();
+        
+        console.log('SidebarWatchlist: Got stocks from service:', allStocks.length);
+        
+        if (!isMounted) return;
+        
+        // Process the stocks from service (which includes fallback if needed)
+        const processedStocks = allStocks.map(stock => ({
+          symbol: stock.symbol,
+          price: stock.price,
+          percent: stock.percent,
+          volume: stock.volume,
+          previousClose: stock.price * (1 + stock.percent / 100),
+          name: stock.fullName,
+        }));
+        
+        console.log('SidebarWatchlist: Setting stocks with processed data:', processedStocks.length);
+        
+        // Set stocks immediately
+        setStocks(processedStocks);
+        
+        // Try to get live data in background (optional enhancement)
+        try {
+          if (!isMounted) return;
+          
+          const symbols = allStocks.map(stock => stock.symbol);
+          const symbolsParam = symbols.join(",");
+          
+          const response = await fetch(`http://localhost:3000/api/stocks/data?symbols=${symbolsParam}`);
+          if (response.ok && isMounted) {
+            const result = await response.json();
+            const liveData = Array.isArray(result.data) ? result.data : [];
+            
+            // Only update if we got ALL 50 stocks (not just 40+)
+            if (liveData.length === 50 && isMounted) {
+              const processedData = liveData.map(stock => ({
+                symbol: stock.symbol ? stock.symbol.replace('.NS', '') : 'N/A',
+                price: stock.price || 0,
+                percent: stock.percentChange || 0,
+                volume: stock.volume ? stock.volume.toLocaleString() : '-',
+                previousClose: stock.previousClose || 0,
+                name: stock.name || stock.symbol,
+              }));
+              setStocks(processedData);
+            }
+          }
+        } catch (liveError) {
+          // Live data fetch failed, using fallback data
+        }
+      } catch (error) {
+        if (isMounted) {
+          console.error('SidebarWatchlist: Error fetching stocks:', error);
+          setError('Failed to load stocks');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
     };
-  }, [companyInfoMap]);
+    
+    fetchStocks();
+    
+    // Cleanup function
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-  // Only show stocks that exist in companyInfoMap
-  const filteredStocks = stocks.filter(stock => companyInfoMap[stock.symbol]);
-
+  // Show all stocks, not just those with company info
+  const filteredStocks = stocks;
+  
   const totalPages = Math.ceil(filteredStocks.length / stocksPerPage);
   const currentStocks = filteredStocks.slice(currentPage * stocksPerPage, (currentPage + 1) * stocksPerPage);
-
+  
   const nextPage = () => setCurrentPage(p => Math.min(p + 1, totalPages - 1));
   const prevPage = () => setCurrentPage(p => Math.max(p - 1, 0));
 
-  const fullNameMap = {
-    "TCS": "Tata Consultancy Services Ltd.", "RELIANCE": "Reliance Industries Ltd.", "INFY": "Infosys Ltd.", "HDFCBANK": "HDFC Bank Ltd.", "ICICIBANK": "ICICI Bank Ltd.", "BHARTIARTL": "Bharti Airtel Ltd.", "HCLTECH": "HCL Technologies Ltd.", "WIPRO": "Wipro Ltd.", "AXISBANK": "Axis Bank Ltd.", "KOTAKBANK": "Kotak Mahindra Bank Ltd."
+  const handleStockClick = (stock) => {
+    try {
+      setSelectedStock(stock);
+      navigate(`/stock/${encodeURIComponent(stock.symbol)}`, { replace: true });
+    } catch (error) {
+      console.error('Error navigating to stock:', error);
+    }
   };
 
   if (error) {
     return <div className="p-4 text-red-600">Error: {error}</div>;
+  }
+  
+  if (stocks.length === 0 && !loading) {
+    return (
+      <aside className={`h-full bg-white shadow-lg rounded-xl flex flex-col overflow-y-auto transition-all duration-300 ease-in-out ${collapsed ? 'sidebar-collapsed w-20' : 'w-80'}`}>
+        <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 sidebar-toggle">
+          {!collapsed && (
+            <div className="flex items-center gap-2 animate-fade-in">
+              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+              <span className="font-bold text-lg text-gray-900 tracking-tight">NIFTY 50</span>
+            </div>
+          )}
+          <button 
+            onClick={toggleSidebar} 
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-red-500 mb-2">⚠️</div>
+            <p className="text-sm text-gray-600">No stocks loaded</p>
+            <p className="text-xs text-gray-500 mt-1">Check console for debug info</p>
+          </div>
+        </div>
+      </aside>
+    );
+  }
+  
+  if (loading) {
+    return (
+      <aside className={`h-full bg-white shadow-lg rounded-xl flex flex-col overflow-y-auto transition-all duration-300 ease-in-out ${collapsed ? 'sidebar-collapsed w-20' : 'w-80'}`}>
+        <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 sidebar-toggle">
+          {!collapsed && (
+            <div className="flex items-center gap-2 animate-fade-in">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="font-bold text-lg text-gray-900 tracking-tight">NIFTY 50</span>
+            </div>
+          )}
+          <button 
+            onClick={toggleSidebar} 
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+            <p className="text-sm text-gray-600">Loading stocks...</p>
+          </div>
+        </div>
+      </aside>
+    );
   }
   
   const data = {
@@ -129,24 +218,59 @@ const SidebarWatchlist = () => {
   };
   
   return (
- <aside className={`h-full bg-white shadow-lg rounded-xl flex flex-col overflow-y-auto transition-all duration-300 ease-in-out ${collapsed ? 'w-20' : 'w-80'}`}>
-
-
-      <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+    <aside className={`h-full bg-white shadow-lg rounded-xl flex flex-col overflow-y-auto transition-all duration-300 ease-in-out ${collapsed ? 'sidebar-collapsed w-20' : 'w-80'}`}>
+      <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 sidebar-toggle">
         {!collapsed && (
           <div className="flex items-center gap-2 animate-fade-in">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             <span className="font-bold text-lg text-gray-900 tracking-tight">NIFTY 50</span>
           </div>
         )}
-        <button onClick={toggleSidebar} className={`p-2 rounded-lg hover:bg-gray-200 transition-colors ${collapsed ? 'mx-auto' : ''}`}>
+        <button 
+          onClick={toggleSidebar} 
+          className={`p-2 rounded-lg hover:bg-gray-200 transition-colors ${collapsed ? 'mx-auto' : ''}`}
+          title={collapsed ? "Expand Watchlist" : "Collapse Watchlist"}
+        >
           {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
         </button>
       </div>
 
-      {!collapsed && (
-        <div className="flex-1 flex flex-col animate-fade-in">
+      {/* Collapsed state - show stock symbols */}
+      {collapsed && (
+        <div className="flex-1 flex flex-col py-2">
+          {/* Stock count indicator */}
+          <div className="flex items-center justify-center py-2 mb-3">
+            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+              <span className="text-sm font-bold text-blue-700">{filteredStocks.length}</span>
+            </div>
+          </div>
+          
+          {currentStocks.slice(0, 8).map((stock, index) => (
+            <div
+              key={stock.symbol}
+              className="flex items-center justify-center py-3 px-2 cursor-pointer hover:bg-gray-100 transition-colors group"
+              onClick={() => handleStockClick(stock)}
+              title={`${stock.symbol} - ₹${stock.price.toLocaleString()}`}
+            >
+              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors border border-gray-200 group-hover:border-blue-300">
+                <span className="font-bold text-lg text-gray-700 group-hover:text-blue-700">
+                  {stock.symbol.charAt(0)}
+                </span>
+              </div>
+            </div>
+          ))}
+          {currentStocks.length === 0 && (
+            <div className="flex items-center justify-center py-3 px-2">
+              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                <span className="font-bold text-lg text-gray-500">-</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
+      {!collapsed && (
+        <div className="flex-1 flex flex-col animate-fade-in sidebar-content">
           <div className="flex items-center gap-4 px-4 py-3 border-b border-gray-50 bg-gray-50">
             {indices.map((idx) => (
               <div key={idx.name} className="flex flex-col items-start text-xs">
@@ -182,7 +306,6 @@ const SidebarWatchlist = () => {
               </div>
             ) : (
                 <ul className="divide-y divide-gray-50">
-
                     {currentStocks.map((stock) => {
                         const fullName = companyInfoMap[stock.symbol]?.company_name || stock.name;
                         const isDown = stock.percent < 0;
@@ -196,10 +319,7 @@ const SidebarWatchlist = () => {
                             <li
                                 key={stock.symbol}
                                 className="flex items-center justify-between px-4 py-3 group hover:bg-gray-50 transition-all cursor-pointer border-l-2 border-transparent hover:border-blue-200"
-                                onClick={() => {
-                                    setSelectedStock(stock);
-                                    navigate(`/stock/${encodeURIComponent(stock.symbol)}`, { replace: true });
-                                }}
+                                onClick={() => handleStockClick(stock)}
                             >
                                 <div className="flex-1 min-w-0">
                                     <Tooltip title={fullName} arrow>
@@ -230,19 +350,8 @@ const SidebarWatchlist = () => {
             <div className="flex flex-col items-center justify-center py-6 px-4 bg-gradient-to-br from-gray-50 to-white border-t border-gray-100">
                 <div className="font-semibold text-base text-gray-700 mb-4">Market Allocation</div>
                 <div className="relative" style={{ width: '100%', maxWidth: 300, height: 300 }}>
-                    <DoughnutChart data={data} details={currentStocks} />
-                    <div className="absolute inset-0 flex items-center justify-center" style={{ pointerEvents: 'none' }}>
-                        <div className="text-center">
-                            <div className="text-3xl font-bold text-gray-900">{currentStocks.length}</div>
-                            <div className="text-sm text-gray-500">Stocks</div>
-                        </div>
-                    </div>
+                    <DoughnutChart data={data} />
                 </div>
-                {currentStocks.length > 0 && (
-                  <div className="mt-4 text-xs text-gray-500 text-center">
-                      Showing {currentPage * stocksPerPage + 1}-{Math.min((currentPage + 1) * stocksPerPage, filteredStocks.length)} of {filteredStocks.length}
-                  </div>
-                )}
             </div>
           </div>
         </div>

@@ -2,7 +2,7 @@
   max-width: 1200px;
   margin: 32px auto;
   padding: 32px 24px;
-  background: #f8f9fa;
+  background: var(--bg-light);
   border-radius: 20px;
   box-shadow: var(--shadow-lg);
   font-family: var(--font-family);
@@ -12,7 +12,7 @@
 .pa-title {
   font-size: 2.3rem;
   font-weight: 800;
-  color: #18181b;
+  color: var(--text-main);
   margin-bottom: 2.2rem;
   text-align: left;
   letter-spacing: -1px;
@@ -27,7 +27,7 @@
 }
 
 .pa-summary-card {
-  background: #fff;
+  background: var(--bg-white);
   border-radius: 16px;
   box-shadow: 0 2px 12px 0 rgba(30,41,59,0.07);
   padding: 1.2rem 2.2rem 1.2rem 1.5rem;
@@ -41,7 +41,7 @@
 
 .pa-label {
   font-size: 1.05rem;
-  color: #64748b;
+  color: var(--text-muted);
   font-weight: 500;
   margin-bottom: 0.1rem;
 }
@@ -49,7 +49,7 @@
 .pa-value {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #18181b;
+  color: var(--text-main);
   letter-spacing: -1px;
 }
 .pa-green {
@@ -67,7 +67,7 @@
 }
 
 .pa-chart-card {
-  background: #fff;
+  background: var(--bg-white);
   border-radius: 16px;
   box-shadow: 0 2px 12px 0 rgba(30,41,59,0.07);
   padding: 1.5rem 1.5rem 1.2rem 1.5rem;
@@ -88,7 +88,7 @@
 .pa-chart-title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #2563eb;
+  color: var(--accent-blue);
   margin-bottom: 0.7rem;
 }
 .pa-chart-container {

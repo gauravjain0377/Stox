@@ -43,8 +43,8 @@ const Orders = () => {
 
   useEffect(() => { if (user) fetchOrders(); }, [user]);
   useEffect(() => {
-    const interval = setInterval(() => { if (user) fetchOrders(); }, 30000);
-    return () => clearInterval(interval);
+    // const interval = setInterval(() => { if (user) fetchOrders(); }, 30000);
+    // return () => clearInterval(interval);
   }, [user]);
 
   // Filtering logic

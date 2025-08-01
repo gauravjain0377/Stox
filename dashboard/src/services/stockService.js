@@ -1,8 +1,8 @@
-const mongoose = require('mongoose');
-const Stock = require('../model/StockModel');
-require('dotenv').config();
+// Stock service for fetching and managing stock data
+const API_BASE_URL = 'http://localhost:3000/api';
 
-const stocks = [
+// Fallback stock data from the seed file - All 50 stocks
+const fallbackStocks = [
   { symbol: "RELIANCE", fullName: "Reliance Industries Ltd", price: 2745.30, percent: 0.42, volume: "3.2M", marketCap: "18.3T" },
   { symbol: "HDFCBANK", fullName: "HDFC Bank Ltd", price: 1578.40, percent: 0.75, volume: "2.9M", marketCap: "11.9T" },
   { symbol: "ICICIBANK", fullName: "ICICI Bank Ltd", price: 1076.20, percent: -0.60, volume: "4.3M", marketCap: "7.5T" },
@@ -55,26 +55,77 @@ const stocks = [
   { symbol: "HDFC", fullName: "Housing Development Finance Corporation Ltd", price: 2850.00, percent: 1.85, volume: "1.2M", marketCap: "5.2T" }
 ];
 
-// Use default URI if environment variable is not set
-const mongoUri = process.env.MONGO_URL || "mongodb://localhost:27017/test";
+export const stockService = {
+  async getAllStocks() {
+    try {
+      const response = await fetch('http://localhost:3000/api/stocks');
+      if (response.ok) {
+        const data = await response.json();
+        const stocks = data.stocks || [];
+        
+        // If backend returns empty or insufficient data, use fallback
+        if (stocks.length === 0 || stocks.length < 50) {
+          return fallbackStocks;
+        }
+        
+        return stocks;
+      }
+      return fallbackStocks;
+    } catch (error) {
+      console.error('StockService: Error fetching stocks:', error);
+      return fallbackStocks;
+    }
+  },
 
-console.log('Connecting to MongoDB...');
-console.log('URI:', mongoUri);
+  async getStockData(symbol) {
+    try {
+      const response = await fetch(`http://localhost:3000/api/stocks/${symbol}`);
+      if (response.ok) {
+        return await response.json();
+      }
+      return null;
+    } catch (error) {
+      console.error('StockService: Error fetching stock data:', error);
+      return null;
+    }
+  },
 
-mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(async () => {
-    console.log('Connected to MongoDB successfully!');
-    await Stock.deleteMany({});
-    console.log('Cleared existing stocks');
-    await Stock.insertMany(stocks);
-    console.log('Stocks seeded successfully!');
-    process.exit(0);
-  })
-  .catch(err => {
-    console.error('MongoDB connection error:', err);
-    console.log('\nTo fix this:');
-    console.log('1. Make sure MongoDB is running');
-    console.log('2. Create a .env file in the backend folder with:');
-    console.log('   MONGO_URL=mongodb://localhost:27017/test');
-    process.exit(1);
-  }); 
+  async getCompanyInfo() {
+    try {
+      const response = await fetch('http://localhost:3000/api/stocks/company-info');
+      if (response.ok) {
+        const data = await response.json();
+        return data.companies || [];
+      }
+      return [];
+    } catch (error) {
+      console.error('StockService: Error fetching company info:', error);
+      return [];
+    }
+  },
+
+  async getMostTradedStocks() {
+    try {
+      const allStocks = await this.getAllStocks();
+      return allStocks.slice(0, 8);
+    } catch (error) {
+      console.error('StockService: Error fetching most traded stocks:', error);
+      return fallbackStocks.slice(0, 8);
+    }
+  },
+
+  async getAllStocksWithData() {
+    try {
+      const allStocks = await this.getAllStocks();
+      
+      if (allStocks.length === 0) {
+        return fallbackStocks;
+      }
+      
+      return allStocks;
+    } catch (error) {
+      console.error('StockService: Error fetching all stocks with data:', error);
+      return fallbackStocks;
+    }
+  }
+}; 

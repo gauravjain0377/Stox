@@ -18,6 +18,7 @@ import { Chart } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
 import { useGeneralContext } from './GeneralContext';
 import StockInfoTabs from './StockInfoTabs';
+import { stockService } from '../services/stockService';
 
 ChartJS.register(
   CategoryScale,
@@ -229,10 +230,73 @@ function generateOHLCData(range, price, symbol, percent) {
 }
 
 const StockDetail = () => {
-  const { selectedStock } = useGeneralContext();
+  const { selectedStock, setSelectedStock } = useGeneralContext();
+  const { symbol: symbolParam } = useParams();
   const navigate = useNavigate();
   const [tradeAlert, setTradeAlert] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [stockData, setStockData] = useState(null);
+  
+  // Fetch stock data if not available in context
+  useEffect(() => {
+    const fetchStockData = async () => {
+      console.log('StockDetail: Fetching stock data', { selectedStock, symbolParam });
+      if (!selectedStock && symbolParam) {
+        setLoading(true);
+        try {
+          // Fetch stock data from the service
+          const stocks = await stockService.getAllStocksWithData();
+          console.log('StockDetail: Fetched stocks', stocks.length);
+          const stock = stocks.find(s => s.symbol === symbolParam);
+          console.log('StockDetail: Found stock', stock);
+          if (stock) {
+            setStockData(stock);
+            setSelectedStock(stock);
+          } else {
+            // If not found in service, create a fallback stock object
+            const fallbackStock = {
+              symbol: symbolParam,
+              name: `${symbolParam} Ltd`,
+              price: 1000,
+              change: 0,
+              percent: 0,
+              volume: "1M",
+              marketCap: "1T"
+            };
+            console.log('StockDetail: Using fallback stock', fallbackStock);
+            setStockData(fallbackStock);
+            setSelectedStock(fallbackStock);
+          }
+        } catch (error) {
+          console.error('Error fetching stock data:', error);
+          // Create fallback stock object
+          const fallbackStock = {
+            symbol: symbolParam,
+            name: `${symbolParam} Ltd`,
+            price: 1000,
+            change: 0,
+            percent: 0,
+            volume: "1M",
+            marketCap: "1T"
+          };
+          setStockData(fallbackStock);
+          setSelectedStock(fallbackStock);
+        } finally {
+          setLoading(false);
+        }
+      } else if (selectedStock) {
+        console.log('StockDetail: Using selectedStock from context', selectedStock);
+        setStockData(selectedStock);
+      }
+    };
+
+    fetchStockData();
+  }, [selectedStock, symbolParam, setSelectedStock]);
+
+  // Use stockData instead of selectedStock for rendering
+  const currentStock = stockData || selectedStock;
+
   // Time range options for candlestick chart
   const timeRanges = [
     { label: '1D', points: 60, trend: 0.002 },
@@ -269,13 +333,13 @@ const StockDetail = () => {
 
   // Generate line chart data for selected range (use improved generator)
   const lineChartData = React.useMemo(() => {
-    if (!selectedStock) return { labels: [], datasets: [] };
+    if (!currentStock) return { labels: [], datasets: [] };
     const { label } = selectedRange;
-    const { labels, data } = generateRealisticLineData(label, selectedStock.price, selectedStock.symbol, selectedStock.percent);
+    const { labels, data } = generateRealisticLineData(label, currentStock.price, currentStock.symbol, currentStock.percent);
     // Use percent if available, otherwise fallback to price comparison
     let isGain = false;
-    if (typeof selectedStock.percent === 'number') {
-      isGain = selectedStock.percent >= 0;
+    if (typeof currentStock.percent === 'number') {
+      isGain = currentStock.percent >= 0;
     } else {
       isGain = data.length > 1 && data[data.length - 1] >= data[0];
     }
@@ -315,12 +379,12 @@ const StockDetail = () => {
         },
       ],
     };
-  }, [selectedStock, selectedRange]);
+  }, [currentStock, selectedRange]);
 
   const ohlcData = React.useMemo(() => {
-    if (!selectedStock || selectedRange.label === '1D') return null;
-    return generateOHLCData(selectedRange.label, selectedStock.price, selectedStock.symbol, selectedStock.percent);
-  }, [selectedStock, selectedRange]);
+    if (!currentStock || selectedRange.label === '1D') return null;
+    return generateOHLCData(selectedRange.label, currentStock.price, currentStock.symbol, currentStock.percent);
+  }, [currentStock, selectedRange]);
 
   // Calculate real absolute and percent change for the selected range
   const [absChange, percentChange] = React.useMemo(() => {
@@ -335,31 +399,46 @@ const StockDetail = () => {
 
   // Trade simulation
   const handleTrade = (type) => {
-    setTradeAlert(`Simulated: ${type === 'buy' ? 'Bought' : 'Sold'} ${quantity} shares of ${symbol}`);
+    setTradeAlert(`Simulated: ${type === 'buy' ? 'Bought' : 'Sold'} ${quantity} shares of ${currentStock.symbol}`);
     setTimeout(() => setTradeAlert(null), 2000);
   };
 
-  if (!selectedStock) {
+  if (!currentStock) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
-        <h2 className="text-2xl font-bold mb-4">No Stock Selected</h2>
-        <button onClick={() => navigate('/')} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">Go Back</button>
+        {loading ? (
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading stock data...</p>
+          </div>
+        ) : (
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">No Stock Selected</h2>
+            <p className="text-gray-600 mb-4">Please select a stock to view its details.</p>
+            <button
+              onClick={() => navigate(-1)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Go back
+            </button>
+          </div>
+        )}
       </div>
     );
   }
 
-  const price = selectedStock.price;
-  const name = selectedStock.name;
-  const symbol = selectedStock.symbol;
-  const percent = selectedStock.percent;
+  const price = currentStock.price;
+  const name = currentStock.name;
+  const symbol = currentStock.symbol;
+  const percent = currentStock.percent;
 
   const chartType = selectedRange.label === '1D' ? 'line' : 'candlestick';
   const isLine = chartType === 'line';
 
-  // Use real-time price, previousClose, and percentChange from selectedStock (as in sidebar)
-  const realPrice = selectedStock?.price;
-  const realPrevClose = selectedStock?.previousClose;
-  const realPercent = selectedStock?.percent;
+  // Use real-time price, previousClose, and percentChange from currentStock (as in sidebar)
+  const realPrice = currentStock?.price;
+  const realPrevClose = currentStock?.previousClose;
+  const realPercent = currentStock?.percent;
   const realAbsChange = (typeof realPrice === 'number' && typeof realPrevClose === 'number') ? realPrice - realPrevClose : 0;
   const realIsDown = realPercent < 0;
   const realFormattedPercent = typeof realPercent === 'number' ? Math.abs(realPercent).toFixed(2) : 'N/A';

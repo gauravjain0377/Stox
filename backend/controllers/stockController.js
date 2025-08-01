@@ -4,7 +4,7 @@ const CompanyInfo = require('../model/CompanyInfoModel');
 
 exports.getStocks = async (req, res, next) => {
   try {
-    const stocks = await Stock.find().limit(10);
+    const stocks = await Stock.find();
     res.json(stocks);
   } catch (err) {
     next(err);

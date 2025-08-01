@@ -1175,5 +1175,29 @@
         "The company reported growth in both retail and SME lending."
       ],
       "history": "Founded in 1994, IndusInd Bank has grown rapidly through customer-centric products and digital innovation."
+    },
+    {
+      "company_name": "Housing Development Finance Corporation Ltd",
+      "symbol": "HDFC",
+      "sector": "Housing Finance",
+      "about": "HDFC is India's premier housing finance company, providing home loans and related financial services.",
+      "financials_2025": {
+        "market_cap_crore": 520000,
+        "close_price": 2850.00,
+        "pe_ratio": 18.45,
+        "pb_ratio": 3.67,
+        "roe_percent": 18.90,
+        "roce_percent": 22.34,
+        "latest_returns": {
+          "1_month": 1.85,
+          "6_month": 12.45,
+          "1_year": 28.90
+        }
+      },
+      "news_2025": [
+        "HDFC continued to lead the housing finance sector with innovative loan products.",
+        "The company reported strong growth in affordable housing segment."
+      ],
+      "history": "Founded in 1977, HDFC has been instrumental in making home ownership accessible to millions of Indians."
     }
 ]

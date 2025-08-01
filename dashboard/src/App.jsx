@@ -16,6 +16,7 @@ import ProfileSettings from './components/ProfileSettings';
 import ProfileDetails from './components/ProfileDetails';
 import ProfileOverview from './components/ProfileOverview';
 import ProfileEdit from './components/ProfileEdit';
+import AllStocks from './components/AllStocks';
 import { SidebarProvider } from './context/SidebarContext';
 
 // ⬇️ MOVED ProtectedRoute OUTSIDE of the App component ⬇️
@@ -83,6 +84,7 @@ function App() {
                           <Route path="/profile/overview" element={<ProfileOverview />} />
                           <Route path="/profile/edit" element={<ProfileEdit />} />
                           <Route path="/stock/:symbol" element={<StockDetail />} />
+                          <Route path="/all-stocks" element={<AllStocks />} />
                         </Routes>
                       </Layout>
                     </ProtectedRoute>

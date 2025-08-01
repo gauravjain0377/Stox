@@ -7,6 +7,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Frontend Color Scheme Variables */
+:root {
+  --accent-green: #00796b;
+  --accent-blue: #1976d2;
+  --bg-light: #fafbfc;
+  --bg-white: #fff;
+  --text-main: #23272f;
+  --text-muted: #888;
+}
+
 @layer base {
   * {
     @apply box-border;
@@ -17,7 +27,13 @@
   }
   
   body {
-    @apply m-0 font-sans antialiased bg-gray-50 text-gray-900;
+    @apply m-0 font-sans antialiased;
+    background: var(--bg-light);
+    color: var(--text-main);
+    font-family: 'Inter', 'Poppins', 'Montserrat', sans-serif;
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
   }
 }
 
@@ -27,11 +43,47 @@
   }
   
   .btn-primary {
-    @apply btn bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
+    background: var(--accent-green);
+    color: #fff;
+    border-radius: 10px;
+    padding: 14px 32px;
+    font-weight: 700;
+    font-size: 1.08rem;
+    border: none;
+    box-shadow: 0 2px 8px 0 rgba(0,121,107,0.10);
+    cursor: pointer;
+    transition: background 0.18s, box-shadow 0.18s, transform 0.13s;
+  }
+  
+  .btn-primary:active {
+    transform: scale(0.97);
+  }
+  
+  .btn-primary:hover, .btn-primary:focus {
+    background: var(--accent-blue);
+    box-shadow: 0 6px 24px rgba(25,118,210,0.13);
   }
   
   .btn-secondary {
-    @apply btn bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500;
+    background: none;
+    color: var(--accent-blue);
+    border: 2px solid var(--accent-blue);
+    border-radius: 10px;
+    padding: 14px 32px;
+    font-weight: 700;
+    font-size: 1.08rem;
+    cursor: pointer;
+    transition: color 0.18s, background 0.18s, border 0.18s, transform 0.13s;
+  }
+  
+  .btn-secondary:active {
+    transform: scale(0.97);
+  }
+  
+  .btn-secondary:hover, .btn-secondary:focus {
+    color: var(--accent-green);
+    background: #e3f0fc;
+    border-color: var(--accent-green);
   }
   
   .btn-success {
@@ -43,15 +95,51 @@
   }
   
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6 transition-all duration-200 hover:shadow-md;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 2px 16px 0 rgba(25,118,210,0.07);
+    border: 1.5px solid #e3f0fc;
+    padding: 32px 28px 24px 28px;
+    transition: box-shadow 0.18s, border 0.18s, transform 0.18s;
+    will-change: transform, box-shadow;
+  }
+  
+  .card:hover, .card:focus {
+    box-shadow: 0 8px 32px 0 rgba(25,118,210,0.13);
+    border: 2px solid var(--accent-blue);
+    transform: translateY(-4px) scale(1.03);
   }
   
   .card-hover {
     @apply card hover:shadow-lg hover:border-gray-300;
   }
   
+  .summary-card-hover {
+    @apply card hover:shadow-lg hover:border-gray-300 transition-all duration-300 ease-in-out;
+    isolation: isolate;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .summary-card-hover:hover {
+    z-index: 2;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+  
   .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1.5px solid #bfc9d1;
+    font-size: 1rem;
+    margin-top: 4px;
+    background: #f6f8fa;
+    transition: border 0.18s, background 0.18s;
+  }
+  
+  .input-field:focus {
+    border: 1.5px solid var(--accent-blue);
+    background: #fff;
   }
   
   .sidebar-item {
@@ -63,11 +151,19 @@
   }
   
   .stock-card {
-    @apply card-hover p-4 cursor-pointer;
+    @apply card p-4 cursor-pointer;
+    isolation: isolate;
+    position: relative;
+    z-index: 1;
+    transition: all 0.3s ease-in-out;
   }
   
   .stock-card:hover {
-    @apply transform scale-105;
+    z-index: 2;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15) !important;
+    border-color: #3b82f6 !important;
+    background-color: rgba(219, 234, 254, 0.3) !important;
   }
   
   .positive-change {
@@ -102,13 +198,30 @@
   }
 }
 
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--accent-green);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--accent-blue);
+  text-decoration: none;
+  transition: color 0.18s;
+}
+
+a:hover {
+  color: var(--accent-green);
+}
+
 body {
   margin: 0;
   font-family: var(--font-family);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  background-color: var(--bg-light);
+  color: var(--text-main);
 }
 
 code {
@@ -122,7 +235,7 @@ code {
   display: flex;
   align-items: center;
   box-sizing: border-box;
-  background-color: var(--bg-primary);
+  background-color: var(--bg-light);
 }
 
 .content {
@@ -131,7 +244,7 @@ code {
   box-sizing: border-box;
   overflow-y: auto;
   padding: 3% 2%;
-  background-color: var(--bg-primary);
+  background-color: var(--bg-light);
 }
 
 .funds {
@@ -144,7 +257,7 @@ code {
 
 .funds p {
   font-size: 0.8rem;
-  color: rgb(179, 179, 179);
+  color: var(--text-muted);
   margin-right: 8px;
 }
 
@@ -158,11 +271,11 @@ code {
 }
 
 .btn-green {
-  background: #4caf50;
+  background: var(--accent-green);
 }
 
 .btn-blue {
-  background: #4184f3;
+  background: var(--accent-blue);
 }
 
 .row {
@@ -186,7 +299,7 @@ code {
 
 .section-icon {
   transform: scale(0.8);
-  color: rgb(66, 56, 56);
+  color: var(--text-main);
   padding: 0;
   margin: 0;
   margin-right: 10px;
@@ -215,16 +328,16 @@ code {
 
 .table .data p:first-child {
   font-size: 1rem;
-  color: rgb(151, 151, 151);
+  color: var(--text-muted);
 }
 
 .imp {
   font-size: 1.5rem;
-  color: #313131;
+  color: var(--text-main);
 }
 
 .colored {
-  color: #4184f3;
+  color: var(--accent-blue);
 }
 
 .table hr {
@@ -244,7 +357,7 @@ code {
   color: #c9c9c9;
 }
 
-/* sudo selectors */
+/* Button hover states */
 .btn-blue:hover {
   background: #74a7fa;
 }
@@ -256,7 +369,7 @@ code {
 .title {
   font-size: 1.3rem;
   font-weight: 300;
-  color: rgb(71, 71, 71);
+  color: var(--text-main);
   margin-bottom: 2%;
 }
 
@@ -273,7 +386,7 @@ code {
 .order-table th {
   text-align: right;
   padding: 15px 10px;
-  color: rgb(145, 145, 145);
+  color: var(--text-muted);
   font-weight: 300;
   font-size: 0.8rem;
 }
@@ -302,7 +415,7 @@ code {
   text-align: right;
   font-weight: 400;
   font-size: 0.9rem;
-  color: rgb(73, 73, 73);
+  color: var(--text-main);
 }
 
 .align-left {
@@ -330,7 +443,7 @@ code {
 
 .col h5 {
   font-size: 1.8rem;
-  color: rgb(71, 71, 71);
+  color: var(--text-main);
   font-weight: 300;
 }
 
@@ -341,7 +454,7 @@ code {
 
 .col p {
   font-size: 0.8rem;
-  color: rgb(153, 153, 153);
+  color: var(--text-muted);
   font-weight: 300;
   margin-top: 2%;
 }
@@ -363,7 +476,7 @@ code {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-white);
   border-right: 1px solid var(--border-primary);
 }
 
@@ -391,11 +504,11 @@ code {
 .menu {
   font-size: 0.8rem;
   font-weight: 400;
-  color: var(--text-secondary);
+  color: var(--text-muted);
 }
 
 .menu.selected {
-  color: var(--accent-primary);
+  color: var(--accent-green);
 }
 
 hr {
@@ -433,9 +546,8 @@ hr {
 }
 
 /* sudo selectors */
-
 .menu:hover {
-  color: var(--accent-primary);
+  color: var(--accent-green);
 }
 
 .profile:hover {
@@ -474,7 +586,7 @@ hr {
 
 .btn {
   text-decoration: none;
-  background: rgb(77, 77, 248);
+  background: var(--accent-blue);
   padding: 10px 20px;
   border-radius: 2px;
   color: #fff;
@@ -482,13 +594,13 @@ hr {
 }
 
 .btn:hover {
-  background: rgb(110, 110, 253);
+  background: #74a7fa;
 }
 
 .title {
   font-size: 1.3rem;
   font-weight: 300;
-  color: rgb(71, 71, 71);
+  color: var(--text-main);
   margin-bottom: 2%;
 }
 
@@ -505,7 +617,7 @@ hr {
 .order-table th {
   text-align: right;
   padding: 15px 10px;
-  color: rgb(145, 145, 145);
+  color: var(--text-muted);
   font-weight: 300;
   font-size: 0.8rem;
 }
@@ -532,7 +644,7 @@ hr {
   text-align: right;
   font-weight: 400;
   font-size: 0.9rem;
-  color: rgb(73, 73, 73);
+  color: var(--text-main);
 }
 
 .align-left {
@@ -560,7 +672,7 @@ hr {
 
 .col h5 {
   font-size: 1.8rem;
-  color: rgb(71, 71, 71);
+  color: var(--text-main);
   font-weight: 300;
 }
 
@@ -571,7 +683,7 @@ hr {
 
 .col p {
   font-size: 0.8rem;
-  color: rgb(153, 153, 153);
+  color: var(--text-muted);
   font-weight: 300;
   margin-top: 2%;
 }
@@ -588,7 +700,7 @@ hr {
 .username h6 {
   font-size: 1.5rem;
   font-weight: 400;
-  color: rgb(83, 83, 83);
+  color: var(--text-main);
   margin-bottom: 20px;
 }
 
@@ -618,7 +730,7 @@ hr {
 
 .section-icon {
   transform: scale(0.8);
-  color: rgb(112, 112, 112);
+  color: var(--text-muted);
   padding: 0;
   margin: 0;
   margin-right: 10px;
@@ -634,12 +746,12 @@ hr {
 .data .first h3 {
   font-size: 2.5rem;
   font-weight: 300;
-  color: rgb(71, 71, 71);
+  color: var(--text-main);
 }
 
 .data .first p {
   font-size: 0.8rem;
-  color: rgb(136, 136, 136);
+  color: var(--text-muted);
 }
 
 .data .first small {
@@ -658,7 +770,7 @@ hr {
 
 .data .second p {
   font-size: 0.8rem;
-  color: rgb(136, 136, 136);
+  color: var(--text-muted);
   margin-bottom: 10px;
   white-space: nowrap;
 }
@@ -667,7 +779,7 @@ hr {
   display: inline;
   margin-left: 5%;
   font-size: 0.9rem;
-  color: rgb(100, 100, 100);
+  color: var(--text-main);
 }
 
 .section hr {
@@ -679,7 +791,7 @@ hr {
   height: 10vh;
   display: flex;
   align-items: center;
-  background: var(--bg-secondary);
+  background: var(--bg-white);
   box-shadow: var(--shadow-sm);
   box-sizing: border-box;
   z-index: 9;
@@ -721,7 +833,7 @@ hr {
   font-size: 0.8rem;
   font-weight: 500;
   text-transform: uppercase;
-  color: rgb(97, 97, 97);
+  color: var(--text-muted);
   white-space: nowrap;
 }
 
@@ -734,7 +846,7 @@ hr {
 .percent {
   font-size: 0.8rem;
   font-weight: 400;
-  color: rgb(146, 146, 146);
+  color: var(--text-muted);
 }
 
 /* sudo selectors */
@@ -746,7 +858,7 @@ hr {
   flex-basis: 32%;
   height: 100%;
   box-sizing: border-box;
-  background: var(--bg-card);
+  background: var(--bg-white);
   box-shadow: var(--shadow-sm);
   overflow-y: auto;
   position: relative;
@@ -767,8 +879,8 @@ hr {
   padding: 15px 20px;
   font-size: 0.9rem;
   font-weight: 400;
-  color: var(--text-primary);
-  background: var(--bg-card);
+  color: var(--text-main);
+  background: var(--bg-white);
   border-bottom: 1px solid var(--border-primary);
 }
 
@@ -777,7 +889,7 @@ hr {
   right: 20px;
   font-size: 0.9rem;
   font-weight: 400;
-  color: var(--text-secondary);
+  color: var(--text-muted);
 }
 
 .list {
@@ -789,7 +901,7 @@ hr {
   border-bottom: 1px solid var(--border-primary);
   padding: 12px 10px 12px 14px;
   position: relative;
-  background: var(--bg-card);
+  background: var(--bg-white);
 }
 
 .item {
@@ -812,7 +924,7 @@ hr {
 }
 
 .item-info span:nth-child(1) {
-  color: var(--text-secondary);
+  color: var(--text-muted);
   flex: 1;
 }
 
@@ -848,11 +960,11 @@ hr {
 }
 
 .buy {
-  background-color: #4184f3;
+  background-color: var(--accent-blue);
   color: #fff;
   font-weight: 400;
   font-size: 0.8rem;
-  border: 0.7px solid #4184f3;
+  border: 0.7px solid var(--accent-blue);
 }
 
 .sell {
@@ -870,7 +982,7 @@ hr {
 
 .icon {
   transform: scale(0.7);
-  color: rgb(65, 65, 65);
+  color: var(--text-main);
 }
 
 .watchlist-number {
@@ -886,7 +998,7 @@ hr {
   left: 0;
   border: 1px solid rgb(231, 231, 231);
   z-index: 5;
-  background: #fff;
+  background: var(--bg-white);
 }
 
 .watchlist-number ul {
@@ -913,7 +1025,7 @@ hr {
 
 .settings {
   transform: scale(0.8);
-  color: rgb(105, 105, 105);
+  color: var(--text-muted);
 }
 
 /* sudo selectors */
@@ -958,7 +1070,7 @@ hr {
 
 /* --- Holdings Table & Stock Link Styles --- */
 .stock-link {
-  color: #2563eb;
+  color: var(--accent-blue);
   text-decoration: none;
   font-weight: 600;
   display: inline-flex;
@@ -986,7 +1098,7 @@ hr {
   right: 0;
   bottom: -2px;
   height: 2.5px;
-  background: #2563eb;
+  background: var(--accent-blue);
   border-radius: 2px;
   opacity: 0;
   transform: scaleX(0);
@@ -1008,8 +1120,8 @@ hr {
   padding: 12px 8px;
   font-weight: 600;
   text-align: left;
-  color: #333;
-  background: #fafbfc;
+  color: var(--text-main);
+  background: var(--bg-light);
   border-bottom: 1px solid #eee;
 }
 .premium-table td {
@@ -1020,11 +1132,37 @@ hr {
   background: #fcfcfc;
 }
 .premium-table tr:nth-child(odd) {
-  background: #fff;
+  background: var(--bg-white);
 }
 .premium-table tr:hover {
   background: #f5f7fa;
 }
+
+/* Micro-interactions */
+.card:active, .button-primary:active, .button-secondary:active {
+  transform: scale(0.98);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .card {
+    min-width: 80vw;
+    max-width: 98vw;
+    padding: 24px 8px 18px 8px;
+  }
+}
+@media (max-width: 600px) {
+  h1, h2, h3, h4, h5, h6 {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+  }
+  .card {
+    min-width: 98vw;
+    max-width: 100vw;
+    padding: 14px 2px 10px 2px;
+  }
+}
+
 aside {
   width: 320px !important;
   min-width: 320px !important;
@@ -1037,4 +1175,131 @@ aside {
   left: 0 !important;
   top: 0 !important;
   z-index: 10 !important;
+}
+
+/* Stock card hover effects - ensure proper isolation */
+.stock-card {
+  isolation: isolate;
+  position: relative;
+  z-index: 1;
+}
+
+.stock-card:hover {
+  z-index: 2;
+}
+
+/* Ensure group hover effects work properly */
+.group:hover .group-hover\:bg-blue-100 {
+  background-color: #dbeafe;
+}
+
+.group:hover .group-hover\:text-blue-700 {
+  color: #1d4ed8;
+}
+
+.group:hover .group-hover\:text-blue-900 {
+  color: #1e40af;
+}
+
+.group:hover .group-hover\:text-blue-600 {
+  color: #2563eb;
+}
+
+/* Enhanced hover effects for better UX */
+.stock-card:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
+  background-color: rgba(219, 234, 254, 0.3);
+}
+
+/* Sidebar collapse improvements */
+.sidebar-collapsed {
+  width: 64px !important;
+  min-width: 64px !important;
+  max-width: 64px !important;
+  overflow: hidden;
+}
+
+.sidebar-collapsed .sidebar-content {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-100%);
+}
+
+.sidebar-toggle {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: linear-gradient(to right, #eff6ff, #e0e7ff);
+}
+
+/* Ensure main content area adjusts properly */
+.main-content-expanded {
+  margin-left: 0;
+  transition: margin-left 0.3s ease-in-out;
+}
+
+.main-content-collapsed {
+  margin-left: 0;
+  transition: margin-left 0.3s ease-in-out;
+}
+
+/* Smooth transitions for sidebar */
+aside {
+  transition: all 0.3s ease-in-out;
+}
+
+aside.sidebar-collapsed {
+  transform: translateX(0);
+}
+
+aside:not(.sidebar-collapsed) {
+  transform: translateX(0);
+}
+
+/* Collapsed sidebar stock symbols */
+.sidebar-collapsed .stock-symbol {
+  width: 48px;
+  height: 48px;
+  background: #f3f4f6;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+  font-weight: 700;
+  font-size: 18px;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.sidebar-collapsed .stock-symbol:hover {
+  background: #dbeafe;
+  color: #1d4ed8;
+  transform: scale(1.05);
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+/* Ensure collapsed sidebar has proper spacing */
+.sidebar-collapsed {
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+  overflow: hidden;
+  padding: 0;
+}
+
+.sidebar-collapsed .sidebar-content {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-100%);
+}
+
+.sidebar-toggle {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: linear-gradient(to right, #eff6ff, #e0e7ff);
 }

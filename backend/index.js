@@ -11,6 +11,10 @@ const fetch = require('node-fetch');
 const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const yahooFinance = require('yahoo-finance2').default;
+
+// Suppress Yahoo Finance API notices
+yahooFinance.suppressNotices(['yahooSurvey']);
 
 const { HoldingsModel } = require("./model/HoldingsModel");
 const { PositionsModel } = require("./model/PositionsModel");

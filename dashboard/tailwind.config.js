@@ -7,21 +7,21 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        'sans': ['Inter', 'system-ui', 'sans-serif'],
+        'sans': ['Inter', 'Poppins', 'Montserrat', 'system-ui', 'sans-serif'],
         'display': ['Poppins', 'system-ui', 'sans-serif'],
       },
       colors: {
         primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
+          50: '#e3f0fc',
+          100: '#c7e1f9',
+          200: '#8fc3f3',
+          300: '#57a5ed',
+          400: '#1f87e7',
+          500: '#00796b',
+          600: '#1976d2',
+          700: '#1565c0',
+          800: '#0d47a1',
+          900: '#0a3d8f',
         },
         success: {
           50: '#f0fdf4',
@@ -48,15 +48,15 @@ export default {
           900: '#7f1d1d',
         },
         gray: {
-          50: '#f9fafb',
+          50: '#fafbfc',
           100: '#f3f4f6',
           200: '#e5e7eb',
           300: '#d1d5db',
           400: '#9ca3af',
-          500: '#6b7280',
+          500: '#888',
           600: '#4b5563',
           700: '#374151',
-          800: '#1f2937',
+          800: '#23272f',
           900: '#111827',
         }
       },
