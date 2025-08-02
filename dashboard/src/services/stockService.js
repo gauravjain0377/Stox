@@ -55,6 +55,9 @@ const fallbackStocks = [
   { symbol: "HDFC", fullName: "Housing Development Finance Corporation Ltd", price: 2850.00, percent: 1.85, volume: "1.2M", marketCap: "5.2T" }
 ];
 
+// Helper function to get user-specific storage key
+const getWatchlistKey = (userId) => `watchlists_${userId || 'default'}`;
+
 export const stockService = {
   async getAllStocks() {
     try {
@@ -126,6 +129,154 @@ export const stockService = {
     } catch (error) {
       console.error('StockService: Error fetching all stocks with data:', error);
       return fallbackStocks;
+    }
+  },
+
+  // Watchlist management functions
+  getUserWatchlists(userId) {
+    try {
+      const key = getWatchlistKey(userId);
+      const stored = localStorage.getItem(key);
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.error('StockService: Error getting user watchlists:', error);
+      return [];
+    }
+  },
+
+  saveUserWatchlists(userId, watchlists) {
+    try {
+      const key = getWatchlistKey(userId);
+      localStorage.setItem(key, JSON.stringify(watchlists));
+    } catch (error) {
+      console.error('StockService: Error saving user watchlists:', error);
+    }
+  },
+
+  async getWatchlist(userId) {
+    try {
+      const watchlists = this.getUserWatchlists(userId);
+      // Return the first watchlist's stocks or empty array
+      return watchlists.length > 0 ? watchlists[0].stocks : [];
+    } catch (error) {
+      console.error('StockService: Error fetching watchlist:', error);
+      return [];
+    }
+  },
+
+  async getAllWatchlists(userId) {
+    try {
+      return this.getUserWatchlists(userId);
+    } catch (error) {
+      console.error('StockService: Error fetching all watchlists:', error);
+      return [];
+    }
+  },
+
+  async createWatchlist(userId, watchlistName) {
+    try {
+      const watchlists = this.getUserWatchlists(userId);
+      const newWatchlist = {
+        id: Date.now(),
+        name: watchlistName,
+        stocks: []
+      };
+      const updatedWatchlists = [...watchlists, newWatchlist];
+      this.saveUserWatchlists(userId, updatedWatchlists);
+      return newWatchlist;
+    } catch (error) {
+      console.error('StockService: Error creating watchlist:', error);
+      return null;
+    }
+  },
+
+  async updateWatchlist(userId, watchlistId, updatedWatchlist) {
+    try {
+      const watchlists = this.getUserWatchlists(userId);
+      const updatedWatchlists = watchlists.map(w => 
+        w.id === watchlistId ? { ...w, ...updatedWatchlist } : w
+      );
+      this.saveUserWatchlists(userId, updatedWatchlists);
+      return true;
+    } catch (error) {
+      console.error('StockService: Error updating watchlist:', error);
+      return false;
+    }
+  },
+
+  async deleteWatchlist(userId, watchlistId) {
+    try {
+      const watchlists = this.getUserWatchlists(userId);
+      const updatedWatchlists = watchlists.filter(w => w.id !== watchlistId);
+      this.saveUserWatchlists(userId, updatedWatchlists);
+      return true;
+    } catch (error) {
+      console.error('StockService: Error deleting watchlist:', error);
+      return false;
+    }
+  },
+
+  async addStockToWatchlist(userId, watchlistId, stock) {
+    try {
+      const watchlists = this.getUserWatchlists(userId);
+      let stockAdded = false;
+      
+      const updatedWatchlists = watchlists.map(w => {
+        if (w.id === watchlistId) {
+          const stockExists = w.stocks.some(s => s.symbol === stock.symbol);
+          if (!stockExists) {
+            stockAdded = true;
+            return { ...w, stocks: [...w.stocks, stock] };
+          }
+        }
+        return w;
+      });
+      
+      this.saveUserWatchlists(userId, updatedWatchlists);
+      return stockAdded; // Return true only if stock was actually added
+    } catch (error) {
+      console.error('StockService: Error adding stock to watchlist:', error);
+      return false;
+    }
+  },
+
+  async removeStockFromWatchlist(userId, watchlistId, stockSymbol) {
+    try {
+      const watchlists = this.getUserWatchlists(userId);
+      const updatedWatchlists = watchlists.map(w => {
+        if (w.id === watchlistId) {
+          return { ...w, stocks: w.stocks.filter(s => s.symbol !== stockSymbol) };
+        }
+        return w;
+      });
+      this.saveUserWatchlists(userId, updatedWatchlists);
+      return true;
+    } catch (error) {
+      console.error('StockService: Error removing stock from watchlist:', error);
+      return false;
+    }
+  },
+
+  async getWatchlistSummary(userId) {
+    try {
+      const watchlists = this.getUserWatchlists(userId);
+      const totalItems = watchlists.reduce((sum, w) => sum + w.stocks.length, 0);
+      const allStocks = watchlists.flatMap(w => w.stocks);
+      
+      return {
+        count: watchlists.length,
+        items: allStocks.slice(0, 3), // Show first 3 items from all watchlists
+        totalItems: totalItems,
+        watchlists: watchlists
+      };
+    } catch (error) {
+      console.error('StockService: Error fetching watchlist summary:', error);
+      return {
+        count: 0,
+        items: [],
+        totalItems: 0,
+        watchlists: []
+      };
     }
   }
 }; 

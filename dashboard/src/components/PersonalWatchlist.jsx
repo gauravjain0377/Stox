@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { useTheme } from "../context/ThemeContext";
+import React, { useState, useEffect } from 'react';
+import { useGeneralContext } from "./GeneralContext";
+import { useLocation } from 'react-router-dom';
 import { watchlist as allStocks } from "../data/data";
+import { stockService } from "../services/stockService";
 import "../styles/PersonalWatchlist.css";
 import { FaSearch, FaPlus } from 'react-icons/fa';
 
@@ -25,12 +27,11 @@ const MiniChart = ({ data, isPositive }) => {
   );
 };
 
-const defaultWatchlist = [{ id: Date.now(), name: 'My Watchlist', stocks: [] }];
-
 const PersonalWatchlist = () => {
-  const { theme } = useTheme();
-  const [watchlists, setWatchlists] = useState(defaultWatchlist);
-  const [activeWatchlist, setActiveWatchlist] = useState(defaultWatchlist[0].id);
+  const { user } = useGeneralContext();
+  const location = useLocation();
+  const [watchlists, setWatchlists] = useState([]);
+  const [activeWatchlist, setActiveWatchlist] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [addStockInput, setAddStockInput] = useState('');
   const [editingWatchlist, setEditingWatchlist] = useState(null);
@@ -41,31 +42,58 @@ const PersonalWatchlist = () => {
   const [itemToDelete, setItemToDelete] = useState(null);
   const [showStockDropdown, setShowStockDropdown] = useState(false);
   const [dropdownIndex, setDropdownIndex] = useState(-1);
-  
-  // Sample stock data
-  const sampleStocks = [
-    { symbol: 'AAPL', name: 'Apple Inc.', price: 150.25, change: 2.15, changePercent: 1.45, volume: '45.2M' },
-    { symbol: 'GOOGL', name: 'Alphabet Inc.', price: 2750.80, change: -15.20, changePercent: -0.55, volume: '12.8M' },
-    { symbol: 'MSFT', name: 'Microsoft Corporation', price: 310.45, change: 8.75, changePercent: 2.89, volume: '28.9M' },
-    { symbol: 'TSLA', name: 'Tesla Inc.', price: 245.30, change: 12.80, changePercent: 5.50, volume: '35.6M' },
-    { symbol: 'AMZN', name: 'Amazon.com Inc.', price: 135.90, change: -3.45, changePercent: -2.48, volume: '22.1M' },
-    { symbol: 'META', name: 'Meta Platforms Inc.', price: 320.75, change: 18.25, changePercent: 6.02, volume: '18.7M' },
-    { symbol: 'NVDA', name: 'NVIDIA Corporation', price: 485.20, change: 25.60, changePercent: 5.57, volume: '15.3M' },
-    { symbol: 'NFLX', name: 'Netflix Inc.', price: 425.80, change: -8.90, changePercent: -2.05, volume: '8.9M' }
-  ];
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
+
+  // Load user watchlists
+  useEffect(() => {
+    const loadWatchlists = async () => {
+      try {
+        setLoading(true);
+        const userId = user?.id || user?.username || 'default';
+        const userWatchlists = await stockService.getAllWatchlists(userId);
+        setWatchlists(userWatchlists);
+        if (userWatchlists.length > 0) {
+          setActiveWatchlist(userWatchlists[0].id);
+        }
+      } catch (error) {
+        console.error('Error loading watchlists:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadWatchlists();
+  }, [user]);
+
+  // Check URL parameters for auto-create watchlist
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const action = searchParams.get('action');
+    
+    if (action === 'create') {
+      setShowAddWatchlist(true);
+      // Clear the URL parameter
+      window.history.replaceState({}, document.title, '/watchlist');
+    }
+  }, [location.search]);
 
   // Add new watchlist
-  const handleAddWatchlist = () => {
+  const handleAddWatchlist = async () => {
     if (newWatchlistName.trim()) {
-      const newWatchlist = {
-        id: Date.now(),
-        name: newWatchlistName.trim(),
-        stocks: []
-      };
-      setWatchlists([...watchlists, newWatchlist]);
-      setNewWatchlistName('');
-      setShowAddWatchlist(false);
-      setActiveWatchlist(newWatchlist.id);
+      try {
+        const userId = user?.id || user?.username || 'default';
+        const newWatchlist = await stockService.createWatchlist(userId, newWatchlistName.trim());
+        if (newWatchlist) {
+          setWatchlists([...watchlists, newWatchlist]);
+          setActiveWatchlist(newWatchlist.id);
+        }
+        setNewWatchlistName('');
+        setShowAddWatchlist(false);
+      } catch (error) {
+        console.error('Error creating watchlist:', error);
+      }
     }
   };
 
@@ -74,48 +102,88 @@ const PersonalWatchlist = () => {
     setItemToDelete({ type: 'watchlist', id: watchlistId, name: watchlists.find(w => w.id === watchlistId)?.name });
     setShowDeleteWatchlistModal(true);
   };
-  const confirmDeleteWatchlist = () => {
-    const updatedWatchlists = watchlists.filter(w => w.id !== itemToDelete.id);
-    setWatchlists(updatedWatchlists);
-    if (activeWatchlist === itemToDelete.id) {
-      setActiveWatchlist(updatedWatchlists[0]?.id || null);
+  const confirmDeleteWatchlist = async () => {
+    try {
+      const userId = user?.id || user?.username || 'default';
+      const success = await stockService.deleteWatchlist(userId, itemToDelete.id);
+      if (success) {
+        const updatedWatchlists = watchlists.filter(w => w.id !== itemToDelete.id);
+        setWatchlists(updatedWatchlists);
+        if (activeWatchlist === itemToDelete.id) {
+          setActiveWatchlist(updatedWatchlists[0]?.id || null);
+        }
+      }
+      setShowDeleteWatchlistModal(false);
+      setItemToDelete(null);
+    } catch (error) {
+      console.error('Error deleting watchlist:', error);
     }
-    setShowDeleteWatchlistModal(false);
-    setItemToDelete(null);
   };
 
   // Delete stock
-  const handleDeleteStock = (stockName) => {
-    setItemToDelete({ type: 'stock', name: stockName });
+  const handleDeleteStock = (stockSymbol) => {
+    setItemToDelete({ type: 'stock', symbol: stockSymbol });
     setShowDeleteStockModal(true);
   };
-  const confirmDeleteStock = () => {
-    const activeWatchlistData = watchlists.find(w => w.id === activeWatchlist);
-    if (activeWatchlistData) {
-      const updatedStocks = activeWatchlistData.stocks.filter(s => s.name !== itemToDelete.name);
-      const updatedWatchlists = watchlists.map(w =>
-        w.id === activeWatchlist ? { ...w, stocks: updatedStocks } : w
-      );
-      setWatchlists(updatedWatchlists);
+  const confirmDeleteStock = async () => {
+    try {
+      const userId = user?.id || user?.username || 'default';
+      const success = await stockService.removeStockFromWatchlist(userId, activeWatchlist, itemToDelete.symbol);
+      if (success) {
+        const activeWatchlistData = watchlists.find(w => w.id === activeWatchlist);
+        if (activeWatchlistData) {
+          const updatedStocks = activeWatchlistData.stocks.filter(s => s.symbol !== itemToDelete.symbol);
+          const updatedWatchlists = watchlists.map(w =>
+            w.id === activeWatchlist ? { ...w, stocks: updatedStocks } : w
+          );
+          setWatchlists(updatedWatchlists);
+        }
+      }
+      setShowDeleteStockModal(false);
+      setItemToDelete(null);
+    } catch (error) {
+      console.error('Error removing stock:', error);
     }
-    setShowDeleteStockModal(false);
-    setItemToDelete(null);
   };
 
   // Add stock to watchlist from dropdown
-  const handleAddStock = (stock) => {
+  const handleAddStock = async (stock) => {
     if (!stock || !activeWatchlist) return;
-    const activeWatchlistData = watchlists.find(w => w.id === activeWatchlist);
-    if (activeWatchlistData && !activeWatchlistData.stocks.find(s => s.name === stock.name)) {
-      const updatedWatchlists = watchlists.map(w =>
-        w.id === activeWatchlist
-          ? { ...w, stocks: [...w.stocks, stock] }
-          : w
-      );
-      setWatchlists(updatedWatchlists);
+    try {
+      const userId = user?.id || user?.username || 'default';
+      
+      // Convert stock data to the expected format
+      const formattedStock = {
+        symbol: stock.name, // Use name as symbol
+        name: stock.name,
+        price: stock.price,
+        percent: stock.percent,
+        volume: stock.volume
+      };
+      
+      const success = await stockService.addStockToWatchlist(userId, activeWatchlist, formattedStock);
+      if (success) {
+        // Stock was successfully added, reload the watchlists to get the updated data
+        const updatedWatchlists = await stockService.getAllWatchlists(userId);
+        setWatchlists(updatedWatchlists);
+        setMessage(`${formattedStock.symbol} added to watchlist!`);
+        setMessageType('success');
+      } else {
+        setMessage(`${formattedStock.symbol} is already in this watchlist`);
+        setMessageType('warning');
+      }
+      
+      // Clear message after 3 seconds
+      setTimeout(() => {
+        setMessage('');
+        setMessageType('');
+      }, 3000);
+      
+      setAddStockInput('');
+      setShowStockDropdown(false);
+    } catch (error) {
+      console.error('Error adding stock:', error);
     }
-    setAddStockInput('');
-    setShowStockDropdown(false);
   };
 
   // Rename watchlist
@@ -123,23 +191,32 @@ const PersonalWatchlist = () => {
     setEditingWatchlist(watchlistId);
     setNewWatchlistName(watchlists.find(w => w.id === watchlistId)?.name || '');
   };
-  const confirmRenameWatchlist = () => {
+  const confirmRenameWatchlist = async () => {
     if (newWatchlistName.trim()) {
-      const updatedWatchlists = watchlists.map(w =>
-        w.id === editingWatchlist ? { ...w, name: newWatchlistName.trim() } : w
-      );
-      setWatchlists(updatedWatchlists);
-      setEditingWatchlist(null);
-      setNewWatchlistName('');
+      try {
+        const userId = user?.id || user?.username || 'default';
+        const success = await stockService.updateWatchlist(userId, editingWatchlist, { name: newWatchlistName.trim() });
+        if (success) {
+          const updatedWatchlists = watchlists.map(w =>
+            w.id === editingWatchlist ? { ...w, name: newWatchlistName.trim() } : w
+          );
+          setWatchlists(updatedWatchlists);
+        }
+        setEditingWatchlist(null);
+        setNewWatchlistName('');
+      } catch (error) {
+        console.error('Error renaming watchlist:', error);
+      }
     }
   };
 
   // Filtered stocks for search in add dropdown
   const filteredStockOptions = allStocks.filter(stock => {
     const activeWatchlistData = watchlists.find(w => w.id === activeWatchlist);
-    const alreadyAdded = activeWatchlistData?.stocks.some(s => s.name === stock.name);
+    const alreadyAdded = activeWatchlistData?.stocks.some(s => s.symbol === stock.name);
     return (
-      (stock.name.toLowerCase().includes(addStockInput.toLowerCase())) &&
+      stock.name && 
+      stock.name.toLowerCase().includes(addStockInput.toLowerCase()) &&
       !alreadyAdded
     );
   });
@@ -148,11 +225,32 @@ const PersonalWatchlist = () => {
   const filteredStocks = watchlists
     .find(w => w.id === activeWatchlist)
     ?.stocks.filter(stock =>
-      stock.name.toLowerCase().includes(searchTerm.toLowerCase())
+      (stock.symbol && stock.symbol.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (stock.name && stock.name.toLowerCase().includes(searchTerm.toLowerCase()))
     ) || [];
+
+  if (loading) {
+    return (
+      <div className="modern-watchlist">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading watchlists...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="modern-watchlist">
+      {/* Message Display */}
+      {message && (
+        <div className={`message ${messageType === 'success' ? 'success' : 'warning'}`}>
+          {message}
+        </div>
+      )}
+      
       {/* Watchlist Tabs */}
       <div className="watchlist-tabs">
         {watchlists.map(watchlist => (
@@ -317,7 +415,7 @@ const PersonalWatchlist = () => {
                   <td>
                     <button
                       className="delete-stock-btn"
-                      onClick={() => handleDeleteStock(stock.name)}
+                      onClick={() => handleDeleteStock(stock.symbol)}
                       title="Remove from watchlist"
                     >
                       ×
@@ -326,11 +424,11 @@ const PersonalWatchlist = () => {
                 </tr>
               ))
             ) : (
-              <tr>
-                <td colSpan="6" className="empty-state">
-                  {searchTerm ? 'No stocks found matching your search.' : 'No stocks in this watchlist yet.'}
-                </td>
-              </tr>
+                              <tr>
+                  <td colSpan="6" className="empty-state">
+                    {searchTerm ? 'No stocks found matching your search.' : 'No stocks in this watchlist yet. Add stocks using the search bar above!'}
+                  </td>
+                </tr>
             )}
           </tbody>
         </table>
@@ -385,7 +483,7 @@ const PersonalWatchlist = () => {
               </button>
             </div>
             <div className="modal-content">
-              <p>Are you sure you want to remove "<strong>{itemToDelete?.name}</strong>" from this watchlist?</p>
+              <p>Are you sure you want to remove "<strong>{itemToDelete?.symbol}</strong>" from this watchlist?</p>
               <p>You can always add it back later.</p>
             </div>
             <div className="modal-actions">
