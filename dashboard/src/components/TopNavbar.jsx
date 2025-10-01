@@ -8,7 +8,9 @@ import {
   TrendingUp,
   TrendingDown,
   Menu,
-  ChevronDown
+  ChevronDown,
+  Mail,
+  BookOpen
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import NotificationBell from "./NotificationBell";
@@ -32,6 +34,7 @@ const TopNavbar = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showSupport, setShowSupport] = useState(false);
   const [editProfileForm, setEditProfileForm] = useState({
     name: user?.username || user?.email || '',
     email: user?.email || ''
@@ -55,6 +58,10 @@ const TopNavbar = () => {
       logout();
     }
   };
+
+  // Route Email support to dedicated support form; others to Privacy & Security
+  const emailSupportRoute = "/support/contact";
+  const supportRoute = "/profile/settings?tab=privacy";
 
   // Mock market data
   const marketIndices = [
@@ -163,11 +170,11 @@ const TopNavbar = () => {
                     <span className="profile-dropdown-link-title">Privacy & Security</span>
                     <span className="profile-dropdown-link-arrow">›</span>
                   </Link>
-                  <Link to="/profile/settings?tab=support" className="profile-dropdown-link-compact" onClick={() => setSettingsOpen(false)}>
+                  <button className="profile-dropdown-link-compact" onClick={() => { setSettingsOpen(false); setShowSupport(true); }}>
                     <span className="profile-dropdown-link-icon">❓</span>
                     <span className="profile-dropdown-link-title">Help & Support</span>
                     <span className="profile-dropdown-link-arrow">›</span>
-                  </Link>
+                  </button>
                 </div>
                 <div className="profile-dropdown-footer-compact">
                   <button className="profile-dropdown-logout-compact" onClick={handleLogout}>Log out</button>
@@ -209,6 +216,39 @@ const TopNavbar = () => {
                     </button>
                     {editProfileMsg && <div className="text-green-600 text-center mt-2">{editProfileMsg}</div>}
                   </form>
+                </div>
+              </div>
+            )}
+            {/* Help & Support Modal */}
+            {showSupport && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+                <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg relative">
+                  <button className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-xl" onClick={() => setShowSupport(false)}>&times;</button>
+                  <div className="mb-4">
+                    <h2 className="text-xl font-bold text-gray-900">Help & Support</h2>
+                    <p className="text-sm text-gray-500 mt-1">Choose a support option below. All pages open within the app.</p>
+                  </div>
+                  <div className="divide-y divide-gray-100">
+                    <Link to={emailSupportRoute} onClick={() => setShowSupport(false)} className="flex items-center justify-between py-3 hover:bg-gray-50 rounded-lg px-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><Mail size={18} /></div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">Email support</div>
+                          <div className="text-xs text-gray-500">View email and contact options</div>
+                        </div>
+                      </div>
+                    </Link>
+
+                    <Link to={supportRoute} onClick={() => setShowSupport(false)} className="flex items-center justify-between py-3 hover:bg-gray-50 rounded-lg px-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><BookOpen size={18} /></div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">FAQs & Guides</div>
+                          <div className="text-xs text-gray-500">Login, orders, funds, positions</div>
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
                 </div>
               </div>
             )}

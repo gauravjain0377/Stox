@@ -18,6 +18,7 @@ import ProfileOverview from './components/ProfileOverview';
 import ProfileEdit from './components/ProfileEdit';
 import AllStocks from './components/AllStocks';
 import { SidebarProvider } from './context/SidebarContext';
+import ContactSupport from './components/ContactSupport';
 
 // ⬇️ MOVED ProtectedRoute OUTSIDE of the App component ⬇️
 // This ensures it's the same component on every render.
@@ -77,6 +78,7 @@ function App() {
                           <Route path="/settings" element={<Settings />} />
                           <Route path="/orders/:orderId" element={<OrderDetail />} />
                           <Route path="/profile/settings" element={<ProfileSettings />} />
+                          <Route path="/support/contact" element={<ContactSupport />} />
                           <Route path="/bank-details" element={<Navigate to="/profile/settings?tab=bank" replace />} />
                           <Route path="/reports" element={<Navigate to="/profile/settings?tab=reports" replace />} />
                           <Route path="/support" element={<Navigate to="/profile/settings?tab=support" replace />} />

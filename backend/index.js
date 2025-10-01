@@ -12,6 +12,7 @@ const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const yahooFinance = require('yahoo-finance2').default;
+const nodemailer = require('nodemailer');
 
 // Suppress Yahoo Finance API notices
 yahooFinance.suppressNotices(['yahooSurvey']);
@@ -566,6 +567,145 @@ app.get('/api/price/:symbol', async (req, res) => {
   }
 });
 
+// Helper to fetch live price internally
+async function getLivePrice(symbol) {
+  try {
+    const apiKey = process.env.TWELVE_DATA_API_KEY;
+    if (!apiKey) return null;
+    const url = `https://api.twelvedata.com/price?symbol=${symbol}.NSE&apikey=${apiKey}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    if (data && data.price) {
+      return parseFloat(data.price);
+    }
+    return null;
+  } catch (err) {
+    return null;
+  }
+}
+
+// Positions API - derive from holdings for the user with live prices
+app.get("/positions", async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(200).json([]);
+    }
+
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(500).json({ error: "Database connection not available" });
+    }
+
+    const userHoldings = await HoldingsModel.find({ userId });
+    // Build positions array with live price if possible
+    const positions = await Promise.all(userHoldings.map(async (h) => {
+      const livePrice = await getLivePrice(h.name) || h.price || h.avg;
+      const quantity = h.qty || 0;
+      const avgPrice = h.avg || 0;
+      const value = livePrice * quantity;
+      const pnl = (livePrice - avgPrice) * quantity;
+      return {
+        product: "CNC",
+        name: h.name,
+        qty: quantity,
+        avg: avgPrice,
+        ltp: livePrice,
+        value,
+        pnl,
+        // placeholders for day change if previous close not tracked
+        dayChangePct: null,
+        isLoss: pnl < 0,
+      };
+    }));
+
+    res.json(positions);
+  } catch (error) {
+    console.error("❌ Error fetching positions:", error);
+    res.status(500).json({ error: "Failed to fetch positions" });
+  }
+});
+
+// Square-off (close) a position entirely for a user
+app.post("/positions/close", async (req, res) => {
+  try {
+    const { userId, name } = req.body;
+    if (!userId || !name) {
+      return res.status(400).json({ success: false, message: "userId and name are required" });
+    }
+
+    const holding = await HoldingsModel.findOne({ userId, name });
+    if (!holding || holding.qty <= 0) {
+      return res.status(400).json({ success: false, message: "No open position to square off" });
+    }
+
+    const sellQty = holding.qty;
+    const livePrice = await getLivePrice(name) || holding.price || holding.avg || 0;
+
+    // Record an order entry for SELL
+    const sellOrder = new OrdersModel({
+      userId,
+      name,
+      qty: sellQty,
+      price: livePrice,
+      mode: "SELL",
+      timestamp: new Date()
+    });
+    await sellOrder.save();
+
+    // Remove or reduce holding to 0
+    await HoldingsModel.deleteOne({ _id: holding._id });
+
+    res.json({ success: true, message: "Position squared off", soldQty: sellQty, price: livePrice });
+  } catch (error) {
+    console.error("❌ Error squaring off position:", error);
+    res.status(500).json({ success: false, message: "Failed to square off position" });
+  }
+});
+
+// Partial close a position
+app.post("/positions/partial-close", async (req, res) => {
+  try {
+    const { userId, name, qty } = req.body;
+    const quantity = parseInt(qty, 10);
+    if (!userId || !name || !quantity || quantity <= 0) {
+      return res.status(400).json({ success: false, message: "userId, name and positive qty are required" });
+    }
+
+    const holding = await HoldingsModel.findOne({ userId, name });
+    if (!holding || holding.qty <= 0) {
+      return res.status(400).json({ success: false, message: "No open position to close" });
+    }
+    if (quantity > holding.qty) {
+      return res.status(400).json({ success: false, message: "Cannot sell more than held quantity" });
+    }
+
+    const livePrice = await getLivePrice(name) || holding.price || holding.avg || 0;
+
+    const sellOrder = new OrdersModel({
+      userId,
+      name,
+      qty: quantity,
+      price: livePrice,
+      mode: "SELL",
+      timestamp: new Date()
+    });
+    await sellOrder.save();
+
+    holding.qty = holding.qty - quantity;
+    if (holding.qty <= 0) {
+      await HoldingsModel.deleteOne({ _id: holding._id });
+    } else {
+      holding.price = livePrice;
+      await holding.save();
+    }
+
+    res.json({ success: true, message: "Partial position closed", soldQty: quantity, price: livePrice });
+  } catch (error) {
+    console.error("❌ Error partial closing position:", error);
+    res.status(500).json({ success: false, message: "Failed to partial close position" });
+  }
+});
+
 app.post("/newOrder", async (req, res) => {
   try {
     const { userId, name, qty, price, mode } = req.body;
@@ -691,6 +831,58 @@ app.post("/api/users/change-password", async (req, res) => {
   } catch (err) {
     console.error("❌ Error changing password:", err);
     res.status(500).json({ success: false, message: "Server error: " + err.message });
+  }
+});
+
+// Support contact endpoint - sends emails from contact form
+app.post('/api/support/contact', async (req, res) => {
+  try {
+    const { name, email, subject, purpose, message } = req.body || {};
+    if (!name || !email || !message) {
+      return res.status(400).json({ success: false, message: 'Name, email and message are required' });
+    }
+
+    const smtpUser = process.env.MAIL_USER;
+    const smtpPass = process.env.MAIL_PASS;
+    const smtpHost = process.env.MAIL_HOST || 'smtp.gmail.com';
+    const smtpPort = parseInt(process.env.MAIL_PORT || '587', 10);
+    const supportTo = process.env.SUPPORT_TO || 'gjain0229@gmail.com';
+
+    if (!smtpUser || !smtpPass) {
+      return res.status(500).json({ success: false, message: 'Mailer is not configured on server' });
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      auth: { user: smtpUser, pass: smtpPass }
+    });
+
+    const mailSubject = subject && subject.trim() ? subject : `Support: ${purpose || 'General inquiry'}`;
+    const html = `
+      <div style="font-family:Arial,sans-serif;font-size:14px;color:#222">
+        <h2>New Support Request</h2>
+        <p><b>Name:</b> ${name}</p>
+        <p><b>Email:</b> ${email}</p>
+        <p><b>Purpose:</b> ${purpose || 'N/A'}</p>
+        <p><b>Message:</b></p>
+        <pre style="white-space:pre-wrap">${message}</pre>
+      </div>
+    `;
+
+    await transporter.sendMail({
+      from: smtpUser,
+      to: supportTo,
+      replyTo: email,
+      subject: mailSubject,
+      html
+    });
+
+    res.json({ success: true, message: 'Message sent. We will get back to you shortly.' });
+  } catch (err) {
+    console.error('❌ Support email error:', err);
+    res.status(500).json({ success: false, message: 'Failed to send message' });
   }
 });
 

@@ -234,6 +234,19 @@ const SidebarWatchlist = () => {
           {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
         </button>
       </div>
+      {!collapsed && (
+        <div className="px-4 pt-2 pb-3 border-b border-gray-100 bg-white">
+          <div className="flex items-start gap-2 text-xs text-gray-500 leading-relaxed">
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>
+              Trading hours: 9:00 AM to 3:30 PM IST (Monday to Friday, excluding holidays)
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Collapsed state - show stock symbols */}
       {collapsed && (

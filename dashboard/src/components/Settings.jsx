@@ -45,7 +45,7 @@ const Settings = ({ user }) => {
     { id: "profile", label: "Edit Profile", icon: "👤" },
     { id: "security", label: "Account Settings", icon: "🔒" },
     { id: "notifications", label: "Privacy & Security", icon: "🔔" },
-    { id: "help", label: "Help & Support", icon: "❓" }
+    { id: "support", label: "Help & Support", icon: "❓" }
   ];
 
   const handleProfileSubmit = async (e) => {
@@ -533,6 +533,85 @@ const Settings = ({ user }) => {
     </div>
   );
 
+  const renderSupportTab = () => (
+    <div className="settings-content">
+      <div className="settings-header">
+        <h2>Help & Support</h2>
+        <p>Contact us or check the FAQs below.</p>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
+        <div className="text-sm text-gray-600">Support email</div>
+        <div className="text-lg font-semibold text-gray-900">gjain0229@gmail.com</div>
+      </div>
+
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          setIsLoading(true);
+          setMessage({ type: "", text: "" });
+          const form = e.target;
+          const payload = {
+            name: form.name.value,
+            email: form.email.value,
+            subject: form.subject.value,
+            purpose: form.purpose.value,
+            message: form.message.value,
+          };
+          try {
+            const res = await fetch('http://localhost:3000/api/support/contact', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) throw new Error(data.message || 'Failed to send');
+            setMessage({ type: 'success', text: data.message || 'Message sent successfully' });
+            form.reset();
+          } catch (err) {
+            setMessage({ type: 'error', text: err.message || 'Failed to send message' });
+          }
+          setIsLoading(false);
+        }}
+        className="settings-form"
+      >
+        <div className="form-grid">
+          <div className="form-group">
+            <label htmlFor="name">Your Name</label>
+            <input id="name" name="name" type="text" required defaultValue={context.user?.username || ''} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="email">Your Email</label>
+            <input id="email" name="email" type="email" required defaultValue={context.user?.email || ''} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="subject">Subject</label>
+            <input id="subject" name="subject" type="text" placeholder="Short summary" />
+          </div>
+          <div className="form-group">
+            <label htmlFor="purpose">Purpose</label>
+            <select id="purpose" name="purpose">
+              <option>General inquiry</option>
+              <option>Login issue</option>
+              <option>Orders</option>
+              <option>Funds</option>
+              <option>Positions</option>
+              <option>Bug report</option>
+              <option>Feature request</option>
+            </select>
+          </div>
+          <div className="form-group full-width">
+            <label htmlFor="message">Message</label>
+            <textarea id="message" name="message" rows="5" placeholder="Describe your issue or request" required></textarea>
+          </div>
+        </div>
+        <div className="form-actions">
+          <button type="submit" className="btn-primary" disabled={isLoading}>{isLoading ? 'Sending...' : 'Send Message'}</button>
+        </div>
+      </form>
+    </div>
+  );
+
   const renderContent = () => {
     switch (activeTab) {
       case "overview":
@@ -543,8 +622,8 @@ const Settings = ({ user }) => {
         return renderSecurityTab();
       case "notifications":
         return renderNotificationsTab();
-      case "help":
-        return <div className="settings-content">Help & Support coming soon.</div>;
+      case "support":
+        return renderSupportTab();
       default:
         return renderOverviewTab();
     }
