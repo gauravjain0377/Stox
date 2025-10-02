@@ -7,7 +7,6 @@ const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
-const fetch = require('node-fetch');
 const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
@@ -41,6 +40,19 @@ app.use(session({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Helper to generate unique client codes (9-10 digits)
+async function generateUniqueClientCode() {
+  let code;
+  let exists = true;
+  while (exists) {
+    code = String(Math.floor(100000000 + Math.random() * 900000000)); // 9 digits
+    // Ensure uniqueness
+    // eslint-disable-next-line no-await-in-loop
+    exists = await UserModel.exists({ clientCode: code });
+  }
+  return code;
+}
 
 passport.serializeUser((user, done) => {
   done(null, user.id);
@@ -91,19 +103,27 @@ app.get('/auth/google',
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/', session: true }),
   (req, res) => {
-    // Create a simple token (or use session ID)
-    const token = Buffer.from(`${req.user._id}-${Date.now()}`).toString('base64');
-    // Pass user info and token as URL params
-    const params = new URLSearchParams({
-      token,
-      user: JSON.stringify({
-        id: req.user._id,
-        name: req.user.username,
-        email: req.user.email,
-      }),
-      isLoggedIn: 'true'
-    });
-    res.redirect(`http://localhost:5174/?${params.toString()}`);
+    (async () => {
+      // Ensure clientCode exists for Google users as well
+      if (!req.user.clientCode) {
+        req.user.clientCode = await generateUniqueClientCode();
+        await req.user.save();
+      }
+      // Create a simple token (or use session ID)
+      const token = Buffer.from(`${req.user._id}-${Date.now()}`).toString('base64');
+      // Pass user info and token as URL params
+      const params = new URLSearchParams({
+        token,
+        user: JSON.stringify({
+          id: req.user._id,
+          name: req.user.username,
+          email: req.user.email,
+          clientCode: req.user.clientCode,
+        }),
+        isLoggedIn: 'true'
+      });
+      res.redirect(`http://localhost:5174/?${params.toString()}`);
+    })();
   }
 );
 
@@ -118,6 +138,51 @@ app.get('/auth/me', (req, res) => {
     res.json({ user: req.user });
   } else {
     res.status(401).json({ user: null });
+  }
+});
+
+// Update user profile
+app.put('/api/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const allowed = [
+      'username','email','dateOfBirth','gender','phone','clientCode','pan','maritalStatus','fatherName','demat','incomeRange','avatar'
+    ];
+    const update = {};
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) update[key] = req.body[key];
+    }
+
+    // If dateOfBirth is a string, try to convert to Date
+    if (update.dateOfBirth && typeof update.dateOfBirth === 'string') {
+      const d = new Date(update.dateOfBirth);
+      if (!isNaN(d)) update.dateOfBirth = d;
+    }
+
+    const user = await UserModel.findByIdAndUpdate(id, update, { new: true });
+    if (!user) return res.status(404).json({ success:false, message:'User not found' });
+
+    return res.json({
+      success: true,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        dateOfBirth: user.dateOfBirth,
+        gender: user.gender,
+        phone: user.phone,
+        clientCode: user.clientCode,
+        pan: user.pan,
+        maritalStatus: user.maritalStatus,
+        fatherName: user.fatherName,
+        demat: user.demat,
+        incomeRange: user.incomeRange,
+        avatar: user.avatar
+      }
+    });
+  } catch (err) {
+    console.error('❌ Error updating user profile:', err);
+    res.status(500).json({ success:false, message:'Server error' });
   }
 });
 
@@ -419,7 +484,8 @@ app.post("/api/users/register", async (req, res) => {
     const newUser = new UserModel({
       username: name,
       email,
-      password: hashedPassword
+      password: hashedPassword,
+      clientCode: await generateUniqueClientCode()
     });
     
     console.log("💾 Saving new user to database...");
@@ -437,6 +503,7 @@ app.post("/api/users/register", async (req, res) => {
         id: newUser._id,
         name: newUser.username,
         email: newUser.email,
+        clientCode: newUser.clientCode,
         role: "user"
       }
     });
@@ -490,6 +557,11 @@ app.post("/api/users/login", async (req, res) => {
       });
     }
     
+    // Ensure clientCode exists
+    if (!user.clientCode) {
+      user.clientCode = await generateUniqueClientCode();
+      await user.save();
+    }
     // Create a simple token (in production, use JWT)
     const token = Buffer.from(`${user._id}-${Date.now()}`).toString('base64');
     
@@ -501,6 +573,7 @@ app.post("/api/users/login", async (req, res) => {
         id: user._id,
         name: user.username,
         email: user.email,
+        clientCode: user.clientCode,
         role: "user"
       }
     });
@@ -859,20 +932,71 @@ app.post('/api/support/contact', async (req, res) => {
       auth: { user: smtpUser, pass: smtpPass }
     });
 
-    const mailSubject = subject && subject.trim() ? subject : `Support: ${purpose || 'General inquiry'}`;
+    const mailSubjectBase = subject && subject.trim() ? subject : `Support: ${purpose || 'General inquiry'}`;
+    const mailSubject = `[StockSathi] ${mailSubjectBase}`;
     const html = `
-      <div style="font-family:Arial,sans-serif;font-size:14px;color:#222">
-        <h2>New Support Request</h2>
-        <p><b>Name:</b> ${name}</p>
-        <p><b>Email:</b> ${email}</p>
-        <p><b>Purpose:</b> ${purpose || 'N/A'}</p>
-        <p><b>Message:</b></p>
-        <pre style="white-space:pre-wrap">${message}</pre>
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0f172a;background:#f8fafc;padding:20px;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+          <thead>
+            <tr>
+              <th style="text-align:left;background:#0ea5e9;padding:16px 20px;color:#ffffff;font-size:18px;">
+                StockSathi
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding:16px 20px;border-bottom:1px solid #f1f5f9;">
+                <div style="color:#0f172a;font-weight:600;font-size:16px;margin-bottom:8px;">New Support Request</div>
+                <div style="color:#475569">You received a new message from the Help & Support form.</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:12px 20px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width:100%;font-size:14px;color:#0f172a;">
+                  <tr>
+                    <td style="width:160px;color:#64748b;padding:6px 0;">Name</td>
+                    <td style="padding:6px 0;">${name}</td>
+                  </tr>
+                  <tr>
+                    <td style="width:160px;color:#64748b;padding:6px 0;">Email</td>
+                    <td style="padding:6px 0;">${email}</td>
+                  </tr>
+                  <tr>
+                    <td style="width:160px;color:#64748b;padding:6px 0;">Purpose</td>
+                    <td style="padding:6px 0;">${purpose || 'General inquiry'}</td>
+                  </tr>
+                  ${subject && subject.trim() ? `
+                  <tr>
+                    <td style="width:160px;color:#64748b;padding:6px 0;">Subject</td>
+                    <td style="padding:6px 0;">${subject}</td>
+                  </tr>` : ''}
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:12px 20px;">
+                <div style="color:#64748b;margin-bottom:6px;">Message</div>
+                <div style="white-space:pre-wrap;line-height:1.6;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:12px;">${message}</div>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td style="padding:12px 20px;color:#94a3b8;font-size:12px;background:#f8fafc;border-top:1px solid #e2e8f0;">
+                This email was sent by the StockSathi Support system.
+              </td>
+            </tr>
+          </tfoot>
+        </table>
       </div>
     `;
 
     await transporter.sendMail({
-      from: smtpUser,
+      from: {
+        name: 'StockSathi Support',
+        address: smtpUser
+      },
       to: supportTo,
       replyTo: email,
       subject: mailSubject,
@@ -883,6 +1007,66 @@ app.post('/api/support/contact', async (req, res) => {
   } catch (err) {
     console.error('❌ Support email error:', err);
     res.status(500).json({ success: false, message: 'Failed to send message' });
+  }
+});
+
+// FAQs endpoint - beginner-friendly FAQs for Help & Support
+app.get('/api/support/faqs', async (req, res) => {
+  try {
+    const faqs = [
+      {
+        id: 'what-is-a-stock',
+        question: 'What is a stock?',
+        answer:
+          'A stock represents a small ownership share in a company. When you buy a stock, you own a portion of that company and may benefit if the company grows in value.'
+      },
+      {
+        id: 'how-do-stocks-make-money',
+        question: 'How can I make money from stocks?',
+        answer:
+          'You can potentially earn through capital gains (selling at a higher price than you bought) and dividends (periodic payouts companies may distribute to shareholders).'
+      },
+      {
+        id: 'what-is-diversification',
+        question: 'What is diversification and why is it important?',
+        answer:
+          'Diversification means spreading your investments across different companies, sectors, or asset classes. It helps reduce risk because poor performance in one area can be offset by better performance in another.'
+      },
+      {
+        id: 'what-is-volatility',
+        question: 'What does market volatility mean?',
+        answer:
+          'Volatility is how much and how quickly prices move. High volatility means prices can change rapidly in either direction, which can increase both risk and opportunity.'
+      },
+      {
+        id: 'long-term-vs-short-term',
+        question: 'Is stock investing better for the long term or short term?',
+        answer:
+          'While strategies vary, many investors focus on long-term investing to smooth out short-term ups and downs and benefit from compound growth over time.'
+      },
+      {
+        id: 'what-is-stop-loss',
+        question: 'What is a stop-loss order?',
+        answer:
+          'A stop-loss is an order that automatically sells your stock if it falls to a set price. It helps limit potential losses and manage risk.'
+      },
+      {
+        id: 'how-much-to-invest',
+        question: 'How much should I invest as a beginner?',
+        answer:
+          'Start small and only invest money you can afford to leave invested for a while. Focus on learning, building discipline, and diversifying as your knowledge grows.'
+      },
+      {
+        id: 'what-are-fees',
+        question: 'Are there any fees when trading stocks?',
+        answer:
+          'Depending on your broker and market, you may pay brokerage, taxes, and other regulatory charges. Always review the fee breakdown before placing orders.'
+      }
+    ];
+
+    res.json({ success: true, items: faqs });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to load FAQs' });
   }
 });
 

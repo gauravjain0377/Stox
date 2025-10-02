@@ -12,7 +12,7 @@ const ProfileEdit = () => {
     dob: user?.dateOfBirth || '',
     gender: user?.gender || '',
     mobile: user?.phone || '',
-    clientCode: user?.clientCode || '5384621902',
+    clientCode: user?.clientCode || '',
     pan: user?.pan || '',
     maritalStatus: user?.maritalStatus || '',
     fatherName: user?.fatherName || '',
@@ -26,24 +26,51 @@ const ProfileEdit = () => {
     setProfile((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    // Here you would call your backend API to update the profile
-    setSuccess('Profile updated successfully!');
-    setUser({
-      username: profile.name,
-      email: profile.email,
-      dateOfBirth: profile.dob,
-      gender: profile.gender,
-      phone: profile.mobile,
-      clientCode: profile.clientCode,
-      pan: profile.pan,
-      maritalStatus: profile.maritalStatus,
-      fatherName: profile.fatherName,
-      demat: profile.demat,
-      incomeRange: profile.incomeRange,
-    });
-    setTimeout(() => setSuccess(''), 1500);
+    try {
+      const storedUser = localStorage.getItem('user');
+      const userObj = storedUser ? JSON.parse(storedUser) : context.user;
+      const userId = userObj?.id || userObj?.userId;
+      if (!userId) throw new Error('Missing user id');
+
+      const res = await fetch(`http://localhost:3000/api/users/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: profile.name,
+          email: profile.email,
+          dateOfBirth: profile.dob,
+          gender: profile.gender,
+          phone: profile.mobile,
+          clientCode: profile.clientCode,
+          pan: profile.pan,
+          maritalStatus: profile.maritalStatus,
+          fatherName: profile.fatherName,
+          demat: profile.demat,
+          incomeRange: profile.incomeRange,
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Failed to update');
+
+      // Update auth context and localStorage
+      const updatedUserForAuth = {
+        id: data.user.id,
+        name: data.user.username,
+        email: data.user.email
+      };
+      localStorage.setItem('user', JSON.stringify(updatedUserForAuth));
+      setUser(updatedUserForAuth);
+
+      setSuccess('Profile updated successfully!');
+      setTimeout(() => setSuccess(''), 1500);
+    } catch (err) {
+      console.error('Failed to save profile:', err);
+      setSuccess('Failed to update profile');
+      setTimeout(() => setSuccess(''), 2000);
+    }
   };
 
   return (
@@ -91,6 +118,7 @@ const ProfileEdit = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Unique Client Code</label>
             <input name="clientCode" type="text" className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100" value={profile.clientCode} readOnly />
+            <p className="text-xs text-gray-500 mt-1">Auto-generated and unique for your account.</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Father's Name</label>

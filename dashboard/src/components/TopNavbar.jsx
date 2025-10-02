@@ -33,6 +33,7 @@ const TopNavbar = () => {
   const { user, logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showSupport, setShowSupport] = useState(false);
   const [editProfileForm, setEditProfileForm] = useState({
@@ -54,14 +55,21 @@ const TopNavbar = () => {
   }, [settingsOpen]);
 
   const handleLogout = () => {
-    if (window.confirm("Are you sure you want to logout?")) {
-      logout();
-    }
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutConfirm(false);
+    logout();
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
   };
 
   // Route Email support to dedicated support form; others to Privacy & Security
   const emailSupportRoute = "/support/contact";
-  const supportRoute = "/profile/settings?tab=privacy";
+  const supportRoute = "/support/faqs";
 
   // Mock market data
   const marketIndices = [
@@ -104,7 +112,7 @@ const TopNavbar = () => {
         {/* Left: Logo + Main Nav */}
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="Logo" className="w-10 h-10 rounded-full shadow-md object-cover" />
+            <img src={logo} alt="Logo" className="w-10 h-10 object-contain bg-transparent" />
             <span className="font-display font-bold text-2xl text-[#222] tracking-tight">StockSathi</span>
           </div>
           {/* Removed duplicate nav links here */}
@@ -274,6 +282,23 @@ const TopNavbar = () => {
           </NavLink>
         ))}
       </nav>
+      {/* Logout confirmation modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm relative border border-gray-100">
+            <button className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-xl" onClick={cancelLogout}>&times;</button>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center border border-red-100">!</div>
+              <h3 className="text-lg font-semibold text-gray-900">Confirm logout</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-5">You will be signed out from your account. Do you want to continue?</p>
+            <div className="flex gap-3 justify-end">
+              <button className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50" onClick={cancelLogout}>Cancel</button>
+              <button className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700" onClick={confirmLogout}>Log out</button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

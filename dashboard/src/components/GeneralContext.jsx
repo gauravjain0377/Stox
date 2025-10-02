@@ -213,6 +213,7 @@ export const GeneralContextProvider = ({ children }) => {
             userId: user.id, 
             username: user.name,
             email: user.email,
+            clientCode: user.clientCode,
             id: user.id // Keep both for compatibility
           };
           console.log("✅ User authenticated and set:", { 
@@ -226,6 +227,7 @@ export const GeneralContextProvider = ({ children }) => {
             userId: user.id, 
             username: user.name,
             email: user.email,
+            clientCode: user.clientCode,
             id: user.id
           });
         } catch (error) {

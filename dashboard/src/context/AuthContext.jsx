@@ -106,6 +106,15 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('isLoggedIn', 'true');
   };
 
+  // Allow updating and persisting minimal auth user fields after profile edit
+  const updateAuthUser = (partialUser) => {
+    setUser((prev) => {
+      const merged = { ...(prev || {}), ...partialUser };
+      localStorage.setItem('user', JSON.stringify(merged));
+      return merged;
+    });
+  };
+
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -122,7 +131,8 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     loading,
-    setUser
+    setUser,
+    updateAuthUser
   };
 
   return (

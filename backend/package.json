@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-  "dev": "nodemon index.js",
+    "dev": "nodemon index.js",
     "migrate-passwords": "node migratePasswords.js",
     "fix-username-constraint": "node fixUsernameConstraint.js",
     "test-user-model": "node testUserModel.js"
@@ -28,6 +28,7 @@
     "mongodb": "^6.15.0",
     "mongoose": "^8.13.2",
     "node-fetch": "^3.3.2",
+    "nodemailer": "^7.0.6",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-local": "^1.0.0",
