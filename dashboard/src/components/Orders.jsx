@@ -15,37 +15,12 @@ function groupOrdersByDate(orders) {
 }
 
 const Orders = () => {
-  const [orders, setOrders] = useState([]);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
-  const [loading, setLoading] = useState(true);
-  const { user } = useGeneralContext();
+  const { user, orders, ordersLoading, refreshOrders } = useGeneralContext();
   const navigate = useNavigate();
 
-  const fetchOrders = () => {
-    if (!user) return;
-    const userId = user.userId || user.id || user._id;
-    if (!userId) return;
-    setLoading(true);
-    axios.get(`http://localhost:3000/allOrders?userId=${userId}`)
-      .then((res) => {
-        setOrders(res.data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setOrders([
-          { name: "TCS", qty: 10, price: 3194.8, mode: "BUY", timestamp: new Date().toISOString() },
-          { name: "RELIANCE", qty: 5, price: 2112.4, mode: "SELL", timestamp: new Date(Date.now() - 3600000).toISOString() },
-        ]);
-        setLoading(false);
-      });
-  };
 
-  useEffect(() => { if (user) fetchOrders(); }, [user]);
-  useEffect(() => {
-    // const interval = setInterval(() => { if (user) fetchOrders(); }, 30000);
-    // return () => clearInterval(interval);
-  }, [user]);
 
   // Filtering logic
   const filteredOrders = orders.filter(order => {
@@ -64,7 +39,7 @@ const Orders = () => {
   // Unique types for dropdown
   const uniqueTypes = ["All", ...Array.from(new Set(orders.map(o => o.mode)))];
 
-  if (loading) {
+  if (ordersLoading) {
     return (
       <div className="p-6">
         <div className="animate-pulse">

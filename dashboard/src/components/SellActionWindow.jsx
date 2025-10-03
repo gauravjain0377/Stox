@@ -38,18 +38,46 @@ const SellActionWindow = ({ stock }) => {
   const handleConfirmSell = async () => {
     setShowConfirm(false);
     try {
-      const response = await axios.post("http://localhost:3000/newOrder", {
-        userId: user.userId,
-        name: stock.name,
-        qty: stockQuantity,
-        price: stockPrice,
-        mode: "SELL",
+      // Get authentication data
+      const token = localStorage.getItem('token');
+      const userData = localStorage.getItem('user');
+      
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add authentication headers
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      if (userData) {
+        headers['x-user-data'] = encodeURIComponent(userData);
+      }
+      
+      const response = await fetch('http://localhost:3000/api/orders/sell', {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify({
+          symbol: stock.name,
+          name: stock.name,
+          quantity: stockQuantity,
+          price: stockPrice
+        }),
       });
-      refreshHoldings();
-      refreshOrders && refreshOrders();
-      closeSellWindow();
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        refreshHoldings();
+        refreshOrders && refreshOrders();
+        closeSellWindow();
+      } else {
+        setError(data.message || "Failed to sell stock");
+      }
     } catch (error) {
-      alert(error.response?.data?.message || "Sell failed");
+      console.error('Error selling stock:', error);
+      setError("Failed to sell stock. Please try again.");
     }
   };
 

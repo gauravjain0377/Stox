@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowUpRight, ArrowDownRight, Wifi, WifiOff } from "lucide-react";
 import { Tooltip } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { DoughnutChart } from "./DoughnoutChart";
@@ -7,6 +7,7 @@ import '../styles/WatchList.css';
 import { useSidebar } from '../context/SidebarContext';
 import { useGeneralContext } from './GeneralContext';
 import { stockService } from '../services/stockService';
+import { io } from 'socket.io-client';
 
 const indices = [
   { name: "NIFTY 50", value: 11504.95, change: -0.10, percent: -0.10 },
@@ -24,8 +25,12 @@ const SidebarWatchlist = () => {
   const [priceChanges, setPriceChanges] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [lastUpdateTime, setLastUpdateTime] = useState(null);
+  const [connectionStatus, setConnectionStatus] = useState('connecting');
   const priceChangeTimeouts = useRef({});
   const [companyInfoMap, setCompanyInfoMap] = useState({});
+  const socketRef = useRef(null);
 
   // Fetch all company info on mount
   useEffect(() => {
@@ -46,25 +51,144 @@ const SidebarWatchlist = () => {
     fetchCompanyInfo();
   }, []);
 
-  // Fetch stocks only once on mount
+  // WebSocket connection setup
+  useEffect(() => {
+    console.log('Setting up WebSocket connection...');
+    
+    // Initialize socket connection
+    socketRef.current = io('http://localhost:3000', {
+      transports: ['websocket', 'polling'],
+      timeout: 20000,
+      forceNew: true
+    });
+
+    const socket = socketRef.current;
+
+    // Connection events
+    socket.on('connect', () => {
+      console.log('WebSocket connected');
+      setIsConnected(true);
+      setConnectionStatus('connected');
+      setError(null);
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('WebSocket disconnected:', reason);
+      setIsConnected(false);
+      setConnectionStatus('disconnected');
+      if (reason === 'io server disconnect') {
+        // Server disconnected, try to reconnect
+        socket.connect();
+      }
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('WebSocket connection error:', error);
+      setConnectionStatus('error');
+      setError('Connection failed. Using fallback data.');
+    });
+
+    // Stock data events
+    socket.on('initialStockData', (data) => {
+      console.log('Received initial stock data:', data.length, 'stocks');
+      if (data && data.length > 0) {
+        const processedData = data.map(stock => ({
+          symbol: stock.symbol,
+          price: stock.price,
+          percent: stock.percentChange,
+          volume: stock.volume ? stock.volume.toLocaleString() : '-',
+          previousClose: stock.previousClose,
+          name: stock.name,
+          lastUpdate: stock.lastUpdate
+        }));
+        setStocks(processedData);
+        setLastUpdateTime(new Date());
+        setLoading(false);
+      }
+    });
+
+    socket.on('stockUpdate', (stock) => {
+      console.log('Received stock update for:', stock.symbol);
+      setStocks(prevStocks => {
+        const updatedStocks = prevStocks.map(prevStock => {
+          if (prevStock.symbol === stock.symbol) {
+            // Show price change animation
+            const prevPrice = prevStock.price;
+            const newPrice = stock.price;
+            if (prevPrice !== newPrice) {
+              setPriceChanges(prev => ({
+                ...prev,
+                [stock.symbol]: newPrice > prevPrice ? 'up' : 'down'
+              }));
+              
+              // Clear animation after 2 seconds
+              setTimeout(() => {
+                setPriceChanges(prev => {
+                  const newChanges = { ...prev };
+                  delete newChanges[stock.symbol];
+                  return newChanges;
+                });
+              }, 2000);
+            }
+            
+            return {
+              ...prevStock,
+              price: stock.price,
+              percent: stock.percentChange,
+              volume: stock.volume ? stock.volume.toLocaleString() : '-',
+              previousClose: stock.previousClose,
+              name: stock.name,
+              lastUpdate: stock.lastUpdate
+            };
+          }
+          return prevStock;
+        });
+        return updatedStocks;
+      });
+      setLastUpdateTime(new Date());
+    });
+
+    socket.on('bulkStockUpdate', (data) => {
+      console.log('Received bulk stock update:', data.length, 'stocks');
+      if (data && data.length > 0) {
+        const processedData = data.map(stock => ({
+          symbol: stock.symbol,
+          price: stock.price,
+          percent: stock.percentChange,
+          volume: stock.volume ? stock.volume.toLocaleString() : '-',
+          previousClose: stock.previousClose,
+          name: stock.name,
+          lastUpdate: stock.lastUpdate
+        }));
+        setStocks(processedData);
+        setLastUpdateTime(new Date());
+        setLoading(false);
+      }
+    });
+
+    // Cleanup on unmount
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, []);
+
+  // Fallback data loading when WebSocket is not available
   useEffect(() => {
     let isMounted = true;
+    let fallbackTimeout;
     
-    const fetchStocks = async () => {
+    // Only load fallback data if WebSocket fails to connect
+    const loadFallbackData = async () => {
       try {
         if (!isMounted) return;
-        setLoading(true);
         
-        console.log('SidebarWatchlist: Starting to fetch stocks...');
-        
-        // First try to get all stocks from the service
+        console.log('Loading fallback stock data...');
         const allStocks = await stockService.getAllStocks();
-        
-        console.log('SidebarWatchlist: Got stocks from service:', allStocks.length);
         
         if (!isMounted) return;
         
-        // Process the stocks from service (which includes fallback if needed)
         const processedStocks = allStocks.map(stock => ({
           symbol: stock.symbol,
           price: stock.price,
@@ -74,58 +198,35 @@ const SidebarWatchlist = () => {
           name: stock.fullName,
         }));
         
-        console.log('SidebarWatchlist: Setting stocks with processed data:', processedStocks.length);
-        
-        // Set stocks immediately
         setStocks(processedStocks);
+        setLoading(false);
+        console.log('Fallback data loaded:', processedStocks.length, 'stocks');
         
-        // Try to get live data in background (optional enhancement)
-        try {
-          if (!isMounted) return;
-          
-          const symbols = allStocks.map(stock => stock.symbol);
-          const symbolsParam = symbols.join(",");
-          
-          const response = await fetch(`http://localhost:3000/api/stocks/data?symbols=${symbolsParam}`);
-          if (response.ok && isMounted) {
-            const result = await response.json();
-            const liveData = Array.isArray(result.data) ? result.data : [];
-            
-            // Only update if we got ALL 50 stocks (not just 40+)
-            if (liveData.length === 50 && isMounted) {
-              const processedData = liveData.map(stock => ({
-                symbol: stock.symbol ? stock.symbol.replace('.NS', '') : 'N/A',
-                price: stock.price || 0,
-                percent: stock.percentChange || 0,
-                volume: stock.volume ? stock.volume.toLocaleString() : '-',
-                previousClose: stock.previousClose || 0,
-                name: stock.name || stock.symbol,
-              }));
-              setStocks(processedData);
-            }
-          }
-        } catch (liveError) {
-          // Live data fetch failed, using fallback data
-        }
       } catch (error) {
         if (isMounted) {
-          console.error('SidebarWatchlist: Error fetching stocks:', error);
-          setError('Failed to load stocks');
-        }
-      } finally {
-        if (isMounted) {
+          console.error('Error loading fallback data:', error);
+          setError('Failed to load stock data');
           setLoading(false);
         }
       }
     };
     
-    fetchStocks();
+    // Set timeout to load fallback data if WebSocket doesn't connect
+    fallbackTimeout = setTimeout(() => {
+      if (!isConnected && stocks.length === 0) {
+        console.log('WebSocket connection timeout, loading fallback data');
+        loadFallbackData();
+      }
+    }, 5000); // 5 second timeout
     
-    // Cleanup function
+    // Cleanup
     return () => {
       isMounted = false;
+      if (fallbackTimeout) {
+        clearTimeout(fallbackTimeout);
+      }
     };
-  }, []);
+  }, [isConnected, stocks.length]);
 
   // Show all stocks, not just those with company info
   const filteredStocks = stocks;
@@ -146,7 +247,39 @@ const SidebarWatchlist = () => {
   };
 
   if (error) {
-    return <div className="p-4 text-red-600">Error: {error}</div>;
+    return (
+      <aside className={`h-full bg-white shadow-lg rounded-xl flex flex-col overflow-y-auto transition-all duration-300 ease-in-out ${collapsed ? 'sidebar-collapsed w-20' : 'w-80'}`}>
+        <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 sidebar-toggle">
+          {!collapsed && (
+            <div className="flex items-center gap-2 animate-fade-in">
+              <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+              <span className="font-bold text-lg text-gray-900 tracking-tight">NIFTY 50</span>
+            </div>
+          )}
+          <button 
+            onClick={toggleSidebar} 
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center px-4">
+            <div className="text-yellow-500 mb-2">⚠️</div>
+            <p className="text-sm text-gray-600 mb-2">Data not available</p>
+            <p className="text-xs text-gray-500">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-3 px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </aside>
+    );
   }
   
   if (stocks.length === 0 && !loading) {
@@ -222,8 +355,32 @@ const SidebarWatchlist = () => {
       <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 sidebar-toggle">
         {!collapsed && (
           <div className="flex items-center gap-2 animate-fade-in">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <div className={`w-2 h-2 rounded-full animate-pulse ${
+              isConnected ? 'bg-green-500' : 
+              connectionStatus === 'connecting' ? 'bg-yellow-500' : 
+              'bg-red-500'
+            }`}></div>
             <span className="font-bold text-lg text-gray-900 tracking-tight">NIFTY 50</span>
+            {isConnected && lastUpdateTime && (
+              <span className="text-xs text-gray-500 ml-2">
+                Live • {lastUpdateTime.toLocaleTimeString()}
+              </span>
+            )}
+            {!isConnected && connectionStatus === 'connecting' && (
+              <span className="text-xs text-gray-500 ml-2">
+                Connecting...
+              </span>
+            )}
+          </div>
+        )}
+        <div className="flex items-center gap-2">
+          {!collapsed && (
+            <div className="flex items-center gap-1">
+              {isConnected ? (
+                <Wifi size={16} className="text-green-500" title="Real-time connection active" />
+              ) : (
+                <WifiOff size={16} className="text-red-500" title="Connection lost" />
+              )}
           </div>
         )}
         <button 
@@ -233,6 +390,7 @@ const SidebarWatchlist = () => {
         >
           {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
         </button>
+        </div>
       </div>
       {!collapsed && (
         <div className="px-4 pt-2 pb-3 border-b border-gray-100 bg-white">
@@ -331,7 +489,7 @@ const SidebarWatchlist = () => {
                         return (
                             <li
                                 key={stock.symbol}
-                                className="flex items-center justify-between px-4 py-3 group hover:bg-gray-50 transition-all cursor-pointer border-l-2 border-transparent hover:border-blue-200"
+                                className={`stock-item flex items-center justify-between px-4 py-3 group hover:bg-gray-50 transition-all cursor-pointer border-l-2 border-transparent hover:border-blue-200 ${priceChanges[stock.symbol] === 'up' ? 'price-up' : priceChanges[stock.symbol] === 'down' ? 'price-down' : ''}`}
                                 onClick={() => handleStockClick(stock)}
                             >
                                 <div className="flex-1 min-w-0">
@@ -344,12 +502,14 @@ const SidebarWatchlist = () => {
                                 </div>
                                 <div className="flex flex-col items-end min-w-[100px]">
                                     <Tooltip title={`Price: ₹${stock.price.toLocaleString()}`} arrow>
-                                        <span className={`font-bold text-lg text-black tabular-nums leading-tight ${priceChanges[stock.symbol] === 'up' ? 'price-up' : priceChanges[stock.symbol] === 'down' ? 'price-down' : ''}`}>₹{stock.price.toLocaleString()}</span>
+                                        <span className={`font-bold text-lg text-black tabular-nums leading-tight ${priceChanges[stock.symbol] === 'up' ? 'price-up' : priceChanges[stock.symbol] === 'down' ? 'price-down' : ''}`}>
+                                            ₹{typeof stock.price === 'number' ? stock.price.toLocaleString() : 'N/A'}
+                                        </span>
                                     </Tooltip>
                                     <Tooltip title={tooltipText} arrow>
                                         <span className={`flex items-center gap-1 text-sm font-semibold ${isDown ? 'text-red-500' : 'text-green-600'}`} style={{ marginTop: 2 }}>
                                             {isDown ? <ArrowDownRight size={14}/> : <ArrowUpRight size={14}/>}
-                                            {absChange < 0 ? '' : '+'}{absChange.toFixed(2)}
+                                            {absChange < 0 ? '' : '+'}{typeof absChange === 'number' ? absChange.toFixed(2) : 'N/A'}
                                             <span>({formattedPercent}%)</span>
                                         </span>
                                     </Tooltip>

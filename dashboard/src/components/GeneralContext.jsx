@@ -28,6 +28,8 @@ export const GeneralContextProvider = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [selectedStock, setSelectedStock] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
 
   // Functions to open and close the buy window
   const handleOpenBuyWindow = (uid) => {
@@ -56,50 +58,50 @@ export const GeneralContextProvider = ({ children }) => {
     console.log("🔄 Refreshing holdings for user:", user?.userId);
     setHoldingsLoading(true);
     
-    // Use a fallback userId if user is not available
-    const userId = user?.userId || user?.id || "default";
-    console.log("🔍 Using userId:", userId);
+    // Get authentication data
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
     
-    // First test the backend connection
-    axios.get('http://localhost:3000/api/test')
-      .then(() => {
-        console.log("✅ Backend connection successful, testing database...");
-        // Test database connection
-        return axios.get('http://localhost:3000/api/test-db');
-      })
-      .then((dbRes) => {
-        console.log("📊 Database status:", dbRes.data);
-        if (!dbRes.data.connected) {
-          throw new Error("Database not connected");
+    const headers = {};
+    
+    // Add authentication headers
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    if (userData) {
+      headers['x-user-data'] = encodeURIComponent(userData);
+    }
+    
+    // Use the new API endpoint with credentials
+    fetch('http://localhost:3000/api/holdings', {
+      credentials: 'include',
+      headers
+    })
+      .then(res => res.json())
+      .then((data) => {
+        if (data.success) {
+          console.log("✅ Holdings fetched successfully:", data.holdings);
+          setHoldings(data.holdings || []);
+          setUsingFallbackData(false);
+        } else {
+          console.error("❌ API returned error:", data.message);
+          // Fallback to mock data
+          setHoldings(fallbackHoldings);
+          setUsingFallbackData(true);
         }
-        console.log("✅ Database connected, fetching holdings...");
-        // Now fetch holdings
-        return axios.get(`http://localhost:3000/allHoldings?userId=${userId}`);
-      })
-      .then((res) => {
-        console.log("✅ Holdings fetched successfully:", res.data);
-        setHoldings(res.data);
-        setUsingFallbackData(false);
         setHoldingsLoading(false);
       })
       .catch((err) => {
         console.error("❌ Failed to fetch holdings:", err);
         console.error("Error details:", {
           message: err.message,
-          code: err.code,
-          status: err.response?.status,
-          statusText: err.response?.statusText,
-          data: err.response?.data
+          code: err.code
         });
         
         // Check if it's a network error (backend not running)
-        if (err.code === 'ERR_NETWORK') {
+        if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
           console.error("🔌 Network Error: Backend server is not running on http://localhost:3000");
           console.error("💡 Please start the backend server with: cd backend && npm start");
-          setUsingFallbackData(true);
-        } else if (err.response?.status === 500) {
-          console.error("🔌 Server Error: Check if MongoDB is running");
-          console.error("💡 Start MongoDB or check the database connection");
           setUsingFallbackData(true);
         }
         
@@ -109,10 +111,54 @@ export const GeneralContextProvider = ({ children }) => {
       });
   };
 
-  // Function to refresh orders (will be called by Orders component)
+  // Function to refresh orders
   const refreshOrders = () => {
-    // This will be implemented by the Orders component
-    console.log("Refresh orders called");
+    console.log("🔄 Refreshing orders for user:", user?.userId);
+    setOrdersLoading(true);
+    
+    // Get authentication data
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    const headers = {};
+    
+    // Add authentication headers
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    if (userData) {
+      headers['x-user-data'] = encodeURIComponent(userData);
+    }
+    
+    // Use the API endpoint with credentials
+    fetch('http://localhost:3000/api/orders', {
+      credentials: 'include',
+      headers
+    })
+      .then(res => res.json())
+      .then((data) => {
+        if (data.success) {
+          console.log("✅ Orders fetched successfully:", data.orders);
+          setOrders(data.orders || []);
+        } else {
+          console.error("❌ API returned error:", data.message);
+          // Fallback to mock data
+          setOrders([
+            { name: "TCS", qty: 10, price: 3194.8, mode: "BUY", timestamp: new Date().toISOString() },
+            { name: "RELIANCE", qty: 5, price: 2112.4, mode: "SELL", timestamp: new Date(Date.now() - 3600000).toISOString() },
+          ]);
+        }
+        setOrdersLoading(false);
+      })
+      .catch((err) => {
+        console.error("❌ Failed to fetch orders:", err);
+        // Set fallback data if API fails
+        setOrders([
+          { name: "TCS", qty: 10, price: 3194.8, mode: "BUY", timestamp: new Date().toISOString() },
+          { name: "RELIANCE", qty: 5, price: 2112.4, mode: "SELL", timestamp: new Date(Date.now() - 3600000).toISOString() },
+        ]);
+        setOrdersLoading(false);
+      });
   };
 
   // Mock data for components that still use this context
@@ -128,6 +174,8 @@ export const GeneralContextProvider = ({ children }) => {
     usingFallbackData: usingFallbackData,
     refreshHoldings: refreshHoldings,
     refreshOrders: refreshOrders,
+    orders: orders,
+    ordersLoading: ordersLoading,
     openBuyWindow: handleOpenBuyWindow,
     closeBuyWindow: handleCloseBuyWindow,
     openSellWindow: handleOpenSellWindow,
@@ -260,10 +308,11 @@ export const GeneralContextProvider = ({ children }) => {
     setTimeout(checkAuth, 1000);
   }, []);
 
-  // Fetch holdings on mount and when user changes
+  // Fetch holdings and orders on mount and when user changes
   useEffect(() => {
     if (user) {
       refreshHoldings();
+      refreshOrders();
     }
   }, [user]);
 
@@ -288,6 +337,10 @@ export const GeneralContextProvider = ({ children }) => {
       user,
       holdings,
       holdingsLoading,
+      orders,
+      ordersLoading,
+      refreshHoldings,
+      refreshOrders,
       openBuyWindow: handleOpenBuyWindow,
       closeBuyWindow: handleCloseBuyWindow,
       openSellWindow: handleOpenSellWindow,

@@ -12,6 +12,8 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const yahooFinance = require('yahoo-finance2').default;
 const nodemailer = require('nodemailer');
+const { createServer } = require('http');
+const { Server } = require('socket.io');
 
 // Suppress Yahoo Finance API notices
 yahooFinance.suppressNotices(['yahooSurvey']);
@@ -26,6 +28,14 @@ const PORT = process.env.PORT || 3000;
 const uri = process.env.MONGO_URL || "mongodb://localhost:27017/test";
 
 const app = express();
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: ['http://localhost:5173', 'http://localhost:5174'],
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
 
 app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:5174'],
@@ -138,6 +148,226 @@ app.get('/auth/me', (req, res) => {
     res.json({ user: req.user });
   } else {
     res.status(401).json({ user: null });
+  }
+});
+
+// Middleware to handle authentication (both session and token)
+const authenticateUser = async (req, res, next) => {
+  try {
+    // First check if user is authenticated via session (Passport.js)
+    if (req.isAuthenticated()) {
+      return next();
+    }
+    
+    // If not authenticated via session, check for token in headers or user data in request
+    const authHeader = req.headers.authorization;
+    const userDataHeader = req.headers['x-user-data'];
+    
+    if (userDataHeader) {
+      try {
+        const userData = JSON.parse(decodeURIComponent(userDataHeader));
+        if (userData.id) {
+          // Find user in database to verify
+          const user = await UserModel.findById(userData.id);
+          if (user) {
+            req.user = user;
+            return next();
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing user data header:', error);
+      }
+    }
+    
+    // If token is provided, try to validate it
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      try {
+        // Decode the simple token (userId-timestamp format)
+        const decoded = Buffer.from(token, 'base64').toString();
+        const [userId] = decoded.split('-');
+        
+        const user = await UserModel.findById(userId);
+        if (user) {
+          req.user = user;
+          return next();
+        }
+      } catch (error) {
+        console.error('Error validating token:', error);
+      }
+    }
+    
+    return res.status(401).json({ success: false, message: 'Not authenticated' });
+  } catch (error) {
+    console.error('Authentication middleware error:', error);
+    return res.status(401).json({ success: false, message: 'Authentication failed' });
+  }
+};
+
+// Test authentication endpoint
+app.get('/api/auth/test', authenticateUser, (req, res) => {
+  res.json({ 
+    success: true, 
+    message: 'Authentication successful', 
+    user: {
+      id: req.user._id,
+      username: req.user.username,
+      email: req.user.email
+    }
+  });
+});
+
+// API endpoint to buy a stock
+app.post('/api/orders/buy', authenticateUser, async (req, res) => {
+  try {
+    
+    const { symbol, name, quantity, price } = req.body;
+    
+    if (!symbol || !name || !quantity || !price) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+    
+    // Create a new order
+    const newOrder = new OrdersModel({
+      userId: req.user._id,
+      name: name,
+      qty: quantity,
+      price: price,
+      mode: 'buy',
+      timestamp: new Date()
+    });
+    
+    await newOrder.save();
+    
+    // Check if user already has holdings for this stock
+    let holding = await HoldingsModel.findOne({ 
+      userId: req.user._id,
+      name: name
+    });
+    
+    if (holding) {
+      // Update existing holding
+      const totalShares = holding.qty + quantity;
+      const totalCost = (holding.qty * holding.avg) + (quantity * price);
+      const newAvgPrice = totalCost / totalShares;
+      
+      holding.qty = totalShares;
+      holding.avg = newAvgPrice;
+      holding.price = price; // Current price
+      await holding.save();
+    } else {
+      // Create new holding
+      const newHolding = new HoldingsModel({
+        userId: req.user._id,
+        name: name,
+        qty: quantity,
+        avg: price,
+        price: price,
+        net: '0%',
+        day: '0%'
+      });
+      
+      await newHolding.save();
+    }
+    
+    res.status(201).json({ 
+      success: true, 
+      message: 'Order placed successfully',
+      order: newOrder
+    });
+    
+  } catch (error) {
+    console.error('Error placing order:', error);
+    res.status(500).json({ success: false, message: 'Failed to place order' });
+  }
+});
+
+// API endpoint to sell a stock
+app.post('/api/orders/sell', authenticateUser, async (req, res) => {
+  try {
+    
+    const { symbol, name, quantity, price } = req.body;
+    
+    if (!symbol || !name || !quantity || !price) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+    
+    // Check if user has enough holdings to sell
+    const holding = await HoldingsModel.findOne({ 
+      userId: req.user._id,
+      name: name
+    });
+    
+    if (!holding || holding.qty < quantity) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Not enough shares to sell' 
+      });
+    }
+    
+    // Create a new sell order
+    const newOrder = new OrdersModel({
+      userId: req.user._id,
+      name: name,
+      qty: quantity,
+      price: price,
+      mode: 'sell',
+      timestamp: new Date()
+    });
+    
+    await newOrder.save();
+    
+    // Update holdings
+    const remainingShares = holding.qty - quantity;
+    
+    if (remainingShares > 0) {
+      // Update existing holding if shares remain
+      holding.qty = remainingShares;
+      holding.price = price; // Update current price
+      await holding.save();
+    } else {
+      // Remove holding if all shares are sold
+      await HoldingsModel.deleteOne({ _id: holding._id });
+    }
+    
+    res.status(201).json({ 
+      success: true, 
+      message: 'Sell order placed successfully',
+      order: newOrder
+    });
+    
+  } catch (error) {
+    console.error('Error placing sell order:', error);
+    res.status(500).json({ success: false, message: 'Failed to place sell order' });
+  }
+});
+
+// API endpoint to get all orders for a user
+app.get('/api/orders', authenticateUser, async (req, res) => {
+  try {
+    
+    const orders = await OrdersModel.find({ userId: req.user._id })
+      .sort({ timestamp: -1 });
+    
+    res.json({ success: true, orders });
+    
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch orders' });
+  }
+});
+
+// API endpoint to get all holdings for a user
+app.get('/api/holdings', authenticateUser, async (req, res) => {
+  try {
+    
+    const holdings = await HoldingsModel.find({ userId: req.user._id });
+    
+    res.json({ success: true, holdings });
+    
+  } catch (error) {
+    console.error('Error fetching holdings:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch holdings' });
   }
 });
 
@@ -1070,7 +1300,111 @@ app.get('/api/support/faqs', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log("App started!");
+// Real-time stock data management
+const stockSymbols = [
+  'RELIANCE.NS', 'HDFCBANK.NS', 'ICICIBANK.NS', 'TCS.NS', 'BHARTIARTL.NS',
+  'INFY.NS', 'ITC.NS', 'KOTAKBANK.NS', 'LT.NS', 'SBIN.NS', 'AXISBANK.NS',
+  'HINDUNILVR.NS', 'BAJFINANCE.NS', 'HCLTECH.NS', 'MARUTI.NS', 'ASIANPAINT.NS',
+  'SUNPHARMA.NS', 'TITAN.NS', 'ULTRACEMCO.NS', 'NTPC.NS', 'TATAMOTORS.NS',
+  'POWERGRID.NS', 'TATASTEEL.NS', 'JSWSTEEL.NS', 'NESTLEIND.NS', 'HDFCLIFE.NS',
+  'TECHM.NS', 'WIPRO.NS', 'BAJAJFINSV.NS', 'GRASIM.NS', 'ADANIGREEN.NS',
+  'ADANIPORTS.NS', 'COALINDIA.NS', 'BPCL.NS', 'UPL.NS', 'HINDALCO.NS',
+  'EICHERMOT.NS', 'DIVISLAB.NS', 'CIPLA.NS', 'BRITANNIA.NS', 'M&M.NS',
+  'BAJAJ_AUTO.NS', 'HERO.NS', 'DRREDDY.NS', 'DABUR.NS', 'APOLLOHOSP.NS',
+  'TATACONSUM.NS', 'ONGC.NS', 'INDUSINDBK.NS', 'HDFC.NS'
+];
+
+let currentStockData = new Map();
+let connectedClients = 0;
+
+// Fetch live stock data
+async function fetchLiveStockData() {
+  try {
+    const results = await Promise.allSettled(
+      stockSymbols.map(async (symbol) => {
+        try {
+          const data = await yahooFinance.quote(symbol);
+          const previousClose = data.regularMarketPreviousClose || 0;
+          // Only calculate circuits if previousClose exists and is not zero
+          const lowerCircuit = previousClose ? Number((previousClose * 0.95).toFixed(2)) : null;
+          const upperCircuit = previousClose ? Number((previousClose * 1.05).toFixed(2)) : null;
+          
+          return {
+            symbol: symbol.replace('.NS', ''),
+            name: data.shortName,
+            price: data.regularMarketPrice,
+            change: data.regularMarketChange,
+            percentChange: data.regularMarketChangePercent,
+            previousClose: previousClose || null,
+            lowerCircuit: lowerCircuit,
+            upperCircuit: upperCircuit,
+            volume: data.regularMarketVolume,
+            marketCap: data.marketCap || null,
+            lastUpdate: new Date().toISOString()
+          };
+        } catch (error) {
+          console.error(`Error fetching data for ${symbol}:`, error.message);
+          return null;
+        }
+      })
+    );
+
+    const validResults = results
+      .filter(result => result.status === 'fulfilled' && result.value !== null)
+      .map(result => result.value);
+
+    // Update current data and emit changes
+    validResults.forEach(stock => {
+      const previousData = currentStockData.get(stock.symbol);
+      currentStockData.set(stock.symbol, stock);
+      
+      // Emit individual stock update
+      io.emit('stockUpdate', stock);
+    });
+
+    // Emit bulk update every 30 seconds
+    if (validResults.length > 0) {
+      io.emit('bulkStockUpdate', validResults);
+      console.log(`Updated ${validResults.length} stocks at ${new Date().toLocaleTimeString()}`);
+    }
+
+  } catch (error) {
+    console.error('Error in fetchLiveStockData:', error);
+  }
+}
+
+// WebSocket connection handling
+io.on('connection', (socket) => {
+  connectedClients++;
+  console.log(`Client connected. Total clients: ${connectedClients}`);
+  
+  // Send current data to newly connected client
+  if (currentStockData.size > 0) {
+    const allStocks = Array.from(currentStockData.values());
+    socket.emit('initialStockData', allStocks);
+  }
+
+  socket.on('disconnect', () => {
+    connectedClients--;
+    console.log(`Client disconnected. Total clients: ${connectedClients}`);
+  });
+
+  socket.on('requestStockUpdate', () => {
+    if (currentStockData.size > 0) {
+      const allStocks = Array.from(currentStockData.values());
+      socket.emit('bulkStockUpdate', allStocks);
+    }
+  });
+});
+
+// Start periodic updates every 10 seconds
+setInterval(fetchLiveStockData, 10000);
+
+// Initial data fetch
+fetchLiveStockData();
+
+server.listen(PORT, () => {
+  console.log(`Server started on port ${PORT}!`);
   console.log("DB started!");
+  console.log("WebSocket server ready for real-time stock updates!");
 });

@@ -34,14 +34,21 @@ exports.getStocksData = async (req, res) => {
           // Append .NS if not present for Indian stocks
           const yfSymbol = /\.(NS|BSE)$/i.test(symbol) ? symbol : symbol + '.NS';
           const data = await yahooFinance.quote(yfSymbol);
+          // Calculate lower and upper circuit limits (5% from previous close)
+          const previousClose = data.regularMarketPreviousClose || 0;
+          const lowerCircuit = previousClose ? Number((previousClose * 0.95).toFixed(2)) : null;
+          const upperCircuit = previousClose ? Number((previousClose * 1.05).toFixed(2)) : null;
+          
           return {
             symbol: symbol, // base symbol for matching
             name: data.shortName,
             price: data.regularMarketPrice,
             percentChange: data.regularMarketChangePercent,
-            previousClose: data.regularMarketPreviousClose, // <-- add this
+            previousClose: previousClose || null,
+            lowerCircuit: lowerCircuit,
+            upperCircuit: upperCircuit,
             volume: data.regularMarketVolume,
-            marketCap: data.marketCap,
+            marketCap: data.marketCap || null,
           };
         } catch (err) {
           return { symbol, error: 'Not found or unavailable' };
@@ -132,4 +139,4 @@ exports.getCompanyInfo = async (req, res) => {
 exports.getAllCompanyInfo = async (req, res) => {
   const all = await CompanyInfo.find({});
   res.json(all);
-}; 
+};

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, TrendingUp, TrendingDown, Plus, Minus } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Plus, Minus, Wifi, WifiOff } from 'lucide-react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -19,6 +19,7 @@ import 'chartjs-adapter-date-fns';
 import { useGeneralContext } from './GeneralContext';
 import StockInfoTabs from './StockInfoTabs';
 import { stockService } from '../services/stockService';
+import { io } from 'socket.io-client';
 
 ChartJS.register(
   CategoryScale,
@@ -230,14 +231,96 @@ function generateOHLCData(range, price, symbol, percent) {
 }
 
 const StockDetail = () => {
-  const { selectedStock, setSelectedStock } = useGeneralContext();
+  const { selectedStock, setSelectedStock, refreshHoldings, refreshOrders } = useGeneralContext();
   const { symbol: symbolParam } = useParams();
   const navigate = useNavigate();
   const [tradeAlert, setTradeAlert] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
   const [stockData, setStockData] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState('connecting');
+  const [lastUpdateTime, setLastUpdateTime] = useState(null);
+  const [priceChange, setPriceChange] = useState(null);
+  const socketRef = useRef(null);
   
+  // WebSocket connection setup for real-time updates
+  useEffect(() => {
+    console.log('StockDetail: Setting up WebSocket connection for', symbolParam);
+    
+    // Initialize socket connection
+    socketRef.current = io('http://localhost:3000', {
+      transports: ['websocket', 'polling'],
+      timeout: 20000,
+      forceNew: true
+    });
+
+    const socket = socketRef.current;
+
+    // Connection events
+    socket.on('connect', () => {
+      console.log('StockDetail: WebSocket connected');
+      setIsConnected(true);
+      setConnectionStatus('connected');
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('StockDetail: WebSocket disconnected:', reason);
+      setIsConnected(false);
+      setConnectionStatus('disconnected');
+      if (reason === 'io server disconnect') {
+        socket.connect();
+      }
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('StockDetail: WebSocket connection error:', error);
+      setConnectionStatus('error');
+    });
+
+    // Listen for stock updates
+    socket.on('stockUpdate', (stock) => {
+      if (stock.symbol === symbolParam) {
+        console.log('StockDetail: Received update for', stock.symbol);
+        
+        // Show price change animation
+        const currentPrice = stockData?.price;
+        const newPrice = stock.price;
+        if (currentPrice && newPrice !== currentPrice) {
+          setPriceChange(newPrice > currentPrice ? 'up' : 'down');
+          
+          // Clear animation after 2 seconds
+          setTimeout(() => {
+            setPriceChange(null);
+          }, 2000);
+        }
+        
+        // Update stock data
+        const updatedStock = {
+          symbol: stock.symbol,
+          name: stock.name,
+          price: stock.price,
+          percent: stock.percentChange,
+          volume: stock.volume ? stock.volume.toLocaleString() : '-',
+          previousClose: stock.previousClose,
+          marketCap: stock.marketCap,
+          lastUpdate: stock.lastUpdate
+        };
+        
+        setStockData(updatedStock);
+        setSelectedStock(updatedStock);
+        setLastUpdateTime(new Date());
+      }
+    });
+
+    // Cleanup on unmount
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, [symbolParam, stockData?.price, setSelectedStock]);
+
   // Fetch stock data if not available in context
   useEffect(() => {
     const fetchStockData = async () => {
@@ -397,10 +480,57 @@ const StockDetail = () => {
     return [abs, percent];
   }, [lineChartData]);
 
-  // Trade simulation
-  const handleTrade = (type) => {
-    setTradeAlert(`Simulated: ${type === 'buy' ? 'Bought' : 'Sold'} ${quantity} shares of ${currentStock.symbol}`);
-    setTimeout(() => setTradeAlert(null), 2000);
+  // Handle trade execution
+  const handleTrade = async (type) => {
+    try {
+      setTradeAlert('Processing your order...');
+      
+      const endpoint = type === 'buy' ? '/api/orders/buy' : '/api/orders/sell';
+      
+      // Get authentication data
+      const token = localStorage.getItem('token');
+      const userData = localStorage.getItem('user');
+      
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add authentication headers
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      if (userData) {
+        headers['x-user-data'] = encodeURIComponent(userData);
+      }
+      
+      const response = await fetch(`http://localhost:3000${endpoint}`, {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify({
+          symbol: currentStock.symbol,
+          name: currentStock.name,
+          quantity: quantity,
+          price: currentStock.price
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setTradeAlert(`Successfully ${type === 'buy' ? 'bought' : 'sold'} ${quantity} shares of ${currentStock.symbol}`);
+        // Refresh holdings and orders data
+        refreshHoldings && refreshHoldings();
+        refreshOrders && refreshOrders();
+      } else {
+        setTradeAlert(`Error: ${data.message || 'Failed to place order'}`);
+      }
+    } catch (error) {
+      console.error(`Error executing ${type} trade:`, error);
+      setTradeAlert(`Error: Failed to place ${type} order. Please try again.`);
+    }
+    
+    setTimeout(() => setTradeAlert(null), 3000);
   };
 
   if (!currentStock) {
@@ -452,9 +582,25 @@ const StockDetail = () => {
               <button onClick={() => navigate('/')} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
                 &#8592;
               </button>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">{name}</h1>
-                <p className="text-sm text-gray-500">{symbol}</p>
+              <div className="flex-1">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <h1 className="text-xl font-bold text-gray-900">{name}</h1>
+                    <p className="text-sm text-gray-500">{symbol}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {isConnected ? (
+                      <Wifi size={16} className="text-green-500" title="Real-time connection active" />
+                    ) : (
+                      <WifiOff size={16} className="text-red-500" title="Connection lost" />
+                    )}
+                    {lastUpdateTime && (
+                      <span className="text-xs text-gray-500">
+                        Live • {lastUpdateTime.toLocaleTimeString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -465,16 +611,31 @@ const StockDetail = () => {
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-3xl font-bold text-gray-900">₹{realPrice ? realPrice.toLocaleString() : 'N/A'}</h2>
-                  <div className="flex items-center space-x-2 mt-2">
-                    <span className={`flex items-center gap-1 text-lg font-semibold ${realIsDown ? 'text-red-600' : 'text-green-600'}`}
-                      title={`${realIsDown ? 'Loss' : 'Profit'}: ${realAbsChange < 0 ? '' : '+'}${realAbsChange.toFixed(2)} (${realFormattedPercent}%)`}>
-                      {realIsDown ? <TrendingDown size={18}/> : <TrendingUp size={18}/>}
-                      {realAbsChange < 0 ? '' : '+'}{realAbsChange.toFixed(2)}
-                      <span>({realFormattedPercent}%)</span>
-                    </span>
+                <div className="flex-1">
+                  <div className={`transition-all duration-300 ${priceChange === 'up' ? 'price-up' : priceChange === 'down' ? 'price-down' : ''}`}>
+                    <h2 className="text-3xl font-bold text-gray-900">₹{realPrice ? realPrice.toLocaleString() : 'N/A'}</h2>
+                    <div className="flex items-center space-x-2 mt-2">
+                      <span className={`flex items-center gap-1 text-lg font-semibold ${realIsDown ? 'text-red-600' : 'text-green-600'}`}
+                        title={`${realIsDown ? 'Loss' : 'Profit'}: ${realAbsChange < 0 ? '' : '+'}${realAbsChange.toFixed(2)} (${realFormattedPercent}%)`}>
+                        {realIsDown ? <TrendingDown size={18}/> : <TrendingUp size={18}/>}
+                        {realAbsChange < 0 ? '' : '+'}{realAbsChange.toFixed(2)}
+                        <span>({realFormattedPercent}%)</span>
+                      </span>
+                    </div>
                   </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {isConnected ? (
+                    <div className="flex items-center gap-1 text-green-600">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-xs">Live</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 text-red-600">
+                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                      <span className="text-xs">Offline</span>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="h-64">
@@ -585,8 +746,12 @@ const StockDetail = () => {
                   <input type="number" min={1} value={quantity} onChange={e => setQuantity(Number(e.target.value))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter quantity" />
                 </div>
                 <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-gray-500">Current Price</span>
+                  <span className="font-semibold">₹{realPrice ? realPrice.toLocaleString() : 'N/A'}</span>
+                </div>
+                <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-gray-500">Total Cost</span>
-                  <span className="font-semibold">₹{price && quantity ? (price * quantity).toLocaleString() : '0'}</span>
+                  <span className="font-semibold">₹{realPrice && quantity ? (realPrice * quantity).toLocaleString() : '0'}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <button className="bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2" onClick={() => handleTrade('buy')}><span>Buy</span></button>
@@ -595,14 +760,64 @@ const StockDetail = () => {
               </div>
             </div>
             <div className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Market Stats</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Market Stats</h3>
+                {isConnected && (
+                  <div className="flex items-center gap-1 text-green-600">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-xs">Live</span>
+                  </div>
+                )}
+              </div>
               <div className="space-y-3">
-                <div className="flex justify-between"><span className="text-sm text-gray-600">Open</span><span className="font-semibold">-</span></div>
-                <div className="flex justify-between"><span className="text-sm text-gray-600">High</span><span className="font-semibold">-</span></div>
-                <div className="flex justify-between"><span className="text-sm text-gray-600">Low</span><span className="font-semibold">-</span></div>
-                <div className="flex justify-between"><span className="text-sm text-gray-600">Market Cap</span><span className="font-semibold">-</span></div>
-                <div className="flex justify-between"><span className="text-sm text-gray-600">Volume</span><span className="font-semibold">-</span></div>
-                <div className="flex justify-between"><span className="text-sm text-gray-600">Dividend Yield</span><span className="font-semibold">-</span></div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Previous Close</span>
+                  <span className="font-semibold">
+                    {currentStock?.previousClose ? `₹${currentStock.previousClose.toLocaleString()}` : '-'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Current</span>
+                  <span className="font-semibold">
+                    {currentStock?.price ? `₹${currentStock.price.toLocaleString()}` : '-'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Change</span>
+                  <span className={`font-semibold ${realIsDown ? 'text-red-600' : 'text-green-600'}`}>
+                    {realAbsChange !== 0 ? `${realAbsChange < 0 ? '' : '+'}${realAbsChange.toFixed(2)}` : '-'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Change %</span>
+                  <span className={`font-semibold ${realIsDown ? 'text-red-600' : 'text-green-600'}`}>
+                    {realFormattedPercent !== 'N/A' ? `${realFormattedPercent}%` : '-'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Lower Circuit</span>
+                  <span className="font-semibold text-red-600">
+                    {currentStock?.lowerCircuit ? `₹${currentStock.lowerCircuit.toLocaleString('en-IN', {maximumFractionDigits: 2})}` : '-'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Upper Circuit</span>
+                  <span className="font-semibold text-green-600">
+                    {currentStock?.upperCircuit ? `₹${currentStock.upperCircuit.toLocaleString('en-IN', {maximumFractionDigits: 2})}` : '-'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Volume</span>
+                  <span className="font-semibold">
+                    {currentStock?.volume || '-'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Market Cap</span>
+                  <span className="font-semibold">
+                    {currentStock?.marketCap ? `₹${(currentStock.marketCap / 1000000000000).toFixed(2)}T` : '-'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -612,4 +827,4 @@ const StockDetail = () => {
   );
 };
 
-export default StockDetail; 
+export default StockDetail;

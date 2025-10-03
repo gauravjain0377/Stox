@@ -6,7 +6,7 @@ import { useGeneralContext } from "./GeneralContext";
 import "../styles/BuyActionWindow.css";
 
 const BuyActionWindow = ({ uid, onClose }) => {
-  const { user } = useGeneralContext();
+  const { user, refreshHoldings, refreshOrders } = useGeneralContext();
   const [stockQuantity, setStockQuantity] = useState(1);
   const [stockPrice, setStockPrice] = useState(0.0);
   const [livePrice, setLivePrice] = useState(null);
@@ -81,16 +81,47 @@ const BuyActionWindow = ({ uid, onClose }) => {
       return;
     }
     try {
-      const response = await axios.post("http://localhost:3000/newOrder", {
-        userId: user.userId,
-        name: uid,
-        qty: stockQuantity,
-        price: stockPrice,
-        mode: "BUY",
+      // Get authentication data
+      const token = localStorage.getItem('token');
+      const userData = localStorage.getItem('user');
+      
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add authentication headers
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      if (userData) {
+        headers['x-user-data'] = encodeURIComponent(userData);
+      }
+      
+      const response = await fetch('http://localhost:3000/api/orders/buy', {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify({
+          symbol: uid,
+          name: uid,
+          quantity: stockQuantity,
+          price: stockPrice
+        }),
       });
-      onClose();
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Refresh both holdings and orders
+        refreshHoldings && refreshHoldings();
+        refreshOrders && refreshOrders();
+        onClose();
+      } else {
+        setError(data.message || "Buy failed");
+      }
     } catch (error) {
-      setError(error.response?.data?.message || "Buy failed");
+      console.error('Error buying stock:', error);
+      setError("Buy failed. Please try again.");
     }
   };
 

@@ -1,8 +1,96 @@
 .price-up {
   background: #d1fae5;
-  transition: background 0.5s;
+  transition: all 0.3s ease-in-out;
+  animation: priceUp 1s ease-in-out;
 }
+
 .price-down {
   background: #fee2e2;
-  transition: background 0.5s;
+  transition: all 0.3s ease-in-out;
+  animation: priceDown 1s ease-in-out;
+}
+
+@keyframes priceUp {
+  0% {
+    background: #10b981;
+    transform: scale(1.02);
+  }
+  50% {
+    background: #d1fae5;
+    transform: scale(1.01);
+  }
+  100% {
+    background: #d1fae5;
+    transform: scale(1);
+  }
+}
+
+@keyframes priceDown {
+  0% {
+    background: #ef4444;
+    transform: scale(1.02);
+  }
+  50% {
+    background: #fee2e2;
+    transform: scale(1.01);
+  }
+  100% {
+    background: #fee2e2;
+    transform: scale(1);
+  }
+}
+
+/* Real-time update indicator */
+.live-indicator {
+  position: relative;
+}
+
+.live-indicator::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+/* Smooth transitions for stock items */
+.stock-item {
+  transition: all 0.2s ease-in-out;
+}
+
+.stock-item:hover {
+  transform: translateX(2px);
+}
+
+/* Connection status animations */
+.connecting {
+  animation: connecting 1.5s ease-in-out infinite;
+}
+
+@keyframes connecting {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
 }
