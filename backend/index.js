@@ -345,7 +345,6 @@ app.post('/api/orders/sell', authenticateUser, async (req, res) => {
 // API endpoint to get all orders for a user
 app.get('/api/orders', authenticateUser, async (req, res) => {
   try {
-    
     const orders = await OrdersModel.find({ userId: req.user._id })
       .sort({ timestamp: -1 });
     
@@ -354,6 +353,88 @@ app.get('/api/orders', authenticateUser, async (req, res) => {
   } catch (error) {
     console.error('Error fetching orders:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch orders' });
+  }
+});
+
+// API endpoint to get a specific order by ID
+app.get('/api/orders/:orderId', authenticateUser, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    
+    const order = await OrdersModel.findOne({ 
+      _id: orderId,
+      userId: req.user._id 
+    });
+    
+    if (!order) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Order not found' 
+      });
+    }
+    
+    // Create enhanced order object with additional fields for display
+    const enhancedOrder = {
+      ...order.toObject(),
+      type: 'Delivery',
+      subtype: 'Regular', 
+      market: 'NSE',
+      exchange: 'NSE',
+      duration: 'Day',
+      avgPrice: order.price, // For now, avg price same as order price
+      mktPrice: order.price, // Current market price (could be fetched from live API)
+      status: 'Executed', // All orders are executed in our system
+      statusSteps: [
+        {
+          label: 'Request Verified',
+          time: new Date(order.timestamp).toLocaleString('en-GB', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            day: '2-digit',
+            month: 'short'
+          }),
+          completed: true
+        },
+        {
+          label: 'Order Placed with NSE',
+          time: new Date(order.timestamp).toLocaleString('en-GB', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            day: '2-digit',
+            month: 'short'
+          }),
+          completed: true
+        },
+        {
+          label: 'Order Executed',
+          time: new Date(order.timestamp).toLocaleString('en-GB', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            day: '2-digit',
+            month: 'short'
+          }),
+          completed: true
+        }
+      ],
+      trades: [
+        {
+          time: new Date(order.timestamp).toLocaleString('en-GB', { 
+            hour: '2-digit', 
+            minute: '2-digit'
+          }),
+          price: order.price,
+          qty: order.qty,
+          amount: order.price * order.qty
+        }
+      ],
+      orderValue: order.price * order.qty
+    };
+    
+    res.json({ success: true, order: enhancedOrder });
+    
+  } catch (error) {
+    console.error('Error fetching order:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch order details' });
   }
 });
 

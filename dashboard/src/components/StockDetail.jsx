@@ -237,6 +237,9 @@ const StockDetail = () => {
   const [tradeAlert, setTradeAlert] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingTradeType, setPendingTradeType] = useState(null);
+  const [isProcessingTrade, setIsProcessingTrade] = useState(false);
   const [stockData, setStockData] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
@@ -480,12 +483,36 @@ const StockDetail = () => {
     return [abs, percent];
   }, [lineChartData]);
 
-  // Handle trade execution
-  const handleTrade = async (type) => {
+  // Show trade confirmation modal
+  const handleTradeClick = (type) => {
+    // Validation
+    if (!quantity || quantity <= 0) {
+      setTradeAlert('Please enter a valid quantity (greater than 0)');
+      setTimeout(() => setTradeAlert(null), 3000);
+      return;
+    }
+    
+    if (!realPrice || realPrice <= 0) {
+      setTradeAlert('Stock price is not available. Please try again later.');
+      setTimeout(() => setTradeAlert(null), 3000);
+      return;
+    }
+    
+    setPendingTradeType(type);
+    setShowConfirmModal(true);
+  };
+
+  // Execute the actual trade after confirmation
+  const executeTradeOrder = async () => {
+    if (!pendingTradeType) return;
+    
+    setIsProcessingTrade(true);
+    setShowConfirmModal(false);
+    
     try {
       setTradeAlert('Processing your order...');
       
-      const endpoint = type === 'buy' ? '/api/orders/buy' : '/api/orders/sell';
+      const endpoint = pendingTradeType === 'buy' ? '/api/orders/buy' : '/api/orders/sell';
       
       // Get authentication data
       const token = localStorage.getItem('token');
@@ -518,19 +545,30 @@ const StockDetail = () => {
       const data = await response.json();
       
       if (data.success) {
-        setTradeAlert(`Successfully ${type === 'buy' ? 'bought' : 'sold'} ${quantity} shares of ${currentStock.symbol}`);
+        setTradeAlert(`✅ Successfully ${pendingTradeType === 'buy' ? 'bought' : 'sold'} ${quantity} shares of ${currentStock.symbol}!`);
         // Refresh holdings and orders data
         refreshHoldings && refreshHoldings();
         refreshOrders && refreshOrders();
+        
+        // Reset quantity to 1 after successful trade
+        setQuantity(1);
       } else {
-        setTradeAlert(`Error: ${data.message || 'Failed to place order'}`);
+        setTradeAlert(`❌ Error: ${data.message || 'Failed to place order'}`);
       }
     } catch (error) {
-      console.error(`Error executing ${type} trade:`, error);
-      setTradeAlert(`Error: Failed to place ${type} order. Please try again.`);
+      console.error(`Error executing ${pendingTradeType} trade:`, error);
+      setTradeAlert(`❌ Error: Failed to place ${pendingTradeType} order. Please try again.`);
+    } finally {
+      setIsProcessingTrade(false);
+      setPendingTradeType(null);
+      setTimeout(() => setTradeAlert(null), 5000);
     }
-    
-    setTimeout(() => setTradeAlert(null), 3000);
+  };
+  
+  // Cancel trade confirmation
+  const cancelTrade = () => {
+    setShowConfirmModal(false);
+    setPendingTradeType(null);
   };
 
   if (!currentStock) {
@@ -754,8 +792,20 @@ const StockDetail = () => {
                   <span className="font-semibold">₹{realPrice && quantity ? (realPrice * quantity).toLocaleString() : '0'}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <button className="bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2" onClick={() => handleTrade('buy')}><span>Buy</span></button>
-                  <button className="bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center space-x-2" onClick={() => handleTrade('sell')}><span>Sell</span></button>
+                  <button 
+                    className="bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed" 
+                    onClick={() => handleTradeClick('buy')}
+                    disabled={isProcessingTrade}
+                  >
+                    <span>Buy</span>
+                  </button>
+                  <button 
+                    className="bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed" 
+                    onClick={() => handleTradeClick('sell')}
+                    disabled={isProcessingTrade}
+                  >
+                    <span>Sell</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -823,6 +873,139 @@ const StockDetail = () => {
           </div>
         </div>
       </div>
+      
+      {/* Beautiful Trade Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-scale-in">
+            {/* Modal Header */}
+            <div className={`px-6 py-4 ${pendingTradeType === 'buy' ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-red-500 to-red-600'} text-white`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className={`p-2 rounded-full ${pendingTradeType === 'buy' ? 'bg-green-400' : 'bg-red-400'}`}>
+                    {pendingTradeType === 'buy' ? (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                      </svg>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold">
+                      {pendingTradeType === 'buy' ? 'Confirm Purchase' : 'Confirm Sale'}
+                    </h3>
+                    <p className="text-sm opacity-90">
+                      {pendingTradeType === 'buy' ? 'Review your buy order' : 'Review your sell order'}
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={cancelTrade}
+                  className="p-1 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            {/* Modal Body */}
+            <div className="px-6 py-6">
+              {/* Stock Information */}
+              <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h4 className="font-bold text-lg text-gray-900">{currentStock?.name}</h4>
+                    <p className="text-sm text-gray-500">{currentStock?.symbol}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-lg text-gray-900">₹{realPrice?.toLocaleString()}</p>
+                    <p className={`text-sm font-medium ${realIsDown ? 'text-red-600' : 'text-green-600'}`}>
+                      {realAbsChange !== 0 ? `${realAbsChange < 0 ? '' : '+'}${realAbsChange.toFixed(2)}` : '0.00'} 
+                      ({realFormattedPercent !== 'N/A' ? `${realIsDown ? '-' : '+'}${realFormattedPercent}%` : '0.00%'})
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Order Details */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-gray-600 font-medium">Order Type</span>
+                  <span className={`font-bold ${pendingTradeType === 'buy' ? 'text-green-600' : 'text-red-600'}`}>
+                    {pendingTradeType === 'buy' ? 'BUY' : 'SELL'} ORDER
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-gray-600 font-medium">Quantity</span>
+                  <span className="font-bold text-gray-900">{quantity} shares</span>
+                </div>
+                
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-gray-600 font-medium">Price per share</span>
+                  <span className="font-bold text-gray-900">₹{realPrice?.toLocaleString()}</span>
+                </div>
+                
+                <div className="flex items-center justify-between py-3 bg-gray-50 rounded-lg px-4">
+                  <span className="text-gray-900 font-bold text-lg">
+                    {pendingTradeType === 'buy' ? 'Total Cost' : 'Total Proceeds'}
+                  </span>
+                  <span className={`font-bold text-xl ${pendingTradeType === 'buy' ? 'text-green-600' : 'text-red-600'}`}>
+                    ₹{(realPrice * quantity)?.toLocaleString()}
+                  </span>
+                </div>
+                
+                {/* Market Status */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    <span className="text-blue-800 text-sm font-medium">
+                      {isConnected ? 'Live Market Price' : 'Market Closed - Using Last Price'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Modal Footer */}
+            <div className="px-6 py-4 bg-gray-50 flex space-x-3">
+              <button
+                onClick={cancelTrade}
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition-colors"
+                disabled={isProcessingTrade}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={executeTradeOrder}
+                disabled={isProcessingTrade}
+                className={`flex-1 px-4 py-3 rounded-lg text-white font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                  pendingTradeType === 'buy' 
+                    ? 'bg-green-600 hover:bg-green-700' 
+                    : 'bg-red-600 hover:bg-red-700'
+                }`}
+              >
+                {isProcessingTrade ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Processing...</span>
+                  </div>
+                ) : (
+                  `Confirm ${pendingTradeType === 'buy' ? 'Purchase' : 'Sale'}`
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

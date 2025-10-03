@@ -1,102 +1,141 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-
-// Mock order data for demonstration
-const mockOrders = [
-  {
-    _id: '1',
-    name: 'Tata Power Company',
-    qty: 1,
-    price: 400.05,
-    avgPrice: 400.05,
-    mktPrice: 401.00,
-    mode: 'BUY',
-    type: 'Delivery',
-    subtype: 'Regular',
-    market: 'NSE',
-    exchange: 'NSE',
-    duration: 'Day',
-    timestamp: '2024-02-05T11:34:00',
-    status: 'Executed',
-    statusSteps: [
-      {
-        label: 'Request Verified',
-        time: '11:34 AM, 05 Feb',
-        id: 'GMK240205113417B1BCFV38BQUC',
-        copy: true
-      },
-      {
-        label: 'Order Placed with NSE',
-        time: '11:34 AM, 05 Feb',
-        id: '1300000024858111',
-        copy: true
-      },
-      {
-        label: 'Order Executed',
-        time: '11:34 AM, 05 Feb',
-        id: '',
-        copy: false
-      }
-    ],
-    trades: [
-      { time: '11:34:17 AM', price: 400.05, qty: 1, amount: 400.05 }
-    ]
-  },
-  // Mock SELL order
-  {
-    _id: '2',
-    name: 'Infosys Ltd',
-    qty: 2,
-    price: 1500.00,
-    avgPrice: 1498.50,
-    mktPrice: 1501.00,
-    mode: 'SELL',
-    type: 'Delivery',
-    subtype: 'Regular',
-    market: 'NSE',
-    exchange: 'NSE',
-    duration: 'Day',
-    timestamp: '2024-02-06T10:15:00',
-    status: 'Executed',
-    statusSteps: [
-      {
-        label: 'Request Verified',
-        time: '10:15 AM, 06 Feb',
-        id: 'GMK240206101517B1BCFV38BQUC',
-        copy: true
-      },
-      {
-        label: 'Order Placed with NSE',
-        time: '10:15 AM, 06 Feb',
-        id: '1300000024858222',
-        copy: true
-      },
-      {
-        label: 'Order Executed',
-        time: '10:15 AM, 06 Feb',
-        id: '',
-        copy: false
-      }
-    ],
-    trades: [
-      { time: '10:15:17 AM', price: 1500.00, qty: 2, amount: 3000.00 }
-    ]
-  }
-];
 
 const OrderDetail = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const [copiedIdx, setCopiedIdx] = useState(null);
-  // Select order by orderId from params
-  const order = mockOrders.find(o => o._id === orderId) || mockOrders[0];
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Use the selected order's statusSteps for the timeline
-  const statusSteps = order.statusSteps.map(step => ({
+  // Fetch order details from backend
+  useEffect(() => {
+    const fetchOrderDetails = async () => {
+      try {
+        setLoading(true);
+        
+        // Get authentication data
+        const token = localStorage.getItem('token');
+        const userData = localStorage.getItem('user');
+        
+        const headers = {};
+        
+        // Add authentication headers
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        if (userData) {
+          headers['x-user-data'] = encodeURIComponent(userData);
+        }
+        
+        const response = await fetch(`http://localhost:3000/api/orders/${orderId}`, {
+          credentials: 'include',
+          headers
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          setOrder(data.order);
+        } else {
+          setError(data.message || 'Failed to fetch order details');
+        }
+      } catch (err) {
+        console.error('Error fetching order details:', err);
+        setError('Failed to load order details. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (orderId) {
+      fetchOrderDetails();
+    }
+  }, [orderId]);
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="p-6 md:p-10 bg-gray-50 min-h-screen">
+        <button className="mb-8 text-sm text-gray-500 hover:text-blue-600 flex items-center gap-1 transition" onClick={() => navigate(-1)}>
+          <span className="text-lg">&larr;</span> Back
+        </button>
+        <div className="animate-pulse">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-white rounded-2xl shadow border border-gray-100 p-8 md:p-10">
+              <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
+              <div className="h-8 bg-gray-200 rounded w-3/4 mb-6"></div>
+              <div className="space-y-3">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="h-4 bg-gray-200 rounded"></div>
+                ))}
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl shadow border border-gray-100 p-8 md:p-10">
+              <div className="h-6 bg-gray-200 rounded w-1/3 mb-6"></div>
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="flex items-center space-x-4">
+                    <div className="w-6 h-6 bg-gray-200 rounded-full"></div>
+                    <div className="flex-1 h-4 bg-gray-200 rounded"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="p-6 md:p-10 bg-gray-50 min-h-screen">
+        <button className="mb-8 text-sm text-gray-500 hover:text-blue-600 flex items-center gap-1 transition" onClick={() => navigate(-1)}>
+          <span className="text-lg">&larr;</span> Back
+        </button>
+        <div className="bg-white rounded-2xl shadow border border-gray-100 p-8 md:p-10 text-center">
+          <div className="text-red-500 mb-4">
+            <svg className="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Unable to Load Order Details</h3>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if no order found
+  if (!order) {
+    return (
+      <div className="p-6 md:p-10 bg-gray-50 min-h-screen">
+        <button className="mb-8 text-sm text-gray-500 hover:text-blue-600 flex items-center gap-1 transition" onClick={() => navigate(-1)}>
+          <span className="text-lg">&larr;</span> Back
+        </button>
+        <div className="bg-white rounded-2xl shadow border border-gray-100 p-8 md:p-10 text-center">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Order Not Found</h3>
+          <p className="text-gray-600 mb-4">The requested order could not be found.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Use the order's statusSteps for the timeline
+  const statusSteps = order.statusSteps ? order.statusSteps.map(step => ({
     label: step.label,
-    completed: true, // All steps are completed for demo; adjust if you want partial completion
+    completed: step.completed || true,
     time: step.time,
-  }));
+  })) : [];
 
   return (
     <div className="p-6 md:p-10 bg-gray-50 min-h-screen">
@@ -127,15 +166,15 @@ const OrderDetail = () => {
             </div>
             <div>
               <div className="text-gray-400 text-xs mb-0.5">Order Price</div>
-              <div>₹{order.price}</div>
+              <div>₹{order.price?.toLocaleString() || 'N/A'}</div>
             </div>
             <div>
               <div className="text-gray-400 text-xs mb-0.5">Avg Price</div>
-              <div>₹{order.avgPrice}</div>
+              <div>₹{(order.avgPrice || order.price)?.toLocaleString() || 'N/A'}</div>
             </div>
             <div>
               <div className="text-gray-400 text-xs mb-0.5">Mkt Price</div>
-              <div>₹{order.mktPrice}</div>
+              <div>₹{(order.mktPrice || order.price)?.toLocaleString() || 'N/A'}</div>
             </div>
             <div>
               <div className="text-gray-400 text-xs mb-0.5">Subtype</div>
@@ -147,15 +186,22 @@ const OrderDetail = () => {
             </div>
           </div>
           <div className="text-xs text-gray-400 mt-1">{new Date(order.timestamp).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
-          <div className="text-right text-base text-gray-700 font-medium mt-1">Order Value <span className="text-gray-900">₹{order.price}</span></div>
+          <div className="text-right text-base text-gray-700 font-medium mt-1">Order Value <span className="text-gray-900">₹{(order.orderValue || (order.price * order.qty)).toLocaleString()}</span></div>
         </div>
         {/* Order Status Card */}
         <div className="bg-white rounded-2xl shadow border border-gray-100 p-10 flex flex-col gap-8">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-lg font-medium text-gray-800 tracking-tight">Order Status</span>
-            <span className="ml-auto text-green-600 font-medium flex items-center gap-1">
-              Executed
-              <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#34D399"/><path d="M8 12.5l2 2 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <span className={`ml-auto font-medium flex items-center gap-1 ${
+              order.status === 'Executed' ? 'text-green-600' : 
+              order.status === 'Pending' ? 'text-yellow-600' : 
+              order.status === 'Cancelled' ? 'text-red-600' : 'text-gray-600'
+            }`}>
+              {order.status || 'Executed'}
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" fill={order.status === 'Executed' ? '#34D399' : '#9CA3AF'}/>
+                <path d="M8 12.5l2 2 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </span>
           </div>
           <div className="relative pl-12 py-8 h-full">
@@ -213,14 +259,20 @@ const OrderDetail = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {order.trades.map((trade, idx) => (
+              {(order.trades && order.trades.length > 0) ? order.trades.map((trade, idx) => (
                 <tr key={idx}>
                   <td className="px-6 py-3 text-sm text-gray-700">{trade.time}</td>
-                  <td className="px-6 py-3 text-sm text-gray-700">₹{trade.price}</td>
+                  <td className="px-6 py-3 text-sm text-gray-700">₹{trade.price?.toLocaleString()}</td>
                   <td className="px-6 py-3 text-sm text-gray-700">{trade.qty}</td>
-                  <td className="px-6 py-3 text-sm text-gray-700">₹{trade.amount}</td>
+                  <td className="px-6 py-3 text-sm text-gray-700">₹{trade.amount?.toLocaleString()}</td>
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                  <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                    No trades available
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
