@@ -101,10 +101,10 @@ const ModernSummary = () => {
       {/* Investment Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Total Investment */}
-        <div className="card-hover">
+        <div className="card-hover p-5 rounded-xl border border-gray-100 shadow-sm bg-white hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-blue-50 rounded-lg">
-              <DollarSign size={20} className="text-blue-600" />
+              <i className="fa-solid fa-indian-rupee-sign text-blue-600 text-xl"></i>
             </div>
             <span className="text-xs text-gray-500">Total Investment</span>
           </div>
@@ -117,7 +117,7 @@ const ModernSummary = () => {
         </div>
 
         {/* Current Value */}
-        <div className="card-hover">
+        <div className="card-hover p-5 rounded-xl border border-gray-100 shadow-sm bg-white hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-green-50 rounded-lg">
               <BarChart3 size={20} className="text-green-600" />
@@ -133,7 +133,7 @@ const ModernSummary = () => {
         </div>
 
         {/* Returns */}
-        <div className="card-hover">
+        <div className="card-hover p-5 rounded-xl border border-gray-100 shadow-sm bg-white hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between mb-4">
             <div className={`p-2 rounded-lg ${pnl >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
               {pnl >= 0 ? (
@@ -325,4 +325,4 @@ const ModernSummary = () => {
   );
 };
 
-export default ModernSummary; 
+export default ModernSummary;

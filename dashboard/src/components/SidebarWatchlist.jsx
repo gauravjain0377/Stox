@@ -400,7 +400,35 @@ const SidebarWatchlist = () => {
               <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
             <span>
-              Trading hours: 9:00 AM to 3:30 PM IST (Monday to Friday, excluding holidays)
+              {(() => {
+                const now = new Date();
+                const day = now.getDay(); // 0 is Sunday, 1 is Monday, etc.
+                const hours = now.getHours();
+                const minutes = now.getMinutes();
+                const currentTime = hours * 60 + minutes;
+                const marketOpenTime = 9 * 60; // 9:00 AM
+                const marketCloseTime = 15 * 60 + 30; // 3:30 PM
+                
+                // Check if it's a weekday (Monday to Friday) and within trading hours
+                if (day >= 1 && day <= 5 && currentTime >= marketOpenTime && currentTime <= marketCloseTime) {
+                  return `Live • ${now.toLocaleTimeString()}`;
+                } else {
+                  // Market is closed
+                  const tomorrow = new Date(now);
+                  tomorrow.setDate(now.getDate() + 1);
+                  
+                  // If it's Friday after hours or weekend, show Monday
+                  if (day === 5 && currentTime > marketCloseTime) {
+                    tomorrow.setDate(now.getDate() + 3); // Next Monday
+                  } else if (day === 6) {
+                    tomorrow.setDate(now.getDate() + 2); // Next Monday
+                  } else if (day === 0) {
+                    tomorrow.setDate(now.getDate() + 1); // Next Monday
+                  }
+                  
+                  return `Market is closed. It will open tomorrow at 09:00 AM`;
+                }
+              })()}
             </span>
           </div>
         </div>

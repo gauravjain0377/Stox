@@ -85,15 +85,14 @@ const Orders = () => {
                     key={idx}
                     className="flex items-center justify-between bg-white rounded-lg shadow-sm border border-gray-100 px-6 py-4 hover:bg-gray-50 transition group"
                   >
-                    {/* Left: Stock name and order type */}
+  
                     <div 
                       className="flex flex-col min-w-0 flex-1 cursor-pointer" 
                       onClick={() => navigate(`/orders/${order._id || idx}`)}
                     >
                       <span className="font-semibold text-base text-gray-900 truncate">{order.name}</span>
                       <span className="text-xs text-gray-500 mt-0.5">
-                        {order.mode === 'BUY' ? 'Buy' : 'Sell'}
-                        {order.market ? ` · ${order.market}` : ' · Market'}
+                        {order.market ? ` · ${order.market}` : ' Market'}
                         {order.type ? ` · ${order.type}` : ' · Regular'}
                       </span>
                     </div>
@@ -113,39 +112,7 @@ const Orders = () => {
                       <div className="flex items-center gap-2">
                         <span className={`w-3 h-3 rounded-full ${order.status === 'in-progress' ? 'bg-yellow-400' : 'bg-green-400'}`}></span>
                         
-                        {/* Action button - Buy or Sell based on order type */}
-                        {order.mode === 'BUY' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              // Find if user has this stock in holdings
-                              const holding = holdings.find(h => h.name === order.name);
-                              if (holding) {
-                                openSellWindow({
-                                  ...holding,
-                                  price: order.price // Use current price from order
-                                });
-                              } else {
-                                alert(`You don't have any shares of ${order.name} to sell.`);
-                              }
-                            }}
-                            className="px-3 py-1 text-xs font-medium text-white bg-red-500 rounded hover:bg-red-600 transition"
-                          >
-                            Sell
-                          </button>
-                        )}
-                        
-                        {order.mode === 'SELL' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/stock/${order.name}`);
-                            }}
-                            className="px-3 py-1 text-xs font-medium text-white bg-green-500 rounded hover:bg-green-600 transition"
-                          >
-                            Buy
-                          </button>
-                        )}
+                      
                         
                         <span 
                           className="text-gray-300 group-hover:text-gray-500 transition cursor-pointer"

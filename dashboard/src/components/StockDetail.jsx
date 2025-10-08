@@ -921,7 +921,13 @@ const StockDetail = () => {
         processing={isProcessingTrade}
         onCancel={cancelTrade}
         onConfirm={executeTradeOrder}
-        currentShares={holdings.find(h => h.symbol === symbolParam)?.qty || 0}
+        currentShares={(() => {
+          // Find the holding that matches the current stock name
+          const holding = holdings.find(h => h.name === currentStock?.name);
+          
+          // Return the quantity if found, otherwise 0
+          return holding?.qty || 0;
+        })()}
       />
     </div>
   );
