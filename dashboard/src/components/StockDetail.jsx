@@ -19,6 +19,7 @@ import 'chartjs-adapter-date-fns';
 import { useGeneralContext } from './GeneralContext';
 import StockInfoTabs from './StockInfoTabs';
 import TradeConfirmModal from './TradeConfirmModal';
+import TradeNotification from './TradeNotification';
 import { stockService } from '../services/stockService';
 import { io } from 'socket.io-client';
 
@@ -235,12 +236,13 @@ const StockDetail = () => {
   const { selectedStock, setSelectedStock, refreshHoldings, refreshOrders } = useGeneralContext();
   const { symbol: symbolParam } = useParams();
   const navigate = useNavigate();
-  const [tradeAlert, setTradeAlert] = useState(false);
+  const [tradeAlert, setTradeAlert] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingTradeType, setPendingTradeType] = useState(null);
   const [isProcessingTrade, setIsProcessingTrade] = useState(false);
+  const [tradeNotification, setTradeNotification] = useState(null);
   const [stockData, setStockData] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
@@ -549,23 +551,41 @@ const StockDetail = () => {
       const data = await response.json();
       
       if (data.success) {
-        setTradeAlert(`✅ Successfully ${pendingTradeType === 'buy' ? 'bought' : 'sold'} ${finalQuantity} shares of ${currentStock.symbol}!`);
+        const message = `Successfully ${pendingTradeType === 'buy' ? 'bought' : 'sold'} ${finalQuantity} shares of ${currentStock.symbol}!`;
+        setTradeNotification({
+          message,
+          type: 'success'
+        });
+        // Clear the processing message immediately
+        setTradeAlert(null);
+        
         // Refresh holdings and orders data
         refreshHoldings && refreshHoldings();
         refreshOrders && refreshOrders();
         
         // Reset quantity to 1 after successful trade
         setQuantity(1);
+        
+        // Wait a moment for the notification to be visible before redirecting
+        setTimeout(() => {
+          // Redirect to orders page
+          navigate('/dashboard/orders');
+        }, 1500);
       } else {
-        setTradeAlert(`❌ Error: ${data.message || 'Failed to place order'}`);
+        setTradeNotification({
+          message: `Error: ${data.message || 'Failed to place order'}`,
+          type: 'error'
+        });
       }
     } catch (error) {
       console.error(`Error executing ${pendingTradeType} trade:`, error);
-      setTradeAlert(`❌ Error: Failed to place ${pendingTradeType} order. Please try again.`);
+      setTradeNotification({
+        message: `Error: Failed to place ${pendingTradeType} order. Please try again.`,
+        type: 'error'
+      });
     } finally {
       setIsProcessingTrade(false);
       setPendingTradeType(null);
-      setTimeout(() => setTradeAlert(null), 5000);
     }
   };
   
@@ -617,6 +637,13 @@ const StockDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {tradeNotification && (
+        <TradeNotification
+          message={tradeNotification.message}
+          type={tradeNotification.type}
+          onClose={() => setTradeNotification(null)}
+        />
+      )}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">

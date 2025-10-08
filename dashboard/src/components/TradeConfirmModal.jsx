@@ -15,17 +15,29 @@ const TradeConfirmModal = ({
   processing = false,
   onCancel,
   onConfirm,
+  currentShares = 0, // Current shares owned (for sell validation)
 }) => {
   const [adjustedQuantity, setAdjustedQuantity] = useState(quantity);
+  const [error, setError] = useState('');
+  const isBuy = type === 'buy';
+
+  // Function to validate quantity (defined before useEffect)
+  const validateQuantity = (value) => {
+    if (!isBuy && value > currentShares) {
+      setError(`You don't have enough shares. Maximum available: ${currentShares} shares.`);
+      return false;
+    }
+    setError('');
+    return true;
+  };
 
   // Update adjusted quantity when the initial quantity changes
   useEffect(() => {
     setAdjustedQuantity(quantity);
-  }, [quantity]);
+    validateQuantity(quantity);
+  }, [quantity, currentShares, isBuy]);
 
   if (!isOpen) return null;
-
-  const isBuy = type === 'buy';
 
   const headerGradient = isBuy
     ? 'bg-gradient-to-r from-green-500 to-green-600'
@@ -34,16 +46,22 @@ const TradeConfirmModal = ({
   const totalLabel = isBuy ? 'Total Cost' : 'Total Proceeds';
   
   const handleIncrement = () => {
-    setAdjustedQuantity(prev => Number(prev) + 1);
+    const newValue = Number(adjustedQuantity) + 1;
+    if (validateQuantity(newValue)) {
+      setAdjustedQuantity(newValue);
+    }
   };
   
   const handleDecrement = () => {
-    setAdjustedQuantity(prev => Math.max(1, Number(prev) - 1));
+    const newValue = Math.max(1, Number(adjustedQuantity) - 1);
+    validateQuantity(newValue);
+    setAdjustedQuantity(newValue);
   };
   
   const handleQuantityChange = (e) => {
     const value = parseInt(e.target.value, 10);
     if (!isNaN(value) && value > 0) {
+      validateQuantity(value);
       setAdjustedQuantity(value);
     }
   };
@@ -124,9 +142,17 @@ const TradeConfirmModal = ({
               </span>
             </div>
 
-            <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <span className="text-gray-600 font-medium">Quantity</span>
-              <div className="flex items-center space-x-2">
+            <div className="flex flex-col py-2 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 font-medium">Quantity</span>
+                {!isBuy && (
+                  <span className="text-sm text-blue-600 font-medium">
+                    You own: {currentShares} {currentShares === 1 ? 'share' : 'shares'}
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex items-center justify-end space-x-2 mt-2">
                 <button 
                   onClick={handleDecrement}
                   disabled={adjustedQuantity <= 1 || processing}
@@ -141,12 +167,12 @@ const TradeConfirmModal = ({
                   value={adjustedQuantity}
                   onChange={handleQuantityChange}
                   disabled={processing}
-                  className="w-16 text-center border border-gray-300 rounded-md py-1 px-2 font-bold text-gray-900"
+                  className={`w-16 text-center border rounded-md py-1 px-2 font-bold ${error ? 'border-red-500 text-red-600' : 'border-gray-300 text-gray-900'}`}
                   min="1"
                 />
                 <button 
                   onClick={handleIncrement}
-                  disabled={processing}
+                  disabled={processing || (!isBuy && adjustedQuantity >= currentShares)}
                   className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors disabled:opacity-50"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,6 +181,12 @@ const TradeConfirmModal = ({
                 </button>
                 <span className="font-medium text-gray-500">{Number(adjustedQuantity) === 1 ? 'share' : 'shares'}</span>
               </div>
+              
+              {error && (
+                <div className="mt-2 text-sm text-red-600 font-medium">
+                  {error}
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
@@ -193,12 +225,12 @@ const TradeConfirmModal = ({
             Cancel
           </button>
           <button
-            onClick={() => onConfirm(adjustedQuantity)}
-            disabled={processing}
-            className={`flex-1 px-4 py-3 rounded-lg text-white font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-              isBuy ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
-            }`}
-          >
+              onClick={() => onConfirm(adjustedQuantity)}
+              disabled={processing || error !== ''}
+              className={`flex-1 px-4 py-3 rounded-lg text-white font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                isBuy ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
+              }`}
+            >
             {processing ? (
               <div className="flex items-center justify-center space-x-2">
                 <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">

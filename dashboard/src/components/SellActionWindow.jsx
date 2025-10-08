@@ -1,17 +1,29 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import TradeConfirmModal from "./TradeConfirmModal";
+import TradeNotification from './TradeNotification';
 
 import { useGeneralContext } from "./GeneralContext";
 import "../styles/BuyActionWindow.css";
 
 const SellActionWindow = ({ stock }) => {
+  // Ensure we get the correct quantity from the stock object
   const availableQty = stock?.qty || 0;
-  const [stockQuantity, setStockQuantity] = useState(Math.min(1, availableQty || 1));
+  const [stockQuantity, setStockQuantity] = useState(1); // Default to 1 initially
   const [stockPrice, setStockPrice] = useState(stock ? Number(stock.price) : 0.0);
+  
+  // Update stockQuantity when stock data changes
+  useEffect(() => {
+    if (stock && stock.qty > 0) {
+      setStockQuantity(1); // Set to 1 if shares are available
+    } else {
+      setStockQuantity(0); // Set to 0 if no shares available
+    }
+  }, [stock]);
   const [error, setError] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState("");
+  const [tradeNotification, setTradeNotification] = useState(null);
 
   const { user, closeSellWindow, refreshHoldings, refreshOrders } = useGeneralContext();
 
@@ -74,30 +86,39 @@ const SellActionWindow = ({ stock }) => {
       // Use the adjusted quantity if provided
       const finalQuantity = adjustedQuantity || stockQuantity;
       
-      const response = await fetch('http://localhost:3000/api/orders/sell', {
-        method: 'POST',
-        headers,
-        credentials: 'include',
-        body: JSON.stringify({
-          symbol: stock.name,
-          name: stock.name,
-          quantity: finalQuantity,
-          price: stockPrice
-        }),
-      });
+      const response = await axios.post('http://localhost:3000/api/orders/sell', {
+        symbol: stock.name,
+        name: stock.name,
+        quantity: finalQuantity,
+        price: stockPrice
+      }, { headers, withCredentials: true });
       
-      const data = await response.json();
-      
-      if (data.success) {
-        refreshHoldings();
+      if (response.data.success) {
+        setTradeNotification({
+          message: `Successfully sold ${finalQuantity} shares of ${stock.name}!`,
+          type: 'success'
+        });
+        
+        // Refresh holdings and orders data
+        refreshHoldings && refreshHoldings();
         refreshOrders && refreshOrders();
-        closeSellWindow();
+        
+        // Close the sell window after a short delay
+        setTimeout(() => {
+          closeSellWindow();
+        }, 2000);
       } else {
-        setError(data.message || "Failed to sell stock");
+        setTradeNotification({
+          message: `Error: ${response.data.message || 'Failed to place sell order'}`,
+          type: 'error'
+        });
       }
     } catch (error) {
-      console.error('Error selling stock:', error);
-      setError("Failed to sell stock. Please try again.");
+      console.error('Error executing sell trade:', error);
+      setTradeNotification({
+        message: `Error: Failed to place sell order. Please try again.`,
+        type: 'error'
+      });
     }
   };
 
@@ -111,6 +132,13 @@ const SellActionWindow = ({ stock }) => {
 
   return (
     <div className="container" id="sell-window" draggable="true">
+      {tradeNotification && (
+        <TradeNotification
+          message={tradeNotification.message}
+          type={tradeNotification.type}
+          onClose={() => setTradeNotification(null)}
+        />
+      )}
       <div className="regular-order">
         <div className="inputs">
           <fieldset>
@@ -185,6 +213,7 @@ const SellActionWindow = ({ stock }) => {
         symbol={stock?.symbol || stock?.name}
         price={Number(stockPrice)}
         quantity={stockQuantity}
+        currentShares={availableQty}
         // We don't track connection here; omit the status bar by not passing isConnected
         note={confirmMessage}
         onCancel={handleCancelConfirm}
