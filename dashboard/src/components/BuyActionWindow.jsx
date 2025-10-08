@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import axios from "axios";
 
 import { useGeneralContext } from "./GeneralContext";
@@ -168,12 +167,12 @@ const BuyActionWindow = ({ uid, onClose }) => {
       <div className="buttons">
         <span>Total Cost: ₹{totalCost.toFixed(2)}</span>
         <div>
-          <Link className="btn btn-blue" onClick={handleBuyClick} disabled={livePrice === null}>
+          <button type="button" className="btn btn-blue" onClick={handleBuyClick} disabled={livePrice === null}>
             Buy
-          </Link>
-          <Link to="" className="btn btn-grey" onClick={handleCancelClick}>
+          </button>
+          <button type="button" className="btn btn-grey" onClick={handleCancelClick}>
             Cancel
-          </Link>
+          </button>
         </div>
       </div>
       {error && <div className="error-popup">{error}</div>}

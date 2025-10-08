@@ -5,13 +5,15 @@ const TABS = ['Overview', 'Financials', 'News', 'History'];
 
 // Add CSS for smooth tab transitions
 const tabContentStyle = {
-  transition: 'opacity 0.35s cubic-bezier(.4,0,.2,1), transform 0.35s cubic-bezier(.4,0,.2,1)',
+  transition: 'opacity 0.5s ease-out, transform 0.5s ease-out',
   opacity: 1,
-  transform: 'translateY(0px)'
+  transform: 'translateX(0)',
+  display: 'block'
 };
 const tabContentHiddenStyle = {
   opacity: 0,
-  transform: 'translateY(24px)'
+  transform: 'translateX(20px)',
+  transition: 'opacity 0.3s ease-in, transform 0.3s ease-in'
 };
 
 export default function StockInfoTabs({ symbol }) {
@@ -22,13 +24,20 @@ export default function StockInfoTabs({ symbol }) {
   const [showingTab, setShowingTab] = useState(activeTab);
   const [tabVisible, setTabVisible] = useState(true);
 
-  // Animate tab change
+  // Animate tab change with smoother transitions
   useEffect(() => {
+    // Start fade out
     setTabVisible(false);
+    
+    // After fade out completes, change content and start fade in
     const timeout = setTimeout(() => {
       setShowingTab(activeTab);
-      setTabVisible(true);
-    }, 180); // fade out, then fade in
+      // Small delay before fade in for smoother effect
+      setTimeout(() => {
+        setTabVisible(true);
+      }, 50);
+    }, 250);
+    
     return () => clearTimeout(timeout);
   }, [activeTab]);
 
@@ -67,14 +76,22 @@ export default function StockInfoTabs({ symbol }) {
               borderBottom: activeTab === tab ? '3px solid #2563eb' : '3px solid transparent',
               borderTopLeftRadius: tab === TABS[0] ? 16 : 0,
               borderTopRightRadius: tab === TABS[TABS.length-1] ? 16 : 0,
-              transition: 'all 0.18s cubic-bezier(.4,0,.2,1)',
+              transition: 'all 0.3s ease-in-out',
               cursor: 'pointer',
               outline: 'none',
               boxShadow: activeTab === tab ? '0 2px 8px rgba(37,99,235,0.04)' : 'none',
+              position: 'relative',
+              overflow: 'hidden'
             }}
             onClick={() => setActiveTab(tab)}
-            onMouseOver={e => e.currentTarget.style.background = '#f3f4f6'}
-            onMouseOut={e => e.currentTarget.style.background = activeTab === tab ? '#fff' : 'transparent'}
+            onMouseOver={e => {
+              e.currentTarget.style.background = activeTab === tab ? '#fff' : '#f3f4f6';
+              e.currentTarget.style.color = activeTab === tab ? '#2563eb' : '#4b5563';
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.background = activeTab === tab ? '#fff' : 'transparent';
+              e.currentTarget.style.color = activeTab === tab ? '#2563eb' : '#6b7280';
+            }}
             aria-selected={activeTab === tab}
             aria-label={tab}
           >
@@ -82,7 +99,7 @@ export default function StockInfoTabs({ symbol }) {
           </button>
         ))}
       </div>
-      <div style={{ minHeight: 220, padding: '32px 32px 24px 32px', borderBottomLeftRadius: 16, borderBottomRightRadius: 16, background: '#fff' }}>
+      <div style={{ minHeight: 220, padding: '32px 32px 24px 32px', borderBottomLeftRadius: 16, borderBottomRightRadius: 16, background: '#fff', overflow: 'hidden' }}>
         {loading && <div style={{ color: '#2563eb', fontWeight: 500 }}>Loading...</div>}
         {error && <div style={{ color: '#ef4444', fontWeight: 500 }}>{error}</div>}
         {!loading && !error && data && (
@@ -135,4 +152,4 @@ export default function StockInfoTabs({ symbol }) {
       </div>
     </div>
   );
-} 
+}
