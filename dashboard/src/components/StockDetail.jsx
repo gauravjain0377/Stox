@@ -233,7 +233,7 @@ function generateOHLCData(range, price, symbol, percent) {
 }
 
 const StockDetail = () => {
-  const { selectedStock, setSelectedStock, refreshHoldings, refreshOrders } = useGeneralContext();
+  const { selectedStock, setSelectedStock, refreshHoldings, refreshOrders, holdings } = useGeneralContext();
   const { symbol: symbolParam } = useParams();
   const navigate = useNavigate();
   const [tradeAlert, setTradeAlert] = useState(null);
@@ -501,6 +501,13 @@ const StockDetail = () => {
       return;
     }
     
+    // For sell orders, check if user has enough shares
+    if (type === 'sell') {
+      // We'll proceed with the trade and let the backend handle validation
+      // The confirmation modal will show the current quantity being sold
+      // and the backend will validate if the user has enough shares
+    }
+    
     setPendingTradeType(type);
     setShowConfirmModal(true);
   };
@@ -565,12 +572,6 @@ const StockDetail = () => {
         
         // Reset quantity to 1 after successful trade
         setQuantity(1);
-        
-        // Wait a moment for the notification to be visible before redirecting
-        setTimeout(() => {
-          // Redirect to orders page
-          navigate('/dashboard/orders');
-        }, 1500);
       } else {
         setTradeNotification({
           message: `Error: ${data.message || 'Failed to place order'}`,
@@ -920,6 +921,7 @@ const StockDetail = () => {
         processing={isProcessingTrade}
         onCancel={cancelTrade}
         onConfirm={executeTradeOrder}
+        currentShares={holdings.find(h => h.symbol === symbolParam)?.qty || 0}
       />
     </div>
   );

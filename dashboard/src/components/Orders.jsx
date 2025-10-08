@@ -17,7 +17,7 @@ function groupOrdersByDate(orders) {
 const Orders = () => {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
-  const { user, orders, ordersLoading, refreshOrders } = useGeneralContext();
+  const { user, orders, ordersLoading, refreshOrders, openSellWindow, holdings } = useGeneralContext();
   const navigate = useNavigate();
 
 
@@ -83,11 +83,13 @@ const Orders = () => {
                 {grouped[date].map((order, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between bg-white rounded-lg shadow-sm border border-gray-100 px-6 py-4 hover:bg-gray-50 transition group cursor-pointer"
-                    onClick={() => navigate(`/orders/${order._id || idx}`)}
+                    className="flex items-center justify-between bg-white rounded-lg shadow-sm border border-gray-100 px-6 py-4 hover:bg-gray-50 transition group"
                   >
                     {/* Left: Stock name and order type */}
-                    <div className="flex flex-col min-w-0 flex-1">
+                    <div 
+                      className="flex flex-col min-w-0 flex-1 cursor-pointer" 
+                      onClick={() => navigate(`/orders/${order._id || idx}`)}
+                    >
                       <span className="font-semibold text-base text-gray-900 truncate">{order.name}</span>
                       <span className="text-xs text-gray-500 mt-0.5">
                         {order.mode === 'BUY' ? 'Buy' : 'Sell'}
@@ -96,21 +98,62 @@ const Orders = () => {
                       </span>
                     </div>
                     {/* Center: Qty and Price */}
-                    <div className="flex flex-col items-end min-w-[100px] mr-8">
+                    <div 
+                      className="flex flex-col items-end min-w-[100px] mr-8 cursor-pointer"
+                      onClick={() => navigate(`/orders/${order._id || idx}`)}
+                    >
                       <span className="text-sm text-gray-900 font-medium">{order.qty} <span className="text-xs text-gray-500 font-normal">Qty</span></span>
                       <span className="text-sm text-gray-900 font-medium">₹{order.price} <span className="text-xs text-gray-500 font-normal">Avg Price</span></span>
                     </div>
-                    {/* Right: Time, status dot, chevron */}
-                    <div className="flex flex-col items-end min-w-[80px]">
+                    {/* Right: Time, status dot, action buttons */}
+                    <div className="flex flex-col items-end min-w-[120px]">
                       <span className="text-xs text-gray-500 mb-1">
                         {order.timestamp ? new Date(order.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
                       </span>
-                      <span className="flex items-center gap-1">
+                      <div className="flex items-center gap-2">
                         <span className={`w-3 h-3 rounded-full ${order.status === 'in-progress' ? 'bg-yellow-400' : 'bg-green-400'}`}></span>
-                        <span className="text-gray-300 group-hover:text-gray-500 transition">
+                        
+                        {/* Action button - Buy or Sell based on order type */}
+                        {order.mode === 'BUY' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Find if user has this stock in holdings
+                              const holding = holdings.find(h => h.name === order.name);
+                              if (holding) {
+                                openSellWindow({
+                                  ...holding,
+                                  price: order.price // Use current price from order
+                                });
+                              } else {
+                                alert(`You don't have any shares of ${order.name} to sell.`);
+                              }
+                            }}
+                            className="px-3 py-1 text-xs font-medium text-white bg-red-500 rounded hover:bg-red-600 transition"
+                          >
+                            Sell
+                          </button>
+                        )}
+                        
+                        {order.mode === 'SELL' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/stock/${order.name}`);
+                            }}
+                            className="px-3 py-1 text-xs font-medium text-white bg-green-500 rounded hover:bg-green-600 transition"
+                          >
+                            Buy
+                          </button>
+                        )}
+                        
+                        <span 
+                          className="text-gray-300 group-hover:text-gray-500 transition cursor-pointer"
+                          onClick={() => navigate(`/orders/${order._id || idx}`)}
+                        >
                           <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/></svg>
                         </span>
-                      </span>
+                      </div>
                     </div>
                   </div>
                 ))}

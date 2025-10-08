@@ -3,91 +3,359 @@ import { Line, Doughnut, Bar, Pie } from "react-chartjs-2";
 import "chart.js/auto";
 import { useTheme } from "../context/ThemeContext";
 import { useGeneralContext } from "./GeneralContext";
-import { watchlist, holdings } from "../data/data";
 import "../styles/PortfolioAnalytics.css";
+
+// Mock data for market movers and news
+const mockData = {
+  topGainers: [
+    { stock: "INFY", price: 1567.90, change: "+1.15%", volume: "2.1M" },
+    { stock: "TCS", price: 3194.80, change: "+0.75%", volume: "1.8M" },
+    { stock: "WIPRO", price: 577.75, change: "+0.32%", volume: "1.5M" },
+    { stock: "HDFCBANK", price: 1578.40, change: "+0.75%", volume: "2.9M" },
+    { stock: "RELIANCE", price: 2745.30, change: "+0.42%", volume: "3.2M" }
+  ],
+  topLosers: [
+    { stock: "TATASTEEL", price: 158.80, change: "-0.37%", volume: "6.4M" },
+    { stock: "TITAN", price: 3667.50, change: "-0.51%", volume: "780K" },
+    { stock: "ULTRACEMCO", price: 10235.60, change: "-1.23%", volume: "410K" },
+    { stock: "TECHM", price: 1352.90, change: "-0.47%", volume: "920K" },
+    { stock: "ITC", price: 207.90, change: "-0.80%", volume: "5.2M" }
+  ],
+  newsFeed: [
+    { category: "Markets", title: "Sensex, Nifty close at record highs", time: "2 hours ago" },
+    { category: "Economy", title: "RBI keeps repo rate unchanged at 4%", time: "5 hours ago" },
+    { category: "Corporate", title: "TCS announces share buyback worth ₹18,000 crore", time: "1 day ago" },
+    { category: "Global", title: "US markets rally on Fed comments", time: "1 day ago" }
+  ]
+};
 
 const timeOptions = ["Week", "Month", "Year"];
 
 const PortfolioAnalytics = () => {
   const [time, setTime] = useState("Month");
   const [selectedFilter, setSelectedFilter] = useState("All");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { theme } = useTheme();
-  const { holdings: userHoldings, holdingsLoading } = useGeneralContext();
+  const { holdings: userHoldings, holdingsLoading, orders } = useGeneralContext();
   const [widgetPos, setWidgetPos] = useState({ x: null, y: null });
   const widgetRef = useRef(null);
   let isDragging = false;
   let dragOffset = { x: 0, y: 0 };
+  
+  // State for real-time data
+  const [portfolioHistory, setPortfolioHistory] = useState({
+    Week: [],
+    Month: [],
+    Year: []
+  });
+  const [sectorAllocation, setSectorAllocation] = useState({ labels: [], data: [] });
+  const [benchmarkData, setBenchmarkData] = useState({ labels: [], portfolio: [], nifty: [], sensex: [] });
+  const [recentTransactions, setRecentTransactions] = useState([]);
+  const [topGainers, setTopGainers] = useState([]);
+  const [topLosers, setTopLosers] = useState([]);
+  const [performanceMetrics, setPerformanceMetrics] = useState({
+    totalReturn: 0,
+    annualizedReturn: 0,
+    sharpeRatio: 0,
+    maxDrawdown: 0,
+    volatility: 0,
+    beta: 0
+  });
 
   // Dynamic color palette based on theme
   const softPalette = theme === 'dark' 
     ? ["#3b82f6", "#60a5fa", "#a5b4fc", "#fbbf24", "#34d399", "#f87171", "#f472b6"]
     : ["#2563eb", "#60a5fa", "#a5b4fc", "#fbbf24", "#34d399", "#f87171", "#f472b6"];
-
-  // Mock data for comprehensive analytics
-  const mockData = {
-    portfolioHistory: {
-      Week: [3100, 3200, 3150, 3300, 3400, 3500, 3550],
-      Month: [2800, 2850, 2900, 3000, 3100, 3200, 3150, 3300, 3400, 3500, 3550],
-      Year: [2000, 2100, 2200, 2500, 2700, 3000, 3200, 3400, 3550]
-    },
-    sectorAllocation: {
-      labels: ["IT", "Finance", "Energy", "Pharma", "Auto", "FMCG"],
-      data: [35, 25, 15, 10, 10, 5]
-    },
-    benchmarkData: {
-      labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-      portfolio: [2800, 2900, 3000, 3100, 3200, 3550],
-      nifty: [18000, 18200, 18500, 18800, 19000, 19500],
-      sensex: [60000, 60500, 61000, 61500, 62000, 63500]
-    },
-    recentTransactions: [
-      { date: "2024-01-15", stock: "TCS", type: "Buy", quantity: 10, price: 3150.00, total: 31500.00 },
-      { date: "2024-01-14", stock: "RELIANCE", type: "Sell", quantity: 5, price: 2750.00, total: 13750.00 },
-      { date: "2024-01-13", stock: "INFY", type: "Buy", quantity: 15, price: 1550.00, total: 23250.00 },
-      { date: "2024-01-12", stock: "HDFCBANK", type: "Buy", quantity: 8, price: 1580.00, total: 12640.00 },
-      { date: "2024-01-11", stock: "WIPRO", type: "Sell", quantity: 12, price: 580.00, total: 6960.00 }
-    ],
-    topGainers: [
-      { stock: "SBIN", change: "+5.2%", price: 867.20, volume: "3.7M" },
-      { stock: "TATAMOTORS", change: "+4.1%", price: 958.10, volume: "4.1M" },
-      { stock: "JSWSTEEL", change: "+3.8%", price: 887.65, volume: "2.0M" },
-      { stock: "BAJAJ-AUTO", change: "+3.2%", price: 8912.55, volume: "670K" },
-      { stock: "HCLTECH", change: "+2.9%", price: 1372.15, volume: "950K" }
-    ],
-    topLosers: [
-      { stock: "ADANIENT", change: "-4.2%", price: 2954.10, volume: "800K" },
-      { stock: "ULTRACEMCO", change: "-3.8%", price: 10235.60, volume: "410K" },
-      { stock: "LTIM", change: "-3.1%", price: 5421.80, volume: "380K" },
-      { stock: "INFY", change: "-2.7%", price: 1567.90, volume: "2.1M" },
-      { stock: "TITAN", change: "-2.3%", price: 3667.50, volume: "780K" }
-    ],
-    newsFeed: [
-      { title: "Nifty 50 hits new all-time high, crosses 19,500 mark", time: "2 hours ago", category: "Market" },
-      { title: "RBI keeps repo rate unchanged at 6.5%", time: "4 hours ago", category: "Policy" },
-      { title: "TCS reports strong Q3 results, beats estimates", time: "6 hours ago", category: "Earnings" },
-      { title: "Reliance Industries announces new digital initiatives", time: "8 hours ago", category: "Corporate" },
-      { title: "Global markets rally on Fed rate cut expectations", time: "10 hours ago", category: "Global" }
-    ],
-    performanceMetrics: {
-      totalReturn: 15.2,
-      annualizedReturn: 18.5,
-      sharpeRatio: 1.2,
-      maxDrawdown: -8.3,
-      volatility: 12.4,
-      beta: 0.95
+    
+  // Generate portfolio history data based on orders
+  useEffect(() => {
+    if (!orders || orders.length === 0 || holdingsLoading) return;
+    
+    setIsLoading(true);
+    
+    try {
+      // Sort orders by timestamp
+      const sortedOrders = [...orders].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      
+      // Generate portfolio value over time
+      const now = new Date();
+      
+      // Week data - last 7 days
+      const weekData = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        
+        // Calculate portfolio value on this date
+        const value = calculatePortfolioValueOnDate(sortedOrders, date);
+        weekData.push(value);
+      }
+      
+      // Month data - last 30 days
+      const monthData = [];
+      for (let i = 29; i >= 0; i -= 3) { // Sample every 3 days for month view
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        
+        // Calculate portfolio value on this date
+        const value = calculatePortfolioValueOnDate(sortedOrders, date);
+        monthData.push(value);
+      }
+      
+      // Year data - last 12 months
+      const yearData = [];
+      for (let i = 11; i >= 0; i--) {
+        const date = new Date(now);
+        date.setMonth(date.getMonth() - i);
+        
+        // Calculate portfolio value on this date
+        const value = calculatePortfolioValueOnDate(sortedOrders, date);
+        yearData.push(value);
+      }
+      
+      setPortfolioHistory({
+        Week: weekData,
+        Month: monthData,
+        Year: yearData
+      });
+      
+      // Generate recent transactions from orders
+      const transactions = sortedOrders.slice(-5).reverse().map(order => ({
+        date: new Date(order.timestamp).toISOString().split('T')[0],
+        stock: order.name,
+        type: order.mode,
+        quantity: order.qty,
+        price: order.price,
+        total: order.price * order.qty
+      }));
+      
+      setRecentTransactions(transactions);
+      
+      // Calculate sector allocation based on current holdings
+      if (userHoldings && userHoldings.length > 0) {
+        // Define sectors for common stocks (in a real app, this would come from an API)
+        const stockSectors = {
+          "TCS": "IT",
+          "INFY": "IT",
+          "WIPRO": "IT",
+          "HCLTECH": "IT",
+          "TECHM": "IT",
+          "RELIANCE": "Energy",
+          "ONGC": "Energy",
+          "BPCL": "Energy",
+          "IOC": "Energy",
+          "GAIL": "Energy",
+          "HDFCBANK": "Finance",
+          "ICICIBANK": "Finance",
+          "SBIN": "Finance",
+          "KOTAKBANK": "Finance",
+          "AXISBANK": "Finance",
+          "SUNPHARMA": "Pharma",
+          "DRREDDY": "Pharma",
+          "CIPLA": "Pharma",
+          "DIVISLAB": "Pharma",
+          "TATAMOTORS": "Auto",
+          "M&M": "Auto",
+          "MARUTI": "Auto",
+          "HEROMOTOCO": "Auto",
+          "BAJAJ-AUTO": "Auto",
+          "ITC": "FMCG",
+          "HINDUNILVR": "FMCG",
+          "NESTLEIND": "FMCG",
+          "BRITANNIA": "FMCG",
+          "DABUR": "FMCG"
+        };
+        
+        // Group holdings by sector
+        const sectorValues = {};
+        
+        userHoldings.forEach(holding => {
+          const sector = stockSectors[holding.name] || "Other";
+          
+          if (!sectorValues[sector]) {
+            sectorValues[sector] = 0;
+          }
+          
+          sectorValues[sector] += holding.price * holding.qty;
+        });
+        
+        // Convert to arrays for chart
+        const sectorLabels = Object.keys(sectorValues);
+        const sectorData = Object.values(sectorValues);
+        
+        // Calculate percentages
+        const totalValue = sectorData.reduce((sum, value) => sum + value, 0);
+        const sectorPercentages = sectorData.map(value => (value / totalValue) * 100);
+        
+        setSectorAllocation({
+          labels: sectorLabels,
+          data: sectorPercentages
+        });
+      }
+      
+      // Generate benchmark comparison data
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const currentMonth = now.getMonth();
+      
+      // Get last 6 months
+      const benchmarkLabels = [];
+      for (let i = 5; i >= 0; i--) {
+        const monthIndex = (currentMonth - i + 12) % 12;
+        benchmarkLabels.push(months[monthIndex]);
+      }
+      
+      // Use portfolio data for benchmark comparison
+      // In a real app, this would fetch actual market index data
+      const portfolioData = [];
+      const niftyData = [];
+      const sensexData = [];
+      
+      // Sample every other month from year data
+      for (let i = 0; i < 6; i++) {
+        const index = Math.floor(i * (yearData.length / 6));
+        if (index < yearData.length) {
+          portfolioData.push(yearData[index]);
+          
+          // Simulate market indices (in a real app, these would come from an API)
+          // Using portfolio value with some variation to simulate correlation
+          const baseValue = yearData[index];
+          niftyData.push(baseValue * 7 * (0.9 + Math.random() * 0.2));
+          sensexData.push(baseValue * 20 * (0.9 + Math.random() * 0.2));
+        }
+      }
+      
+      setBenchmarkData({
+        labels: benchmarkLabels,
+        portfolio: portfolioData,
+        nifty: niftyData,
+        sensex: sensexData
+      });
+      
+      // Calculate top gainers and losers from holdings
+      if (userHoldings && userHoldings.length > 0) {
+        // Calculate percent change for each holding
+        const holdingsWithChange = userHoldings.map(holding => {
+          const currentValue = holding.price * holding.qty;
+          const investedValue = holding.avg * holding.qty;
+          const percentChange = ((currentValue - investedValue) / investedValue) * 100;
+          
+          return {
+            stock: holding.name,
+            change: percentChange > 0 ? `+${percentChange.toFixed(1)}%` : `${percentChange.toFixed(1)}%`,
+            price: holding.price,
+            volume: `${holding.qty} shares`
+          };
+        });
+        
+        // Sort by percent change
+        const sortedHoldings = [...holdingsWithChange].sort((a, b) => {
+          const aChange = parseFloat(a.change.replace('%', ''));
+          const bChange = parseFloat(b.change.replace('%', ''));
+          return bChange - aChange;
+        });
+        
+        // Get top gainers and losers
+        const gainers = sortedHoldings.filter(h => parseFloat(h.change) > 0).slice(0, 5);
+        const losers = sortedHoldings.filter(h => parseFloat(h.change) < 0).slice(0, 5);
+        
+        setTopGainers(gainers);
+        setTopLosers(losers);
+      }
+      
+      // Calculate performance metrics
+      if (yearData.length > 0) {
+        const startValue = yearData[0];
+        const endValue = yearData[yearData.length - 1];
+        const totalReturn = ((endValue - startValue) / startValue) * 100;
+        
+        // Simple annualized return calculation
+        const annualizedReturn = totalReturn;
+        
+        // Calculate volatility (standard deviation of returns)
+        const returns = [];
+        for (let i = 1; i < yearData.length; i++) {
+          returns.push((yearData[i] - yearData[i-1]) / yearData[i-1]);
+        }
+        const avgReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+        const volatility = Math.sqrt(returns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) / returns.length) * 100;
+        
+        // Approximate Sharpe ratio (assuming risk-free rate of 4%)
+        const sharpeRatio = (annualizedReturn - 4) / volatility;
+        
+        // Calculate maximum drawdown
+        let maxDrawdown = 0;
+        let peak = yearData[0];
+        
+        for (const value of yearData) {
+          if (value > peak) {
+            peak = value;
+          }
+          
+          const drawdown = (peak - value) / peak * 100;
+          if (drawdown > maxDrawdown) {
+            maxDrawdown = drawdown;
+          }
+        }
+        
+        setPerformanceMetrics({
+          totalReturn: totalReturn,
+          annualizedReturn: annualizedReturn,
+          sharpeRatio: sharpeRatio,
+          maxDrawdown: -maxDrawdown,
+          volatility: volatility,
+          beta: 0.95 // Placeholder - would need market data to calculate
+        });
+      }
+      
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error generating portfolio history:", error);
+      setIsLoading(false);
     }
+  }, [orders, holdingsLoading, userHoldings]);
+  
+  // Helper function to calculate portfolio value on a specific date
+  const calculatePortfolioValueOnDate = (orders, targetDate) => {
+    // Filter orders that occurred before or on the target date
+    const relevantOrders = orders.filter(order => new Date(order.timestamp) <= targetDate);
+    
+    // Calculate holdings based on these orders
+    const holdings = {};
+    
+    relevantOrders.forEach(order => {
+      const { name, qty, price, mode } = order;
+      
+      if (!holdings[name]) {
+        holdings[name] = { qty: 0, value: 0 };
+      }
+      
+      if (mode === "BUY") {
+        holdings[name].qty += parseInt(qty);
+        holdings[name].value = holdings[name].qty * price;
+      } else if (mode === "SELL") {
+        holdings[name].qty -= parseInt(qty);
+        holdings[name].value = holdings[name].qty * price;
+      }
+      
+      // Remove stocks with zero quantity
+      if (holdings[name].qty <= 0) {
+        delete holdings[name];
+      }
+    });
+    
+    // Calculate total portfolio value
+    return Object.values(holdings).reduce((total, stock) => total + stock.value, 0);
   };
 
   // Portfolio Value Over Time
   const lineData = {
-    labels: Array(mockData.portfolioHistory[time].length)
+    labels: Array(portfolioHistory[time]?.length || 0)
       .fill(0)
       .map((_, i) => `${time} ${i + 1}`),
     datasets: [
       {
         label: "Portfolio Value",
-        data: mockData.portfolioHistory[time],
+        data: portfolioHistory[time] || [],
         borderColor: theme === 'dark' ? "#3b82f6" : "#2563eb",
         backgroundColor: theme === 'dark' ? "rgba(59,130,246,0.1)" : "rgba(37,99,235,0.08)",
         tension: 0.3,
@@ -99,26 +367,26 @@ const PortfolioAnalytics = () => {
   };
 
   // Benchmark Comparison
-  const benchmarkData = {
-    labels: mockData.benchmarkData.labels,
+  const benchmarkChartData = {
+    labels: benchmarkData.labels || [],
     datasets: [
       {
         label: "Your Portfolio",
-        data: mockData.benchmarkData.portfolio,
+        data: benchmarkData.portfolio || [],
         borderColor: "#3b82f6",
         backgroundColor: "rgba(59,130,246,0.1)",
         tension: 0.3
       },
       {
         label: "Nifty 50",
-        data: mockData.benchmarkData.nifty.map(v => v / 7),
+        data: benchmarkData.nifty || [],
         borderColor: "#f59e0b",
         backgroundColor: "rgba(245,158,11,0.1)",
         tension: 0.3
       },
       {
         label: "Sensex",
-        data: mockData.benchmarkData.sensex.map(v => v / 20),
+        data: benchmarkData.sensex || [],
         borderColor: "#10b981",
         backgroundColor: "rgba(16,185,129,0.1)",
         tension: 0.3
@@ -128,10 +396,10 @@ const PortfolioAnalytics = () => {
 
   // Sector-wise Allocation
   const doughnutData = {
-    labels: mockData.sectorAllocation.labels,
+    labels: sectorAllocation.labels || [],
     datasets: [
       {
-        data: mockData.sectorAllocation.data,
+        data: sectorAllocation.data || [],
         backgroundColor: softPalette,
         borderWidth: 2
       }
@@ -258,13 +526,15 @@ const PortfolioAnalytics = () => {
         </div>
         <div className="pa-summary-card">
           <div className="pa-label">Total P&L</div>
-          <div className="pa-value pa-green">
-            ₹{portfolioSummary.totalPnL.toLocaleString()} ({portfolioSummary.totalPnLPercent.toFixed(2)}%)
+          <div className={`pa-value ${portfolioSummary.totalPnL >= 0 ? 'pa-green' : 'pa-red'}`}>
+            {portfolioSummary.totalPnL >= 0 ? '+' : ''}₹{Math.abs(portfolioSummary.totalPnL).toLocaleString()} ({portfolioSummary.totalPnLPercent.toFixed(2)}%)
           </div>
         </div>
         <div className="pa-summary-card">
           <div className="pa-label">Total Return</div>
-          <div className="pa-value pa-green">+{mockData.performanceMetrics.totalReturn}%</div>
+          <div className={`pa-value ${performanceMetrics.totalReturn >= 0 ? 'pa-green' : 'pa-red'}`}>
+            {performanceMetrics.totalReturn >= 0 ? '+' : ''}{performanceMetrics.totalReturn.toFixed(2)}%
+          </div>
         </div>
       </div>
 
@@ -273,29 +543,35 @@ const PortfolioAnalytics = () => {
         <div className="pa-top-movers-card">
           <div className="pa-section-title">Top Gainers in Your Portfolio</div>
           <div className="pa-movers-list">
-            {topPortfolioGainers.map((h, idx) => (
-              <div className="pa-mover-pill pa-mover-gain" key={idx}>
-                <span className="pa-mover-icon">▲</span>
-                <span className="pa-mover-symbol">{h.name}</span>
-                <span className="pa-mover-pct">+{h.percent.toFixed(2)}%</span>
-                <span className="pa-mover-price">₹{h.price.toFixed(2)}</span>
-              </div>
-            ))}
-            {topPortfolioGainers.length === 0 && <div className="pa-mover-empty">No gainers</div>}
+            {topGainers.length > 0 ? (
+              topGainers.map((h, idx) => (
+                <div className="pa-mover-pill pa-mover-gain" key={idx}>
+                  <span className="pa-mover-icon">▲</span>
+                  <span className="pa-mover-symbol">{h.stock}</span>
+                  <span className="pa-mover-pct">{h.change}</span>
+                  <span className="pa-mover-price">₹{h.price}</span>
+                </div>
+              ))
+            ) : (
+              <div className="pa-mover-empty">No gainers found in your portfolio</div>
+            )}
           </div>
         </div>
         <div className="pa-top-movers-card">
           <div className="pa-section-title">Top Losers in Your Portfolio</div>
           <div className="pa-movers-list">
-            {topPortfolioLosers.map((h, idx) => (
-              <div className="pa-mover-pill pa-mover-loss" key={idx}>
-                <span className="pa-mover-icon">▼</span>
-                <span className="pa-mover-symbol">{h.name}</span>
-                <span className="pa-mover-pct">{h.percent.toFixed(2)}%</span>
-                <span className="pa-mover-price">₹{h.price.toFixed(2)}</span>
-              </div>
-            ))}
-            {topPortfolioLosers.length === 0 && <div className="pa-mover-empty">No losers</div>}
+            {topLosers.length > 0 ? (
+              topLosers.map((h, idx) => (
+                <div className="pa-mover-pill pa-mover-loss" key={idx}>
+                  <span className="pa-mover-icon">▼</span>
+                  <span className="pa-mover-symbol">{h.stock}</span>
+                  <span className="pa-mover-pct">{h.change}</span>
+                  <span className="pa-mover-price">₹{h.price}</span>
+                </div>
+              ))
+            ) : (
+              <div className="pa-mover-empty">No losers found in your portfolio</div>
+            )}
           </div>
         </div>
       </div>
@@ -329,19 +605,19 @@ const PortfolioAnalytics = () => {
       <div className="pa-metrics-grid">
         <div className="pa-metric">
           <div className="pa-metric-label">Sharpe Ratio</div>
-          <div className="pa-metric-value">{mockData.performanceMetrics.sharpeRatio}</div>
+          <div className="pa-metric-value">{performanceMetrics.sharpeRatio}</div>
         </div>
         <div className="pa-metric">
           <div className="pa-metric-label">Beta</div>
-          <div className="pa-metric-value">{mockData.performanceMetrics.beta}</div>
+          <div className="pa-metric-value">{performanceMetrics.beta}</div>
         </div>
         <div className="pa-metric">
           <div className="pa-metric-label">Volatility</div>
-          <div className="pa-metric-value">{mockData.performanceMetrics.volatility}%</div>
+          <div className="pa-metric-value">{performanceMetrics.volatility}%</div>
         </div>
         <div className="pa-metric">
           <div className="pa-metric-label">Max Drawdown</div>
-          <div className="pa-metric-value pa-red">{mockData.performanceMetrics.maxDrawdown}%</div>
+          <div className="pa-metric-value pa-red">{performanceMetrics.maxDrawdown}%</div>
         </div>
       </div>
 
@@ -349,7 +625,7 @@ const PortfolioAnalytics = () => {
       <div className="chart-card full-width">
         <h4>Portfolio vs Benchmark</h4>
         <div className="chart-container">
-          <Line data={benchmarkData} options={chartOptions} />
+          <Line data={benchmarkChartData} options={chartOptions} />
         </div>
       </div>
       
@@ -407,18 +683,24 @@ const PortfolioAnalytics = () => {
             </tr>
           </thead>
           <tbody>
-            {mockData.recentTransactions.map((tx, idx) => (
-              <tr key={idx}>
-                <td>{new Date(tx.date).toLocaleDateString()}</td>
-                <td className="pa-rt-stock">{tx.stock}</td>
-                <td>
-                  <span className={`pa-rt-type-badge ${tx.type.toLowerCase()}`}>{tx.type}</span>
-                </td>
-                <td>{tx.quantity}</td>
-                <td>₹{tx.price.toFixed(2)}</td>
-                <td>₹{tx.total.toFixed(2)}</td>
+            {recentTransactions.length > 0 ? (
+              recentTransactions.map((tx, idx) => (
+                <tr key={idx}>
+                  <td>{new Date(tx.date).toLocaleDateString()}</td>
+                  <td className="pa-rt-stock">{tx.stock}</td>
+                  <td>
+                    <span className={`pa-rt-type-badge ${tx.type.toLowerCase()}`}>{tx.type}</span>
+                  </td>
+                  <td>{tx.quantity}</td>
+                  <td>₹{tx.price.toFixed(2)}</td>
+                  <td>₹{tx.total.toFixed(2)}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="6" className="text-center py-4">No recent transactions found</td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
@@ -505,4 +787,4 @@ const PortfolioAnalytics = () => {
   );
 };
 
-export default PortfolioAnalytics; 
+export default PortfolioAnalytics;

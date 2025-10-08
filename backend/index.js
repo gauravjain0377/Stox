@@ -92,8 +92,8 @@ passport.use(new GoogleStrategy({
         avatar: profile.photos && profile.photos[0] ? profile.photos[0].value : undefined,
       });
       await user.save();
-    } else if (!user.googleId) {
-      // If user exists but not linked to Google, update provider info
+    } 
+    else if (!user.googleId) {
       user.provider = 'google';
       user.googleId = profile.id;
       user.avatar = profile.photos && profile.photos[0] ? profile.photos[0].value : user.avatar;

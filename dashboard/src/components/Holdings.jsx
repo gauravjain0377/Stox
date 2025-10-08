@@ -336,7 +336,7 @@ const Holdings = () => {
                     </td>
                     <td style={{ textAlign: 'center' }}>
                       <button 
-                        className="btn btn-red sell-button"
+                        className="px-3 py-1 text-xs font-medium text-white bg-red-500 rounded hover:bg-red-600 transition"
                         onClick={(e) => {
                           e.stopPropagation(); // Prevent row click when selling
                           openSellWindow({
