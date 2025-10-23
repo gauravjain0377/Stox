@@ -1,22 +1,15 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useGeneralContext } from "./GeneralContext";
 import { VerticalGraph } from "./VerticalGraph";
 import { Link, useNavigate } from 'react-router-dom';
-import { io } from 'socket.io-client';
 import TradeConfirmModal from "./TradeConfirmModal";
-import { WS_URL, getApiUrl } from '../config/api';
+import { getApiUrl } from '../config/api';
 import '../styles/Holdings.css';
 
 const Holdings = () => {
-  const { holdings: allHoldings, holdingsLoading, openSellWindow, usingFallbackData, setSelectedStock, refreshHoldings, refreshOrders } = useGeneralContext();
+  const { holdings: allHoldings, holdingsLoading, openSellWindow, usingFallbackData, setSelectedStock, refreshHoldings, refreshOrders, realTimePrices, isSocketConnected } = useGeneralContext();
   const navigate = useNavigate();
-  const [realTimePrices, setRealTimePrices] = useState({});
-  const [priceChanges, setPriceChanges] = useState({});
-  const [isConnected, setIsConnected] = useState(false);
   const [lastUpdateTime, setLastUpdateTime] = useState(null);
-  const socketRef = useRef(null);
-  const priceUpdateTimeoutRef = useRef({});
-  const smoothUpdateIntervalRef = useRef(null);
   
   // Trade confirmation modal state
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -24,125 +17,12 @@ const Holdings = () => {
   const [sellQuantity, setSellQuantity] = useState(1);
   const [isProcessingTrade, setIsProcessingTrade] = useState(false);
   
-  // Function for smooth price transitions with better stability
-  const updatePricesSmoothly = (stockName, newPrice) => {
-    const currentPrice = realTimePrices[stockName];
-    
-    // Only update if price actually changed significantly (avoid micro-fluctuations)
-    // Increase threshold to 0.50 (50 paise) for more stability
-    if (currentPrice && Math.abs(newPrice - currentPrice) < 0.50) {
-      return; // Skip tiny changes
-    }
-    
-    // Clear any existing timeout for this stock
-    if (priceUpdateTimeoutRef.current[stockName]) {
-      clearTimeout(priceUpdateTimeoutRef.current[stockName]);
-    }
-    
-    // Smooth transition with longer debouncing for stability
-    priceUpdateTimeoutRef.current[stockName] = setTimeout(() => {
-      setRealTimePrices(prev => {
-        const updated = { ...prev, [stockName]: newPrice };
-        return updated;
-      });
-      
-      // Show subtle change indicator
-      if (currentPrice && newPrice !== currentPrice) {
-        setPriceChanges(prev => ({
-          ...prev,
-          [stockName]: newPrice > currentPrice ? 'up' : 'down'
-        }));
-        
-        // Remove change indicator after 5 seconds (longer for smoother feel)
-        setTimeout(() => {
-          setPriceChanges(prev => {
-            const updated = { ...prev };
-            delete updated[stockName];
-            return updated;
-          });
-        }, 5000);
-      }
-      
-      setLastUpdateTime(new Date());
-    }, 2000); // 2000ms (2 seconds) delay for much smoother updates
-  };
-  
-  // WebSocket connection for real-time price updates
+  // Update time when real-time prices change
   useEffect(() => {
-    if (!allHoldings || allHoldings.length === 0) return;
-    
-    console.log('Holdings: Setting up WebSocket connection for real-time prices');
-    
-    // Initialize socket connection
-    socketRef.current = io(WS_URL, {
-      transports: ['websocket', 'polling'],
-      timeout: 20000,
-      forceNew: true
-    });
-    
-    const socket = socketRef.current;
-    
-    // Connection events
-    socket.on('connect', () => {
-      console.log('Holdings: WebSocket connected');
-      setIsConnected(true);
-    });
-    
-    socket.on('disconnect', (reason) => {
-      console.log('Holdings: WebSocket disconnected:', reason);
-      setIsConnected(false);
-    });
-    
-    socket.on('connect_error', (error) => {
-      console.error('Holdings: WebSocket connection error:', error);
-      setIsConnected(false);
-    });
-    
-    // Listen for stock updates (individual updates)
-    socket.on('stockUpdate', (stock) => {
-      const holdingStock = allHoldings.find(h => h.name === stock.symbol || h.name === stock.name);
-      if (holdingStock) {
-        // Use smooth update function
-        updatePricesSmoothly(holdingStock.name, stock.price);
-      }
-    });
-    
-    // Listen for bulk updates (smoother batch processing)
-    socket.on('bulkStockUpdate', (stocks) => {
-      // Process bulk updates with longer staggered timing to avoid jarring changes
-      stocks.forEach((stock, index) => {
-        const holdingStock = allHoldings.find(h => h.name === stock.symbol || h.name === stock.name);
-        if (holdingStock) {
-          // Stagger updates by 500ms each for much smoother bulk updates
-          setTimeout(() => {
-            updatePricesSmoothly(holdingStock.name, stock.price);
-          }, index * 500);
-        }
-      });
-    });
-    
-    // Request initial data
-    setTimeout(() => {
-      socket.emit('requestStockUpdate');
-    }, 1000);
-    
-    // Cleanup on unmount
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
-      
-      // Clear all price update timeouts
-      Object.values(priceUpdateTimeoutRef.current).forEach(timeout => {
-        if (timeout) clearTimeout(timeout);
-      });
-      priceUpdateTimeoutRef.current = {};
-      
-      if (smoothUpdateIntervalRef.current) {
-        clearInterval(smoothUpdateIntervalRef.current);
-      }
-    };
-  }, [allHoldings, realTimePrices]);
+    if (realTimePrices && Object.keys(realTimePrices).length > 0) {
+      setLastUpdateTime(new Date());
+    }
+  }, [realTimePrices]);
 
   // Show loading message while fetching holdings
   if (holdingsLoading) {
@@ -181,10 +61,10 @@ const Holdings = () => {
     const stockData = {
       symbol: stock.name,
       name: stock.name,
-      price: realTimePrices[stock.name] || stock.price,
-      percent: 0, // Calculate if needed
+      price: stock.currentPrice || stock.price, // Use precomputed current price
+      percent: stock.profitPercent || 0,
       volume: 'N/A',
-      previousClose: stock.price,
+      previousClose: stock.avg,
       marketCap: null
     };
     
@@ -192,10 +72,9 @@ const Holdings = () => {
     navigate(`/stock/${stock.name}`);
   };
 
-  // Calculate total portfolio value using real-time prices
+  // Calculate total portfolio value using precomputed values
   const totalPortfolioValue = allHoldings.reduce((sum, stock) => {
-    const currentPrice = realTimePrices[stock.name] || stock.price;
-    return sum + currentPrice * stock.qty;
+    return sum + (stock.curValue || (stock.currentPrice || stock.price) * stock.qty);
   }, 0);
 
 
@@ -249,13 +128,12 @@ const Holdings = () => {
               </thead>
               <tbody>
                 {allHoldings.map((stock, index) => {
-                  // Use real-time price if available, otherwise use stored price
-                  const currentPrice = realTimePrices[stock.name] || stock.price;
-                  const curValue = currentPrice * stock.qty;
-                  const profit = curValue - stock.avg * stock.qty;
-                  const profitPercent = stock.avg > 0 ? (profit / (stock.avg * stock.qty)) * 100 : 0;
+                  // Use precomputed values from context (instant, no calculation needed)
+                  const currentPrice = stock.currentPrice || stock.price;
+                  const curValue = stock.curValue || (currentPrice * stock.qty);
+                  const profit = stock.profit !== undefined ? stock.profit : (curValue - stock.avg * stock.qty);
+                  const profitPercent = stock.profitPercent !== undefined ? stock.profitPercent : (stock.avg > 0 ? (profit / (stock.avg * stock.qty)) * 100 : 0);
                   const profClass = profit >= 0 ? "profit" : "loss";
-                  const priceChange = priceChanges[stock.name];
                   
                   return (
                     <tr 
@@ -268,10 +146,8 @@ const Holdings = () => {
                           <span className="stock-link-text font-semibold text-blue-600 hover:text-blue-800">
                             {stock.name}
                           </span>
-                          {priceChange && (
-                            <div className={`w-1.5 h-1.5 rounded-full transition-all duration-700 ${
-                              priceChange === 'up' ? 'bg-green-400' : 'bg-red-400'
-                            }`} style={{
+                          {isSocketConnected && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-400" style={{
                               animation: 'subtle-pulse 2s ease-in-out infinite'
                             }}></div>
                           )}
@@ -284,21 +160,9 @@ const Holdings = () => {
                         <span className="text-gray-600">₹{stock.avg.toFixed(2)}</span>
                       </td>
                       <td style={{ textAlign: 'right' }}>
-                        <div className={`font-semibold transition-all duration-1000 ease-out ${
-                          priceChange === 'up' ? 'text-green-700' : 
-                          priceChange === 'down' ? 'text-red-700' : 
-                          'text-gray-900'
-                        }`} style={{
-                          backgroundColor: priceChange === 'up' ? 'rgba(34, 197, 94, 0.08)' : 
-                                          priceChange === 'down' ? 'rgba(239, 68, 68, 0.08)' : 
-                                          'transparent',
-                          padding: priceChange ? '4px 8px' : '0',
-                          borderRadius: priceChange ? '6px' : '0',
-                          transform: priceChange ? 'scale(1.02)' : 'scale(1)',
-                          transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
-                        }}>
+                        <div className="font-semibold text-gray-900">
                           ₹{currentPrice.toFixed(2)}
-                          {isConnected && (
+                          {isSocketConnected && (
                             <span className="ml-1 text-xs opacity-60" style={{
                               color: '#10b981',
                               fontSize: '8px'
@@ -396,15 +260,13 @@ const Holdings = () => {
           datasets: [
             {
               label: "Stock Price (Live)",
-              data: allHoldings.map((stock) => realTimePrices[stock.name] || stock.price),
+              data: allHoldings.map((stock) => stock.currentPrice || stock.price),
               backgroundColor: allHoldings.map((stock) => {
-                const currentPrice = realTimePrices[stock.name] || stock.price;
-                const profit = (currentPrice - stock.avg) * stock.qty;
+                const profit = stock.profit !== undefined ? stock.profit : ((stock.currentPrice || stock.price) - stock.avg) * stock.qty;
                 return profit >= 0 ? "rgba(34, 197, 94, 0.5)" : "rgba(239, 68, 68, 0.5)";
               }),
               borderColor: allHoldings.map((stock) => {
-                const currentPrice = realTimePrices[stock.name] || stock.price;
-                const profit = (currentPrice - stock.avg) * stock.qty;
+                const profit = stock.profit !== undefined ? stock.profit : ((stock.currentPrice || stock.price) - stock.avg) * stock.qty;
                 return profit >= 0 ? "rgba(34, 197, 94, 1)" : "rgba(239, 68, 68, 1)";
               }),
               borderWidth: 2,
@@ -421,7 +283,7 @@ const Holdings = () => {
         symbol={selectedStock?.symbol || selectedStock?.name}
         price={selectedStock?.price}
         quantity={sellQuantity}
-        isConnected={isConnected}
+        isConnected={isSocketConnected}
         processing={isProcessingTrade}
         onCancel={() => setShowConfirmModal(false)}
         onConfirm={async (adjustedQuantity) => {

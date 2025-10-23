@@ -2,20 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, TrendingUp, TrendingDown, Plus, Minus, Wifi, WifiOff } from 'lucide-react';
-import { Line } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
-import { CandlestickController, CandlestickElement } from 'chartjs-chart-financial';
-import { Chart } from 'react-chartjs-2';
-import 'chartjs-adapter-date-fns';
+import { createChart, ColorType, CrosshairMode } from 'lightweight-charts';
 import { useGeneralContext } from './GeneralContext';
 import StockInfoTabs from './StockInfoTabs';
 import TradeConfirmModal from './TradeConfirmModal';
@@ -23,24 +10,14 @@ import TradeNotification from './TradeNotification';
 import { stockService } from '../services/stockService';
 import { io } from 'socket.io-client';
 import { WS_URL, getApiUrl } from '../config/api';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  CandlestickController,
-  CandlestickElement
-);
+import LightweightStockChart from './LightweightStockChart';
 
 // Simple seeded pseudo-random generator
 function seededRandom(seed) {
   let x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
 }
+
 function getSeedFromSymbol(symbol) {
   let hash = 0;
   for (let i = 0; i < symbol.length; i++) {
@@ -48,190 +25,178 @@ function getSeedFromSymbol(symbol) {
   }
   return Math.abs(hash);
 }
-const generateMockChartData = (range, price, symbol, percent) => {
-  const now = new Date();
-  let labels = [];
-  let data = [];
-  let points = 0;
-  const seed = getSeedFromSymbol(symbol || "");
-  let rand = (i) => {
-    // Deterministic pseudo-random for each stock
-    return seededRandom(seed + i);
+
+  // Generate realistic chart data based on range
+  const generateChartData = (range, basePrice, symbol, percent) => {
+    const now = new Date();
+    const data = [];
+    let points = 0;
+    const seed = getSeedFromSymbol(symbol || "");
+    const rand = (i) => seededRandom(seed + i);
+    
+    switch (range) {
+      case '1D':
+        points = 390; // Market hours: 9:15 AM to 3:30 PM = 375 minutes
+        for (let i = 0; i < points; i++) {
+          const date = new Date(now);
+          date.setHours(9, 15, 0, 0);
+          date.setMinutes(date.getMinutes() + i);
+          
+          const volatility = 0.001;
+          const trend = (percent / 100) * (i / points);
+          const noise = (rand(i) - 0.5) * 2 * volatility;
+          const value = basePrice * (1 + trend + noise);
+          
+          data.push({
+            time: Math.floor(date.getTime() / 1000),
+            value: Number(value.toFixed(2))
+          });
+        }
+        break;
+        
+      case '1W':
+        points = 7;
+        for (let i = 0; i < points; i++) {
+          const date = new Date(now);
+          date.setDate(now.getDate() - (6 - i));
+          date.setHours(15, 30, 0, 0);
+          
+          const volatility = 0.015;
+          const trend = (percent / 100) * (i / points);
+          const noise = (rand(i) - 0.5) * 2 * volatility;
+          const value = basePrice * (1 + trend + noise);
+          
+          data.push({
+            time: date.toISOString().split('T')[0],
+            value: Number(value.toFixed(2))
+          });
+        }
+        break;
+        
+      case '1M':
+        points = 30;
+        for (let i = 0; i < points; i++) {
+          const date = new Date(now);
+          date.setDate(now.getDate() - (29 - i));
+          
+          const volatility = 0.02;
+          const trend = (percent / 100) * (i / points);
+          const noise = (rand(i) - 0.5) * 2 * volatility;
+          const value = basePrice * (1 + trend + noise);
+          
+          data.push({
+            time: date.toISOString().split('T')[0],
+            value: Number(value.toFixed(2))
+          });
+        }
+        break;
+        
+      case '1Y':
+        points = 252; // Trading days in a year
+        for (let i = 0; i < points; i++) {
+          const date = new Date(now);
+          date.setDate(now.getDate() - (251 - i));
+          
+          const volatility = 0.03;
+          const trend = (percent / 100) * (i / points);
+          const noise = (rand(i) - 0.5) * 2 * volatility;
+          const value = basePrice * (1 + trend + noise);
+          
+          data.push({
+            time: date.toISOString().split('T')[0],
+            value: Number(value.toFixed(2))
+          });
+        }
+        break;
+        
+      case '5Y':
+        points = 60; // Monthly data points
+        for (let i = 0; i < points; i++) {
+          const date = new Date(now);
+          date.setMonth(now.getMonth() - (59 - i));
+          
+          const volatility = 0.1;
+          const trend = (percent / 100) * (i / points);
+          const noise = (rand(i) - 0.5) * 2 * volatility;
+          const value = basePrice * (1 + trend + noise);
+          
+          data.push({
+            time: date.toISOString().split('T')[0],
+            value: Number(value.toFixed(2))
+          });
+        }
+        break;
+        
+      default:
+        points = 100;
+        for (let i = 0; i < points; i++) {
+          const date = new Date(now);
+          date.setMonth(now.getMonth() - (99 - i));
+          
+          const volatility = 0.15;
+          const trend = (percent / 100) * (i / points);
+          const noise = (rand(i) - 0.5) * 2 * volatility;
+          const value = basePrice * (1 + trend + noise);
+          
+          data.push({
+            time: date.toISOString().split('T')[0],
+            value: Number(value.toFixed(2))
+          });
+        }
+    }
+    
+    return data;
   };
-  switch (range) {
-    case '1D': {
-      const startHour = 9, startMinute = 15, totalMinutes = 390;
-      let open = price;
-      let last = open;
-      // Bias trend based on percent
-      let trendBias = percent >= 0 ? 0.0003 : -0.0003;
-      for (let i = 0; i < totalMinutes; i++) {
-        const hour = startHour + Math.floor((startMinute + i) / 60);
-        const minute = (startMinute + i) % 60;
-        labels.push(minute === 0 ? `${hour}:${minute.toString().padStart(2, '0')}` : '');
-        // Simulate realistic market movement with bias
-        let trend = trendBias * i;
-        if (i > 120 && i < 270) trend += (percent >= 0 ? -0.0002 : 0.0002) * (i - 120); // midday reversal
-        // Add small seeded random noise
-        const noise = (rand(i) - 0.5) * open * 0.002;
-        let next = open * (1 + trend) + noise;
-        // Clamp to ±2% of open
-        next = Math.max(open * 0.98, Math.min(open * 1.02, next));
-        last = next;
-        data.push(Number(last.toFixed(2)));
-      }
-      break;
+  
+  // Generate candlestick data
+  const generateCandlestickData = (range, basePrice, symbol, percent) => {
+    const now = new Date();
+    const data = [];
+    let points = 0;
+    const seed = getSeedFromSymbol(symbol || "");
+    const rand = (i) => seededRandom(seed + i);
+    
+    switch (range) {
+      case '1W': points = 7; break;
+      case '1M': points = 30; break;
+      case '1Y': points = 252; break;
+      case '5Y': points = 60; break;
+      default: points = 30;
     }
-    case '2D':
-      points = 40;
-      for (let i = 0; i < points; i++) {
-        labels.push(`Day ${1 + Math.floor(i/20)} ${9 + Math.floor((i%20)/2)}:${(i%2)*30 === 0 ? '00' : '30'}`);
-        data.push(price * (0.97 + Math.random() * 0.06));
+    
+    let prevClose = basePrice;
+    
+    for (let i = 0; i < points; i++) {
+      const date = new Date(now);
+      
+      if (range === '1W') {
+        date.setDate(now.getDate() - (points - i - 1));
+      } else if (range === '1M' || range === '1Y') {
+        date.setDate(now.getDate() - (points - i - 1));
+      } else {
+        date.setMonth(now.getMonth() - (points - i - 1));
       }
-      break;
-    case '1W':
-      points = 7;
-      for (let i = 0; i < points; i++) {
-        const d = new Date(now);
-        d.setDate(now.getDate() - (6 - i));
-        labels.push(d.toLocaleDateString('en-IN', { weekday: 'short' }));
-        data.push(price * (0.95 + Math.random() * 0.1));
-      }
-      break;
-    case '1M':
-      points = 30;
-      for (let i = 0; i < points; i++) {
-        const d = new Date(now);
-        d.setDate(now.getDate() - (29 - i));
-        labels.push(`${d.getDate()}/${d.getMonth()+1}`);
-        data.push(price * (0.9 + Math.random() * 0.2));
-      }
-      break;
-    case '1Y':
-      points = 12;
-      for (let i = 0; i < points; i++) {
-        const d = new Date(now);
-        d.setMonth(now.getMonth() - (11 - i));
-        labels.push(d.toLocaleDateString('en-IN', { month: 'short' }));
-        data.push(price * (0.8 + Math.random() * 0.4));
-      }
-      break;
-    case '5Y':
-      points = 5;
-      for (let i = 0; i < points; i++) {
-        const d = new Date(now);
-        d.setFullYear(now.getFullYear() - (4 - i));
-        labels.push(d.getFullYear().toString());
-        data.push(price * (0.5 + Math.random() * 1.0));
-      }
-      break;
-    case 'All':
-      points = 10;
-      for (let i = 0; i < points; i++) {
-        const d = new Date(now);
-        d.setFullYear(now.getFullYear() - (9 - i));
-        labels.push(d.getFullYear().toString());
-        data.push(price * (0.3 + Math.random() * 1.5));
-      }
-      break;
-    default:
-      labels = [];
-      data = [];
-  }
-  return { labels, data };
-};
-
-// Realistic monotonic random walk for smooth, natural price action, with optimal point count and spacing
-function generateRealisticLineData(range, price, symbol, percent) {
-  const now = new Date();
-  let labels = [];
-  let data = [];
-  let points = 0;
-  const seed = getSeedFromSymbol(symbol || "");
-  let rand = (i) => seededRandom(seed + i);
-  let base = price;
-  let interval = 1;
-  let volatility = 0.012 + Math.abs(percent) * 0.006;
-  let clampLow = 0.8, clampHigh = 1.2;
-  switch (range) {
-    case '1D': points = 90; interval = Math.floor(376 / 90); volatility = 0.012 + Math.abs(percent) * 0.006; clampLow = 0.8; clampHigh = 1.2; break;
-    case '1W': points = 60; interval = Math.floor(240 / 60); volatility = 0.015 + Math.abs(percent) * 0.008; clampLow = 0.8; clampHigh = 1.2; break;
-    case '1M': points = 120; interval = Math.floor(120 / 120); volatility = 0.025 + Math.abs(percent) * 0.012; clampLow = 0.75; clampHigh = 1.25; break;
-    case '1Y': points = 52; interval = Math.floor(260 / 52); volatility = 0.03 + Math.abs(percent) * 0.015; clampLow = 0.7; clampHigh = 1.3; break;
-    case '5Y': points = 60; interval = 1; volatility = 0.10 + Math.abs(percent) * 0.05; clampLow = 0.5; clampHigh = 1.5; break;
-    case 'All': points = 60; interval = 1; volatility = 0.15 + Math.abs(percent) * 0.08; clampLow = 0.4; clampHigh = 1.6; break;
-    default: points = 60; interval = 1; break;
-  }
-  let last = base;
-  for (let i = 0; i < points; i++) {
-    let maxStep = base * volatility;
-    let step = (rand(i) - 0.5) * 2 * maxStep;
-    let trend = (percent / 100) * (i / points) * base * 0.5;
-    let next = last + step + trend;
-    // Clamp for realism
-    next = Math.max(base * clampLow, Math.min(base * clampHigh, next));
-    last = next;
-    data.push(Number(last.toFixed(2)));
-    let d = new Date(now);
-    if (range === '1D') {
-      d.setHours(9, 15, 0, 0);
-      d.setMinutes(d.getMinutes() + i * Math.floor(376 / points));
-    } else if (range === '1W') {
-      d.setDate(now.getDate() - (points - i - 1));
-    } else if (range === '1M') {
-      d.setDate(now.getDate() - (points - i - 1));
-    } else if (range === '1Y') {
-      d.setDate(now.getDate() - (points - i - 1) * Math.floor(365 / points));
-    } else if (range === '5Y') {
-      d.setMonth(now.getMonth() - (points - i - 1)); // ~1 month apart
-    } else if (range === 'All') {
-      d.setMonth(now.getMonth() - (points - i - 1) * 2); // ~2 months apart
+      
+      const open = prevClose;
+      const volatility = 0.02;
+      const trend = (percent / 100) * (i / points) * basePrice;
+      const close = open + trend + (rand(i) - 0.5) * 2 * open * volatility;
+      const high = Math.max(open, close) * (1 + rand(i + 1) * 0.01);
+      const low = Math.min(open, close) * (1 - rand(i + 2) * 0.01);
+      
+      data.push({
+        time: date.toISOString().split('T')[0],
+        open: Number(open.toFixed(2)),
+        high: Number(high.toFixed(2)),
+        low: Number(low.toFixed(2)),
+        close: Number(close.toFixed(2))
+      });
+      
+      prevClose = close;
     }
-    labels.push(d);
-  }
-  return { labels, data };
-}
-
-// Generate realistic OHLC data for candlestick chart
-function generateOHLCData(range, price, symbol, percent) {
-  const now = new Date();
-  let data = [];
-  let points = 0;
-  const seed = getSeedFromSymbol(symbol || "");
-  let rand = (i) => seededRandom(seed + i);
-  let base = price;
-  switch (range) {
-    case '1W': points = 7; break;
-    case '1M': points = 30; break;
-    case '1Y': points = 52; break;
-    case '5Y': points = 60; break;
-    case 'All': points = 60; break;
-    default: points = 30;
-  }
-  let prevClose = base;
-  for (let i = 0; i < points; i++) {
-    let open = prevClose;
-    let trend = (percent / 100) * (i / points) * base * 0.5;
-    let close = open * (1 + (rand(i) - 0.5) * 0.08 + trend / base);
-    let high = Math.max(open, close) * (1 + rand(i + 1) * 0.04);
-    let low = Math.min(open, close) * (1 - rand(i + 2) * 0.04);
-    high = Math.min(high, base * 1.2);
-    low = Math.max(low, base * 0.8);
-    let d = new Date(now);
-    if (range === '1W') {
-      d.setDate(now.getDate() - (points - i - 1));
-    } else if (range === '1M') {
-      d.setDate(now.getDate() - (points - i - 1));
-    } else if (range === '1Y') {
-      d.setDate(now.getDate() - (points - i - 1) * 7);
-    } else {
-      d.setFullYear(now.getFullYear() - (points - i - 1));
-    }
-    data.push({ x: d, o: Number(open.toFixed(2)), h: Number(high.toFixed(2)), l: Number(low.toFixed(2)), c: Number(close.toFixed(2)) });
-    prevClose = close;
-  }
-  return data;
-}
+    
+    return data;
+  };
 
 const StockDetail = () => {
   const { selectedStock, setSelectedStock, refreshHoldings, refreshOrders, holdings } = useGeneralContext();
@@ -250,6 +215,9 @@ const StockDetail = () => {
   const [lastUpdateTime, setLastUpdateTime] = useState(null);
   const [priceChange, setPriceChange] = useState(null);
   const socketRef = useRef(null);
+  const chartContainerRef = useRef(null);
+  const chartRef = useRef(null);
+  const seriesRef = useRef(null);
   
   // WebSocket connection setup for real-time updates
   useEffect(() => {
@@ -387,105 +355,17 @@ const StockDetail = () => {
   // Use stockData instead of selectedStock for rendering
   const currentStock = stockData || selectedStock;
 
-  // Time range options for candlestick chart
+  // Time range options
   const timeRanges = [
-    { label: '1D', points: 60, trend: 0.002 },
-    { label: '1W', points: 7, trend: 0.01 },
-    { label: '1M', points: 30, trend: 0.02 },
-    { label: '1Y', points: 52, trend: 0.05 },
-    { label: '5Y', points: 60, trend: 0.1 },
-    { label: 'All', points: 100, trend: 0.15 },
+    { label: '1D', value: '1D' },
+    { label: '1W', value: '1W' },
+    { label: '1M', value: '1M' },
+    { label: '1Y', value: '1Y' },
+    { label: '5Y', value: '5Y' },
+    { label: 'All', value: 'All' },
   ];
-  const [selectedRange, setSelectedRange] = useState(timeRanges[0]);
-
-  // Generate random OHLC data for candlestick with real Date objects
-  function generateRandomOHLC(base, points = 60, trendStrength = 0.004) {
-    let arr = [];
-    let prevClose = base;
-    const trend = (Math.random() - 0.5) * trendStrength;
-    const now = new Date();
-    for (let i = 0; i < points; i++) {
-      let open = prevClose;
-      let close = open * (1 + (Math.random() - 0.5) * 0.02 + trend);
-      let high = Math.max(open, close) * (1 + Math.random() * 0.01);
-      let low = Math.min(open, close) * (1 - Math.random() * 0.01);
-      // Clamp for realism
-      high = Math.min(high, base * 1.1);
-      low = Math.max(low, base * 0.9);
-      // Date: go back (points - i - 1) days from now
-      let date = new Date(now);
-      date.setDate(now.getDate() - (points - i - 1));
-      arr.push({ x: date, o: Number(open.toFixed(2)), h: Number(high.toFixed(2)), l: Number(low.toFixed(2)), c: Number(close.toFixed(2)) });
-      prevClose = close;
-    }
-    return arr;
-  }
-
-  // Generate line chart data for selected range (use improved generator)
-  const lineChartData = React.useMemo(() => {
-    if (!currentStock) return { labels: [], datasets: [] };
-    const { label } = selectedRange;
-    const { labels, data } = generateRealisticLineData(label, currentStock.price, currentStock.symbol, currentStock.percent);
-    // Use percent if available, otherwise fallback to price comparison
-    let isGain = false;
-    if (typeof currentStock.percent === 'number') {
-      isGain = currentStock.percent >= 0;
-    } else {
-      isGain = data.length > 1 && data[data.length - 1] >= data[0];
-    }
-    const lineColor = isGain ? '#22c55e' : '#ef4444';
-    const areaStart = isGain ? 'rgba(34,197,94,0.10)' : 'rgba(239,68,68,0.10)';
-    const areaEnd = isGain ? 'rgba(34,197,94,0.00)' : 'rgba(239,68,68,0.00)';
-    return {
-      labels,
-      datasets: [
-        {
-          label: '',
-          data,
-          borderColor: (ctx) => {
-            if (!ctx || !ctx.chart || !ctx.chart.chartArea) return lineColor;
-            const chart = ctx.chart;
-            const {ctx: c, chartArea} = chart;
-            const gradient = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-            gradient.addColorStop(0, lineColor);
-            gradient.addColorStop(1, lineColor);
-            return gradient;
-          },
-          borderWidth: 3.5,
-          pointRadius: 0,
-          fill: true,
-          backgroundColor: (ctx) => {
-            if (!ctx || !ctx.chart || !ctx.chart.chartArea) return areaStart;
-            const chart = ctx.chart;
-            const {ctx: c, chartArea} = chart;
-            const gradient = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-            gradient.addColorStop(0, areaStart);
-            gradient.addColorStop(1, areaEnd);
-            return gradient;
-          },
-          tension: 0.25,
-          shadowBlur: 8,
-          shadowColor: lineColor,
-        },
-      ],
-    };
-  }, [currentStock, selectedRange]);
-
-  const ohlcData = React.useMemo(() => {
-    if (!currentStock || selectedRange.label === '1D') return null;
-    return generateOHLCData(selectedRange.label, currentStock.price, currentStock.symbol, currentStock.percent);
-  }, [currentStock, selectedRange]);
-
-  // Calculate real absolute and percent change for the selected range
-  const [absChange, percentChange] = React.useMemo(() => {
-    if (!lineChartData.datasets[0] || !lineChartData.datasets[0].data || lineChartData.datasets[0].data.length < 2) return [0, 0];
-    const dataArr = lineChartData.datasets[0].data;
-    const first = dataArr[0];
-    const last = dataArr[dataArr.length - 1];
-    const abs = last - first;
-    const percent = first !== 0 ? ((last - first) / first) * 100 : 0;
-    return [abs, percent];
-  }, [lineChartData]);
+  const [selectedRange, setSelectedRange] = useState('1D');
+  const [chartType, setChartType] = useState('area'); // 'area' or 'candlestick'
 
   // Show trade confirmation modal
   const handleTradeClick = (type) => {
@@ -626,8 +506,7 @@ const StockDetail = () => {
   const symbol = currentStock.symbol;
   const percent = currentStock.percent;
 
-  const chartType = selectedRange.label === '1D' ? 'line' : 'candlestick';
-  const isLine = chartType === 'line';
+
 
   // Use real-time price, previousClose, and percentChange from currentStock (as in sidebar)
   const realPrice = currentStock?.price;
@@ -709,95 +588,42 @@ const StockDetail = () => {
                   )}
                 </div>
               </div>
-              <div className="h-64">
-                <div className="flex gap-2 my-4">
+              <div>
+                <div className="flex gap-2 mb-4">
                   {timeRanges.map((r) => (
                     <button
-                      key={r.label}
-                      className={`px-3 py-1 rounded ${selectedRange.label === r.label ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
-                      onClick={() => setSelectedRange(r)}
+                      key={r.value}
+                      className={`px-3 py-1 rounded ${selectedRange === r.value ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+                      onClick={() => setSelectedRange(r.value)}
                     >
                       {r.label}
                     </button>
                   ))}
                 </div>
-                {/* Chart rendering */}
-                <Line
-                  data={{
-                    labels: lineChartData.labels,
-                    datasets: lineChartData.datasets,
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                      mode: 'index',
-                      intersect: false,
-                      axis: 'x',
-                    },
-                    plugins: {
-                      legend: { display: false },
-                      tooltip: {
-                        enabled: true,
-                        backgroundColor: '#222',
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        borderColor: '#222',
-                        borderWidth: 1,
-                        cornerRadius: 6,
-                        padding: 12,
-                        callbacks: {
-                          label: ctx => {
-                            const price = ctx.parsed.y;
-                            const idx = ctx.dataIndex;
-                            const range = selectedRange.label;
-                            const dateObj = ctx.chart.data.labels[idx];
-                            let dateStr = '';
-                            if (range === '1D') {
-                              dateStr = `${dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}, ${dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`;
-                            } else if (range === '1W' || range === '1M') {
-                              dateStr = dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-                            } else {
-                              dateStr = dateObj.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
-                            }
-                            return `₹${price} | ${dateStr}`;
-                          },
-                        },
-                        displayColors: false,
-                        caretSize: 0,
-                        yAlign: 'bottom',
-                        mode: 'index',
-                        intersect: false,
-                      },
-                    },
-                    scales: {
-                      x: {
-                        display: false,
-                        grid: { display: false },
-                        ticks: { display: false },
-                        type: 'time',
-                        time: {
-                          tooltipFormat: 'PPpp',
-                        },
-                      },
-                      y: {
-                        display: false,
-                        grid: { display: false },
-                        ticks: { display: false },
-                        min: lineChartData.datasets[0]?.data ? Math.min(...lineChartData.datasets[0].data) * 0.98 : undefined,
-                        max: lineChartData.datasets[0]?.data ? Math.max(...lineChartData.datasets[0].data) * 1.02 : undefined,
-                      },
-                    },
-                    layout: {
-                      padding: {
-                        left: 10,
-                        right: 10,
-                        top: 30,
-                        bottom: 20,
-                      },
-                    },
-                  }}
-                  height={250}
+                <div className="flex gap-2 mb-4">
+                  <button
+                    className={`px-3 py-1 rounded ${chartType === 'area' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+                    onClick={() => setChartType('area')}
+                  >
+                    Area
+                  </button>
+                  {selectedRange !== '1D' && (
+                    <button
+                      className={`px-3 py-1 rounded ${chartType === 'candlestick' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+                      onClick={() => setChartType('candlestick')}
+                    >
+                      Candlestick
+                    </button>
+                  )}
+                </div>
+                {/* Professional Chart using Lightweight Charts */}
+                <LightweightStockChart
+                  symbol={currentStock?.symbol || ''}
+                  price={currentStock?.price || 0}
+                  percent={currentStock?.percent || 0}
+                  range={selectedRange}
+                  type={chartType}
+                  realTimePrice={realPrice}
                 />
               </div>
             </div>

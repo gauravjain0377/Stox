@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { holdings as fallbackHoldings } from "../data/data.jsx";
-import { getApiUrl, FRONTEND_URL } from '../config/api';
+import { getApiUrl, FRONTEND_URL, WS_URL } from '../config/api';
+import { io } from 'socket.io-client';
 
 import BuyActionWindow from "./BuyActionWindow";
 import SellActionWindow from "./SellActionWindow";
@@ -31,6 +32,12 @@ export const GeneralContextProvider = ({ children }) => {
   const [selectedStock, setSelectedStock] = useState(null);
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
+  
+  // Real-time price tracking for instant P&L calculation
+  const [realTimePrices, setRealTimePrices] = useState({});
+  const [holdingsWithPnL, setHoldingsWithPnL] = useState([]);
+  const socketRef = useRef(null);
+  const [isSocketConnected, setIsSocketConnected] = useState(false);
 
   // Functions to open and close the buy window
   const handleOpenBuyWindow = (uid) => {
@@ -316,6 +323,103 @@ export const GeneralContextProvider = ({ children }) => {
       refreshOrders();
     }
   }, [user]);
+  
+  // Precompute holdings with P&L whenever holdings or real-time prices change
+  useEffect(() => {
+    if (!holdings || holdings.length === 0) {
+      setHoldingsWithPnL([]);
+      return;
+    }
+    
+    const enrichedHoldings = holdings.map(stock => {
+      // Use real-time price if available, otherwise use stored price
+      const currentPrice = realTimePrices[stock.name] || stock.price;
+      const curValue = currentPrice * stock.qty;
+      const investedValue = stock.avg * stock.qty;
+      const profit = curValue - investedValue;
+      const profitPercent = investedValue > 0 ? (profit / investedValue) * 100 : 0;
+      
+      return {
+        ...stock,
+        currentPrice,
+        curValue,
+        profit,
+        profitPercent
+      };
+    });
+    
+    setHoldingsWithPnL(enrichedHoldings);
+  }, [holdings, realTimePrices]);
+  
+  // WebSocket connection for real-time price updates
+  useEffect(() => {
+    if (!holdings || holdings.length === 0) return;
+    
+    console.log('GeneralContext: Setting up WebSocket for real-time prices');
+    
+    // Initialize socket connection
+    socketRef.current = io(WS_URL, {
+      transports: ['websocket', 'polling'],
+      timeout: 20000,
+      forceNew: true
+    });
+    
+    const socket = socketRef.current;
+    
+    // Connection events
+    socket.on('connect', () => {
+      console.log('GeneralContext: WebSocket connected');
+      setIsSocketConnected(true);
+      
+      // Request initial data
+      setTimeout(() => {
+        socket.emit('requestStockUpdate');
+      }, 1000);
+    });
+    
+    socket.on('disconnect', (reason) => {
+      console.log('GeneralContext: WebSocket disconnected:', reason);
+      setIsSocketConnected(false);
+    });
+    
+    socket.on('connect_error', (error) => {
+      console.error('GeneralContext: WebSocket connection error:', error);
+      setIsSocketConnected(false);
+    });
+    
+    // Listen for individual stock updates
+    socket.on('stockUpdate', (stock) => {
+      const holdingStock = holdings.find(h => h.name === stock.symbol || h.name === stock.name);
+      if (holdingStock) {
+        setRealTimePrices(prev => ({
+          ...prev,
+          [holdingStock.name]: stock.price
+        }));
+      }
+    });
+    
+    // Listen for bulk updates
+    socket.on('bulkStockUpdate', (stocks) => {
+      const updates = {};
+      stocks.forEach(stock => {
+        const holdingStock = holdings.find(h => h.name === stock.symbol || h.name === stock.name);
+        if (holdingStock) {
+          updates[holdingStock.name] = stock.price;
+        }
+      });
+      
+      if (Object.keys(updates).length > 0) {
+        setRealTimePrices(prev => ({ ...prev, ...updates }));
+      }
+    });
+    
+    // Cleanup on unmount
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, [holdings]);
 
   // Show loading screen while checking authentication
   if (!user) {
@@ -336,7 +440,8 @@ export const GeneralContextProvider = ({ children }) => {
   return (
     <GeneralContext.Provider value={{
       user,
-      holdings,
+      holdings: holdingsWithPnL.length > 0 ? holdingsWithPnL : holdings, // Use enriched holdings if available
+      rawHoldings: holdings, // Provide original holdings as well
       holdingsLoading,
       orders,
       ordersLoading,
@@ -348,6 +453,9 @@ export const GeneralContextProvider = ({ children }) => {
       closeSellWindow: handleCloseSellWindow,
       selectedStock,
       setSelectedStock,
+      realTimePrices,
+      isSocketConnected,
+      usingFallbackData,
     }}>
       {children}
       {isBuyWindowOpen && <BuyActionWindow uid={selectedStockUID} />}
