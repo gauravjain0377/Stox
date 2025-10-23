@@ -69,9 +69,57 @@ const PortfolioAnalytics = () => {
     
   // Generate portfolio history data based on orders
   useEffect(() => {
-    if (!orders || orders.length === 0 || holdingsLoading) return;
+    if (holdingsLoading) return;
     
     setIsLoading(true);
+    
+    // Handle new users with no orders - show zero state with proper structure
+    if (!orders || orders.length === 0) {
+      // Initialize with zero data for new users
+      const weekData = Array(7).fill(0);
+      const monthData = Array(10).fill(0);
+      const yearData = Array(12).fill(0);
+      
+      setPortfolioHistory({
+        Week: weekData,
+        Month: monthData,
+        Year: yearData
+      });
+      
+      setRecentTransactions([]);
+      setSectorAllocation({ labels: [], data: [] });
+      
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const benchmarkLabels = [];
+      for (let i = 5; i >= 0; i--) {
+        const monthIndex = (currentMonth - i + 12) % 12;
+        benchmarkLabels.push(months[monthIndex]);
+      }
+      
+      setBenchmarkData({
+        labels: benchmarkLabels,
+        portfolio: Array(6).fill(0),
+        nifty: Array(6).fill(0),
+        sensex: Array(6).fill(0)
+      });
+      
+      setTopGainers([]);
+      setTopLosers([]);
+      
+      setPerformanceMetrics({
+        totalReturn: 0,
+        annualizedReturn: 0,
+        sharpeRatio: 0,
+        maxDrawdown: 0,
+        volatility: 0,
+        beta: 0
+      });
+      
+      setIsLoading(false);
+      return;
+    }
     
     try {
       // Sort orders by timestamp
@@ -504,7 +552,7 @@ const PortfolioAnalytics = () => {
     document.removeEventListener('touchend', onWidgetTouchEnd);
   };
 
-  // Loading state
+  // Loading state - only show loading if actually fetching data
   if (holdingsLoading || isLoading) {
     return (
       <div className="portfolio-analytics-container">
@@ -515,10 +563,31 @@ const PortfolioAnalytics = () => {
       </div>
     );
   }
+  
+  // Check if user is truly new with no data at all
+  const isNewUser = (!orders || orders.length === 0) && (!userHoldings || userHoldings.length === 0);
 
   return (
     <div className="portfolio-analytics-container">
       <h1 className="pa-title">Portfolio Analytics</h1>
+      
+      {/* New User Welcome Message */}
+      {isNewUser && (
+        <div className="pa-welcome-banner" style={{
+          padding: '20px',
+          marginBottom: '20px',
+          backgroundColor: theme === 'dark' ? '#1e293b' : '#e0f2fe',
+          borderRadius: '8px',
+          border: theme === 'dark' ? '1px solid #334155' : '1px solid #bae6fd',
+          textAlign: 'center'
+        }}>
+          <h3 style={{ color: theme === 'dark' ? '#3b82f6' : '#0369a1', marginBottom: '8px' }}>Welcome to Your Portfolio Analytics!</h3>
+          <p style={{ color: theme === 'dark' ? '#cbd5e1' : '#475569' }}>
+            You haven't made any trades yet. Start trading to see your portfolio performance, analytics, and insights here.
+          </p>
+        </div>
+      )}
+      
       <div className="pa-summary-grid">
         <div className="pa-summary-card">
           <div className="pa-label">Total Value</div>

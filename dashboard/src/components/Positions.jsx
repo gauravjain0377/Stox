@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useGeneralContext } from "./GeneralContext";
+import { getApiUrl } from "../config/api";
 
 const currency = (n) =>
   typeof n === "number"
@@ -103,11 +104,11 @@ const Positions = () => {
       setActionLoading(true);
       const userId = user.userId || user.id || user._id;
       if (confirmType === "square") {
-        await axios.post("http://localhost:3000/positions/close", { userId, name: selectedName });
+        await axios.post(getApiUrl("/positions/close"), { userId, name: selectedName });
         addToast(`Squared off ${selectedName}`);
       } else {
         const qty = Math.max(1, Math.min(maxQty, parseInt(partialQty || 0, 10)));
-        await axios.post("http://localhost:3000/positions/partial-close", { userId, name: selectedName, qty });
+        await axios.post(getApiUrl("/positions/partial-close"), { userId, name: selectedName, qty });
         addToast(`Closed ${qty} of ${selectedName}`);
       }
       setConfirmOpen(false);

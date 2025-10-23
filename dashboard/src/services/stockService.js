@@ -1,5 +1,5 @@
 // Stock service for fetching and managing stock data
-const API_BASE_URL = 'http://localhost:3000/api';
+import { getApiUrl, API_URL } from '../config/api';
 
 // Fallback stock data from the seed file - All 50 stocks
 const fallbackStocks = [
@@ -61,7 +61,7 @@ const getWatchlistKey = (userId) => `watchlists_${userId || 'default'}`;
 export const stockService = {
   async getAllStocks() {
     try {
-      const response = await fetch('http://localhost:3000/api/stocks');
+      const response = await fetch(getApiUrl('/api/stocks'));
       if (response.ok) {
         const data = await response.json();
         const stocks = data.stocks || [];
@@ -82,7 +82,7 @@ export const stockService = {
 
   async getStockData(symbol) {
     try {
-      const response = await fetch(`http://localhost:3000/api/stocks/${symbol}`);
+      const response = await fetch(getApiUrl(`/api/stocks/${symbol}`));
       if (response.ok) {
         return await response.json();
       }
@@ -95,7 +95,7 @@ export const stockService = {
 
   async getCompanyInfo() {
     try {
-      const response = await fetch('http://localhost:3000/api/stocks/company-info');
+      const response = await fetch(getApiUrl('/api/stocks/company-info'));
       if (response.ok) {
         const data = await response.json();
         return data.companies || [];
