@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 import { useGeneralContext } from "./GeneralContext";
+import { getApiUrl } from '../config/api';
 import "../styles/BuyActionWindow.css";
 
 const BuyActionWindow = ({ uid, onClose }) => {
@@ -18,7 +19,7 @@ const BuyActionWindow = ({ uid, onClose }) => {
     let isMounted = true;
     async function fetchLivePrice() {
       try {
-        const res = await axios.get(`http://localhost:3000/api/price/${uid}`);
+        const res = await axios.get(getApiUrl(`/api/price/${uid}`));
         if (res.data.price && isMounted) {
           setLivePrice(Number(res.data.price));
           setStockPrice(Number(res.data.price));
@@ -96,7 +97,7 @@ const BuyActionWindow = ({ uid, onClose }) => {
         headers['x-user-data'] = encodeURIComponent(userData);
       }
       
-      const response = await fetch('http://localhost:3000/api/orders/buy', {
+      const response = await fetch(getApiUrl('/api/orders/buy'), {
         method: 'POST',
         headers,
         credentials: 'include',

@@ -18,6 +18,10 @@ const Login = () => {
   const location = useLocation();
   const { login } = useAuth();
 
+  // Environment URLs
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+  const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL || 'http://localhost:5174';
+
   // Get redirectTo from URL query parameters
   const searchParams = new URLSearchParams(location.search);
   const redirectTo = searchParams.get('redirectTo');
@@ -30,7 +34,7 @@ const Login = () => {
     console.log("📤 Sending login request:", { email, password: password ? "***" : "undefined" });
 
     try {
-      const res = await axios.post("http://localhost:3000/api/users/login", {
+      const res = await axios.post(`${API_URL}/api/users/login`, {
         email,
         password,
       });
@@ -96,7 +100,7 @@ const Login = () => {
               user: finalUser,
               isLoggedIn: finalLogin
             });
-            const dashboardUrl = `http://localhost:5174?${authParams.toString()}`;
+            const dashboardUrl = `${DASHBOARD_URL}?${authParams.toString()}`;
             console.log("🚀 Immediate redirect URL:", dashboardUrl);
             window.location.href = dashboardUrl;
           }
@@ -130,7 +134,7 @@ const Login = () => {
             user: finalUser,
             isLoggedIn: finalLogin
           });
-          const dashboardUrl = `http://localhost:5174?${authParams.toString()}`;
+          const dashboardUrl = `${DASHBOARD_URL}?${authParams.toString()}`;
           console.log("🔄 Dashboard URL:", dashboardUrl);
           
           // Try redirecting to dashboard
@@ -155,7 +159,7 @@ const Login = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:3000/auth/google";
+    window.location.href = `${API_URL}/auth/google`;
   };
 
     return (

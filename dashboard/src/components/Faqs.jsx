@@ -40,7 +40,7 @@ const Faqs = () => {
       try {
         setLoading(true);
         setError("");
-        const res = await fetch("http://localhost:3000/api/support/faqs");
+        const res = await fetch(getApiUrl("/api/support/faqs"));
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message || "Failed to load FAQs");
         setItems(data.items || []);

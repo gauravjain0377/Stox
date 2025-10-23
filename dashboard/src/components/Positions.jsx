@@ -37,7 +37,7 @@ const Positions = () => {
     setLoading(true);
     setFetchError("");
     axios
-      .get(`http://localhost:3000/positions?userId=${userId}`)
+      .get(getApiUrl(`/positions?userId=${userId}`))
       .then((res) => {
         setPositions(Array.isArray(res.data) ? res.data : []);
         setLoading(false);

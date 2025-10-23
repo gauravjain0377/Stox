@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { getApiUrl } from '../config/api';
 
 const isValidEmail = (value) => /[^\s@]+@[^\s@]+\.[^\s@]+/.test(value);
 
@@ -28,7 +29,7 @@ const ContactSupport = () => {
 
     try {
       setSubmitting(true);
-      const res = await fetch("http://localhost:3000/api/support/contact", {
+      const res = await fetch(getApiUrl("/api/support/contact"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, subject, purpose, message })

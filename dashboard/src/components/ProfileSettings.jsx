@@ -59,7 +59,7 @@ const ProfileSettings = () => {
       return;
     }
     try {
-      const res = await axios.post('http://localhost:3000/api/users/change-password', {
+      const res = await axios.post(getApiUrl('/api/users/change-password'), {
         email: user.email,
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword

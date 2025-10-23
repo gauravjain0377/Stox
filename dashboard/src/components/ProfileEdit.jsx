@@ -34,7 +34,7 @@ const ProfileEdit = () => {
       const userId = userObj?.id || userObj?.userId;
       if (!userId) throw new Error('Missing user id');
 
-      const res = await fetch(`http://localhost:3000/api/users/${userId}`, {
+      const res = await fetch(getApiUrl(`/api/users/${userId}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

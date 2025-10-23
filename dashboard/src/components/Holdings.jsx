@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useGeneralContext } from "./GeneralContext";
 import { VerticalGraph } from "./VerticalGraph";
-
 import { Link, useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import TradeConfirmModal from "./TradeConfirmModal";
+import { WS_URL, getApiUrl } from '../config/api';
 import '../styles/Holdings.css';
 
 const Holdings = () => {
@@ -74,7 +74,7 @@ const Holdings = () => {
     console.log('Holdings: Setting up WebSocket connection for real-time prices');
     
     // Initialize socket connection
-    socketRef.current = io('http://localhost:3000', {
+    socketRef.current = io(WS_URL, {
       transports: ['websocket', 'polling'],
       timeout: 20000,
       forceNew: true
@@ -447,7 +447,7 @@ const Holdings = () => {
             // Use the adjusted quantity if provided
             const finalQuantity = adjustedQuantity || sellQuantity;
             
-            const response = await fetch('http://localhost:3000/api/orders/sell', {
+            const response = await fetch(getApiUrl('/api/orders/sell'), {
               method: 'POST',
               headers,
               body: JSON.stringify({

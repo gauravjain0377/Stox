@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { useGeneralContext } from "./GeneralContext";
 import { stockService } from "../services/stockService";
 import { io } from 'socket.io-client';
+import { WS_URL } from '../config/api';
 
 const ModernSummary = () => {
   const { holdings = [], user } = useGeneralContext();
@@ -84,7 +85,7 @@ const ModernSummary = () => {
     console.log('ModernSummary: Setting up WebSocket connection for real-time prices');
     
     // Initialize socket connection
-    socketRef.current = io('http://localhost:3000', {
+    socketRef.current = io(WS_URL, {
       transports: ['websocket', 'polling'],
       timeout: 20000,
       forceNew: true

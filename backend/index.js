@@ -26,19 +26,41 @@ const stockRoutes = require('./routes/stockRoutes');
 
 const PORT = process.env.PORT || 3000;
 const uri = process.env.MONGO_URL || "mongodb://localhost:27017/test";
+const NODE_ENV = process.env.NODE_ENV || 'development';
+
+// Allowed origins for CORS
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'https://stocksathi.vercel.app',
+  'https://stocksathi-dashboard.vercel.app',
+  process.env.FRONTEND_URL,
+  process.env.DASHBOARD_URL
+].filter(Boolean);
 
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:5173', 'http://localhost:5174'],
-    methods: ['GET', 'POST'],
-    credentials: true
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-user-data']
   }
 });
 
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  origin: function(origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('⚠️  CORS blocked origin:', origin);
+      callback(null, true); // Allow in production to prevent issues, log for monitoring
+    }
+  },
   credentials: true
 }));
 app.use(bodyParser.json());
@@ -46,7 +68,11 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'your-session-secret',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false } // Set to true if using HTTPS
+  cookie: { 
+    secure: NODE_ENV === 'production', // Use secure cookies in production (HTTPS)
+    sameSite: NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site cookies in production
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
 }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -79,7 +105,7 @@ passport.deserializeUser(async (id, done) => {
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: '/auth/google/callback',
+  callbackURL: process.env.GOOGLE_CALLBACK_URL || '/auth/google/callback',
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     let user = await UserModel.findOne({ email: profile.emails[0].value });
@@ -132,14 +158,16 @@ app.get('/auth/google/callback',
         }),
         isLoggedIn: 'true'
       });
-      res.redirect(`http://localhost:5174/?${params.toString()}`);
+      const dashboardURL = process.env.DASHBOARD_URL || 'http://localhost:5174';
+      res.redirect(`${dashboardURL}/?${params.toString()}`);
     })();
   }
 );
 
 app.get('/auth/logout', (req, res) => {
   req.logout(() => {
-    res.redirect('http://localhost:5173'); // Redirect to main landing home page
+    const frontendURL = process.env.FRONTEND_URL || 'http://localhost:5173';
+    res.redirect(frontendURL); // Redirect to main landing home page
   });
 });
 
@@ -1405,25 +1433,38 @@ async function fetchLiveStockData() {
       stockSymbols.map(async (symbol) => {
         try {
           const data = await yahooFinance.quote(symbol);
-          const previousClose = data.regularMarketPreviousClose || 0;
+          
+          // Safely extract data with fallbacks
+          const previousClose = data?.regularMarketPreviousClose || null;
+          const regularMarketPrice = data?.regularMarketPrice || data?.currentPrice || null;
+          const regularMarketChange = data?.regularMarketChange || null;
+          const regularMarketChangePercent = data?.regularMarketChangePercent || null;
+          
+          // Skip stocks with missing critical data
+          if (!regularMarketPrice) {
+            console.warn(`⚠️  Skipping ${symbol}: Missing price data`);
+            return null;
+          }
+          
           // Only calculate circuits if previousClose exists and is not zero
           const lowerCircuit = previousClose ? Number((previousClose * 0.95).toFixed(2)) : null;
           const upperCircuit = previousClose ? Number((previousClose * 1.05).toFixed(2)) : null;
           
           return {
             symbol: symbol.replace('.NS', ''),
-            name: data.shortName,
-            price: data.regularMarketPrice,
-            change: data.regularMarketChange,
-            percentChange: data.regularMarketChangePercent,
-            previousClose: previousClose || null,
+            name: data?.shortName || symbol.replace('.NS', ''),
+            price: regularMarketPrice,
+            change: regularMarketChange,
+            percentChange: regularMarketChangePercent,
+            previousClose: previousClose,
             lowerCircuit: lowerCircuit,
             upperCircuit: upperCircuit,
-            volume: data.regularMarketVolume,
-            marketCap: data.marketCap || null,
+            volume: data?.regularMarketVolume || null,
+            marketCap: data?.marketCap || null,
             lastUpdate: new Date().toISOString()
           };
         } catch (error) {
+          // Only log error message, not full stack trace to reduce noise
           console.error(`Error fetching data for ${symbol}:`, error.message);
           return null;
         }

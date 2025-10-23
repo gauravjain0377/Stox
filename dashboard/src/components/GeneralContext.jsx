@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { holdings as fallbackHoldings } from "../data/data.jsx";
+import { getApiUrl, FRONTEND_URL } from '../config/api';
 
 import BuyActionWindow from "./BuyActionWindow";
 import SellActionWindow from "./SellActionWindow";
@@ -73,7 +74,7 @@ export const GeneralContextProvider = ({ children }) => {
     }
     
     // Use the new API endpoint with credentials
-    fetch('http://localhost:3000/api/holdings', {
+    fetch(getApiUrl('/api/holdings'), {
       credentials: 'include',
       headers
     })
@@ -100,7 +101,7 @@ export const GeneralContextProvider = ({ children }) => {
         
         // Check if it's a network error (backend not running)
         if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
-          console.error("🔌 Network Error: Backend server is not running on http://localhost:3000");
+          console.error("🔌 Network Error: Backend server is not running");
           console.error("💡 Please start the backend server with: cd backend && npm start");
           setUsingFallbackData(true);
         }
@@ -131,7 +132,7 @@ export const GeneralContextProvider = ({ children }) => {
     }
     
     // Use the API endpoint with credentials
-    fetch('http://localhost:3000/api/orders', {
+    fetch(getApiUrl('/api/orders'), {
       credentials: 'include',
       headers
     })
@@ -299,7 +300,7 @@ export const GeneralContextProvider = ({ children }) => {
         // Redirect to frontend if not logged in
         setTimeout(() => {
           console.log("🔄 Redirecting to frontend due to missing auth");
-          window.location.href = "http://localhost:5173";
+          window.location.href = FRONTEND_URL;
         }, 2000);
       }
     };

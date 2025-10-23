@@ -22,6 +22,7 @@ import TradeConfirmModal from './TradeConfirmModal';
 import TradeNotification from './TradeNotification';
 import { stockService } from '../services/stockService';
 import { io } from 'socket.io-client';
+import { WS_URL, getApiUrl } from '../config/api';
 
 ChartJS.register(
   CategoryScale,
@@ -255,7 +256,7 @@ const StockDetail = () => {
     console.log('StockDetail: Setting up WebSocket connection for', symbolParam);
     
     // Initialize socket connection
-    socketRef.current = io('http://localhost:3000', {
+    socketRef.current = io(WS_URL, {
       transports: ['websocket', 'polling'],
       timeout: 20000,
       forceNew: true
@@ -543,7 +544,7 @@ const StockDetail = () => {
         headers['x-user-data'] = encodeURIComponent(userData);
       }
       
-      const response = await fetch(`http://localhost:3000${endpoint}`, {
+      const response = await fetch(getApiUrl(endpoint), {
         method: 'POST',
         headers,
         credentials: 'include',

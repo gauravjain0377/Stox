@@ -21,6 +21,10 @@ const Signup = () => {
   const location = useLocation();
   const { login } = useAuth();
 
+  // Environment URLs
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+  const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL || 'http://localhost:5174';
+
   // Get redirectTo from URL query parameters
   const searchParams = new URLSearchParams(location.search);
   const redirectTo = searchParams.get('redirectTo');
@@ -37,7 +41,7 @@ const Signup = () => {
     setErrorMsg("");
 
     try {
-      const res = await axios.post("http://localhost:3000/api/users/register", {
+      const res = await axios.post(`${API_URL}/api/users/register`, {
         name: form.name,
         email: form.email,
         password: form.password
@@ -116,7 +120,7 @@ const Signup = () => {
             user: finalUser,
             isLoggedIn: finalLogin
           });
-          window.location.href = `http://localhost:5174?${authParams.toString()}`;
+          window.location.href = `${DASHBOARD_URL}?${authParams.toString()}`;
         }, 2000);
       } else {
         setErrorMsg(res.data.message || "Registration failed. Please try again.");
@@ -128,7 +132,7 @@ const Signup = () => {
   };
 
   const handleGoogleSignup = () => {
-    window.location.href = "http://localhost:3000/auth/google";
+    window.location.href = `${API_URL}/auth/google`;
   };
 
 

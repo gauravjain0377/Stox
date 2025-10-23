@@ -29,7 +29,7 @@ const OrderDetail = () => {
           headers['x-user-data'] = encodeURIComponent(userData);
         }
         
-        const response = await fetch(`http://localhost:3000/api/orders/${orderId}`, {
+        const response = await fetch(getApiUrl(`/api/orders/${orderId}`), {
           credentials: 'include',
           headers
         });
