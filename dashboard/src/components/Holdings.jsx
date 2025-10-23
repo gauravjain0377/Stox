@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useGeneralContext } from "./GeneralContext";
 import { VerticalGraph } from "./VerticalGraph";
-import { Sparklines, SparklinesLine } from 'react-sparklines';
+
 import { Link, useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import TradeConfirmModal from "./TradeConfirmModal";
@@ -24,12 +24,13 @@ const Holdings = () => {
   const [sellQuantity, setSellQuantity] = useState(1);
   const [isProcessingTrade, setIsProcessingTrade] = useState(false);
   
-  // Function for smooth price transitions
+  // Function for smooth price transitions with better stability
   const updatePricesSmoothly = (stockName, newPrice) => {
     const currentPrice = realTimePrices[stockName];
     
     // Only update if price actually changed significantly (avoid micro-fluctuations)
-    if (currentPrice && Math.abs(newPrice - currentPrice) < 0.01) {
+    // Increase threshold to 0.50 (50 paise) for more stability
+    if (currentPrice && Math.abs(newPrice - currentPrice) < 0.50) {
       return; // Skip tiny changes
     }
     
@@ -38,7 +39,7 @@ const Holdings = () => {
       clearTimeout(priceUpdateTimeoutRef.current[stockName]);
     }
     
-    // Smooth transition with debouncing
+    // Smooth transition with longer debouncing for stability
     priceUpdateTimeoutRef.current[stockName] = setTimeout(() => {
       setRealTimePrices(prev => {
         const updated = { ...prev, [stockName]: newPrice };
@@ -52,18 +53,18 @@ const Holdings = () => {
           [stockName]: newPrice > currentPrice ? 'up' : 'down'
         }));
         
-        // Remove change indicator after 3 seconds (longer for smoother feel)
+        // Remove change indicator after 5 seconds (longer for smoother feel)
         setTimeout(() => {
           setPriceChanges(prev => {
             const updated = { ...prev };
             delete updated[stockName];
             return updated;
           });
-        }, 3000);
+        }, 5000);
       }
       
       setLastUpdateTime(new Date());
-    }, 500); // 500ms delay for smoother updates
+    }, 2000); // 2000ms (2 seconds) delay for much smoother updates
   };
   
   // WebSocket connection for real-time price updates
@@ -108,14 +109,14 @@ const Holdings = () => {
     
     // Listen for bulk updates (smoother batch processing)
     socket.on('bulkStockUpdate', (stocks) => {
-      // Process bulk updates with staggered timing to avoid jarring changes
+      // Process bulk updates with longer staggered timing to avoid jarring changes
       stocks.forEach((stock, index) => {
         const holdingStock = allHoldings.find(h => h.name === stock.symbol || h.name === stock.name);
         if (holdingStock) {
-          // Stagger updates by 100ms each for smoother bulk updates
+          // Stagger updates by 500ms each for much smoother bulk updates
           setTimeout(() => {
             updatePricesSmoothly(holdingStock.name, stock.price);
-          }, index * 100);
+          }, index * 500);
         }
       });
     });
@@ -197,16 +198,7 @@ const Holdings = () => {
     return sum + currentPrice * stock.qty;
   }, 0);
 
-  // Dummy sparkline data (replace with real price history if available)
-  const getSparklineData = (stock) => {
-    // If you have price history, use it here. For now, use random walk for demo.
-    const base = stock.price;
-    let arr = [base];
-    for (let i = 1; i < 10; i++) {
-      arr.push(arr[i-1] + (Math.random() - 0.5) * base * 0.01);
-    }
-    return arr;
-  };
+
 
   return (
     <>
@@ -252,7 +244,6 @@ const Holdings = () => {
                   <th>Current Value</th>
                   <th>P&L (₹)</th>
                   <th>P&L (%)</th>
-                  <th>Trend</th>
                   <th>Sell</th>
                 </tr>
               </thead>
@@ -323,11 +314,6 @@ const Holdings = () => {
                       </td>
                       <td style={{ textAlign: 'right', color: profitPercent >= 0 ? '#2ecc40' : '#e74c3c', fontWeight: 600 }}>
                         {profitPercent >= 0 ? '+' : ''}{profitPercent.toFixed(2)}%
-                      </td>
-                      <td style={{ textAlign: 'center' }}>
-                        <Sparklines data={getSparklineData(stock)} width={60} height={20} margin={4}>
-                          <SparklinesLine color={profit >= 0 ? '#2ecc40' : '#e74c3c'} style={{ fill: "none" }} />
-                        </Sparklines>
                       </td>
                       <td style={{ textAlign: 'center' }}>
                         <button 
