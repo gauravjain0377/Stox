@@ -3,6 +3,7 @@ import { useGeneralContext } from "./GeneralContext";
 import { VerticalGraph } from "./VerticalGraph";
 import { Link, useNavigate } from 'react-router-dom';
 import TradeConfirmModal from "./TradeConfirmModal";
+import TradeNotification from "./TradeNotification";
 import { getApiUrl } from '../config/api';
 import '../styles/Holdings.css';
 
@@ -16,6 +17,9 @@ const Holdings = () => {
   const [selectedStock, setSelectedSellStock] = useState(null);
   const [sellQuantity, setSellQuantity] = useState(1);
   const [isProcessingTrade, setIsProcessingTrade] = useState(false);
+  
+  // Trade notification state
+  const [tradeNotification, setTradeNotification] = useState(null);
   
   // Update time when real-time prices change
   useEffect(() => {
@@ -81,6 +85,13 @@ const Holdings = () => {
 
   return (
     <>
+      {tradeNotification && (
+        <TradeNotification
+          message={tradeNotification.message}
+          type={tradeNotification.type}
+          onClose={() => setTradeNotification(null)}
+        />
+      )}
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: 24 }}>
         {usingFallbackData && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
@@ -113,17 +124,17 @@ const Holdings = () => {
         </div>
         <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 12px #0001', padding: 24, marginBottom: 32 }}>
           <div className="order-table" style={{ overflowX: 'auto' }}>
-            <table className="premium-table">
+            <table className="premium-table" style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed' }}>
               <thead>
                 <tr>
-                  <th>Symbol</th>
-                  <th>Qty</th>
-                  <th>Avg. Buy</th>
-                  <th>LTP</th>
-                  <th>Current Value</th>
-                  <th>P&L (₹)</th>
-                  <th>P&L (%)</th>
-                  <th>Sell</th>
+                  <th style={{ width: '20%' }}>Symbol</th>
+                  <th style={{ width: '10%', textAlign: 'right' }}>Qty</th>
+                  <th style={{ width: '15%', textAlign: 'right' }}>Avg. Buy</th>
+                  <th style={{ width: '15%', textAlign: 'right' }}>LTP</th>
+                  <th style={{ width: '15%', textAlign: 'right' }}>Current Value</th>
+                  <th style={{ width: '10%', textAlign: 'right' }}>P&L (₹)</th>
+                  <th style={{ width: '10%', textAlign: 'right' }}>P&L (%)</th>
+                  <th style={{ width: '5%', textAlign: 'center' }}>Sell</th>
                 </tr>
               </thead>
               <tbody>
@@ -141,7 +152,7 @@ const Holdings = () => {
                       className="holdings-row cursor-pointer"
                       onClick={() => handleStockClick(stock)}
                     >
-                      <td>
+                      <td style={{ width: '20%' }}>
                         <div className="flex items-center space-x-2">
                           <span className="stock-link-text font-semibold text-blue-600 hover:text-blue-800">
                             {stock.name}
@@ -153,13 +164,13 @@ const Holdings = () => {
                           )}
                         </div>
                       </td>
-                      <td style={{ textAlign: 'right' }}>
+                      <td style={{ width: '10%', textAlign: 'right' }}>
                         <span className="font-medium">{stock.qty}</span>
                       </td>
-                      <td style={{ textAlign: 'right' }}>
+                      <td style={{ width: '15%', textAlign: 'right' }}>
                         <span className="text-gray-600">₹{stock.avg.toFixed(2)}</span>
                       </td>
-                      <td style={{ textAlign: 'right' }}>
+                      <td style={{ width: '15%', textAlign: 'right' }}>
                         <div className="font-semibold text-gray-900">
                           ₹{currentPrice.toFixed(2)}
                           {isSocketConnected && (
@@ -170,16 +181,16 @@ const Holdings = () => {
                           )}
                         </div>
                       </td>
-                      <td style={{ textAlign: 'right' }}>
+                      <td style={{ width: '15%', textAlign: 'right' }}>
                         <span className="font-medium">₹{curValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
                       </td>
-                      <td style={{ textAlign: 'right', color: profit >= 0 ? '#2ecc40' : '#e74c3c', fontWeight: 600 }}>
+                      <td style={{ width: '10%', textAlign: 'right', color: profit >= 0 ? '#2ecc40' : '#e74c3c', fontWeight: 600 }}>
                         {profit >= 0 ? '+' : ''}₹{profit.toFixed(2)}
                       </td>
-                      <td style={{ textAlign: 'right', color: profitPercent >= 0 ? '#2ecc40' : '#e74c3c', fontWeight: 600 }}>
+                      <td style={{ width: '10%', textAlign: 'right', color: profitPercent >= 0 ? '#2ecc40' : '#e74c3c', fontWeight: 600 }}>
                         {profitPercent >= 0 ? '+' : ''}{profitPercent.toFixed(2)}%
                       </td>
-                      <td style={{ textAlign: 'center' }}>
+                      <td style={{ width: '5%', textAlign: 'center' }}>
                         <button 
                           className="px-3 py-1 text-xs font-medium text-white bg-red-500 rounded hover:bg-red-600 transition"
                           onClick={(e) => {
@@ -324,13 +335,29 @@ const Holdings = () => {
             const data = await response.json();
             
             if (data.success) {
+              // Show success notification
+              setTradeNotification({
+                message: `Successfully sold ${finalQuantity} shares of ${selectedStock.name}!`,
+                type: 'success'
+              });
+              
               // Refresh holdings and orders data
               refreshHoldings && refreshHoldings();
               refreshOrders && refreshOrders();
             } else {
+              // Show error notification
+              setTradeNotification({
+                message: `Error: ${data.message || 'Failed to execute sell order'}`,
+                type: 'error'
+              });
               console.error('Error executing sell trade:', data.message);
             }
           } catch (error) {
+            // Show error notification
+            setTradeNotification({
+              message: `Error: Failed to execute sell order. Please try again.`,
+              type: 'error'
+            });
             console.error('Error executing sell trade:', error);
           } finally {
             setIsProcessingTrade(false);

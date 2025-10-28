@@ -147,7 +147,9 @@ const OrderDetail = () => {
         {/* Order Details Card */}
         <div className="bg-white rounded-2xl shadow border border-gray-100 p-8 md:p-10 flex flex-col gap-6">
           <div className="flex items-center gap-3 mb-1">
-            <span className={`px-3 py-1 rounded-full text-xs font-medium tracking-wide ${order.mode === 'BUY' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{order.mode === 'BUY' ? 'BUY' : 'SELL'}</span>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium tracking-wide ${order.mode?.toUpperCase() === 'BUY' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+              {order.mode?.toUpperCase() === 'BUY' ? 'BUY' : 'SELL'}
+            </span>
             <span className="text-xs text-gray-400 ml-auto">Qty <span className="text-gray-700 font-medium">{order.qty}</span></span>
           </div>
           <div className="text-xl md:text-2xl font-medium text-gray-900 mb-1 tracking-tight">{order.name}</div>
@@ -155,7 +157,7 @@ const OrderDetail = () => {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3 text-[15px] text-gray-700 mb-2">
             <div>
               <div className="text-gray-400 text-xs mb-0.5">Order Type</div>
-              <div>{order.type}</div>
+              <div>{order.mode?.toUpperCase() === 'BUY' ? 'BUY' : 'SELL'}</div>
             </div>
             <div>
               <div className="text-gray-400 text-xs mb-0.5">Market</div>

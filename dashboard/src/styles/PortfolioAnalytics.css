@@ -930,7 +930,9 @@
   border-spacing: 0;
   font-size: 1rem;
   background: transparent;
+  table-layout: fixed; /* Fix table layout */
 }
+
 .pa-rt-table th {
   text-align: left;
   font-weight: 600;
@@ -939,20 +941,44 @@
   padding: 0.9rem 1rem;
   border-bottom: 1.5px solid #e2e8f0;
   font-size: 1rem;
+  white-space: nowrap; /* Prevent text wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
 .pa-rt-table td {
   padding: 0.85rem 1rem;
   border-bottom: 1px solid #f1f5f9;
   background: #fff;
   vertical-align: middle;
+  white-space: nowrap; /* Prevent text wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
 .pa-rt-table tr:hover {
   background: #f8fafc;
 }
+
+/* Set specific widths for columns */
+.pa-rt-table th:nth-child(1),
+.pa-rt-table td:nth-child(1) { width: 15%; } /* Date */
+.pa-rt-table th:nth-child(2),
+.pa-rt-table td:nth-child(2) { width: 20%; } /* Stock */
+.pa-rt-table th:nth-child(3),
+.pa-rt-table td:nth-child(3) { width: 15%; } /* Type */
+.pa-rt-table th:nth-child(4),
+.pa-rt-table td:nth-child(4) { width: 10%; } /* Qty */
+.pa-rt-table th:nth-child(5),
+.pa-rt-table td:nth-child(5) { width: 20%; } /* Price */
+.pa-rt-table th:nth-child(6),
+.pa-rt-table td:nth-child(6) { width: 20%; } /* Total */
+
 .pa-rt-stock {
   font-weight: 600;
   color: #2563eb;
 }
+
 .pa-rt-type-badge {
   display: inline-block;
   padding: 0.3em 0.9em;
@@ -962,10 +988,12 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
 .pa-rt-type-badge.buy {
   background: rgba(16, 185, 129, 0.12);
   color: #10b981;
 }
+
 .pa-rt-type-badge.sell {
   background: rgba(239, 68, 68, 0.12);
   color: #ef4444;

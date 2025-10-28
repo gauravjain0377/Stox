@@ -24,7 +24,7 @@ const PortfolioAnalytics = () => {
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [isLoading, setIsLoading] = useState(true);
   const { theme } = useTheme();
-  const { holdings: userHoldings, holdingsLoading, orders } = useGeneralContext();
+  const { holdings: userHoldings, holdingsLoading, realTimePrices = {}, orders } = useGeneralContext();
   const [widgetPos, setWidgetPos] = useState({ x: null, y: null });
   const widgetRef = useRef(null);
   let isDragging = false;
@@ -496,10 +496,13 @@ const PortfolioAnalytics = () => {
     }
   };
 
-  // Calculate portfolio summary
+  // Calculate portfolio summary with real-time prices using the same logic as Holdings page
   const portfolioSummary = {
-    totalValue: userHoldings?.reduce((sum, stock) => sum + stock.price * stock.qty, 0) || 0,
-    totalInvestment: userHoldings?.reduce((sum, stock) => sum + stock.avg * stock.qty, 0) || 0,
+    totalValue: userHoldings?.reduce((sum, stock) => {
+      const currentPrice = (realTimePrices && realTimePrices[stock.name]) || stock.price || 0;
+      return sum + currentPrice * (stock.qty || 0);
+    }, 0) || 0,
+    totalInvestment: userHoldings?.reduce((sum, stock) => sum + (stock.avg || 0) * (stock.qty || 0), 0) || 0,
     totalPnL: 0,
     totalPnLPercent: 0
   };
@@ -509,12 +512,13 @@ const PortfolioAnalytics = () => {
     portfolioSummary.totalPnLPercent = (portfolioSummary.totalPnL / portfolioSummary.totalInvestment) * 100;
   }
 
-  // Calculate top gainers/losers in user's portfolio
+  // Calculate top gainers/losers in user's portfolio with real-time prices
   const sortedHoldings = (userHoldings || []).map(h => {
-    const invested = h.avg * h.qty;
-    const current = h.price * h.qty;
+    const currentPrice = (realTimePrices && realTimePrices[h.name]) || h.price || 0;
+    const invested = (h.avg || 0) * (h.qty || 0);
+    const current = currentPrice * (h.qty || 0);
     const percent = invested > 0 ? ((current - invested) / invested) * 100 : 0;
-    return { ...h, percent, current };
+    return { ...h, percent, current, currentPrice };
   });
   const topPortfolioGainers = [...sortedHoldings].sort((a, b) => b.percent - a.percent).slice(0, 3);
   const topPortfolioLosers = [...sortedHoldings].sort((a, b) => a.percent - b.percent).slice(0, 3);
@@ -606,18 +610,16 @@ const PortfolioAnalytics = () => {
       <div className="pa-summary-grid">
         <div className="pa-summary-card">
           <div className="pa-label">Total Value</div>
-          <div className="pa-value">₹{portfolioSummary.totalValue.toLocaleString()}</div>
+          <div className="pa-value">₹{portfolioSummary.totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+        </div>
+        <div className="pa-summary-card">
+          <div className="pa-label">Total Investment</div>
+          <div className="pa-value">₹{portfolioSummary.totalInvestment.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
         </div>
         <div className="pa-summary-card">
           <div className="pa-label">Total P&L</div>
           <div className={`pa-value ${portfolioSummary.totalPnL >= 0 ? 'pa-green' : 'pa-red'}`}>
-            {portfolioSummary.totalPnL >= 0 ? '+' : ''}₹{Math.abs(portfolioSummary.totalPnL).toLocaleString()} ({portfolioSummary.totalPnLPercent.toFixed(2)}%)
-          </div>
-        </div>
-        <div className="pa-summary-card">
-          <div className="pa-label">Total Return</div>
-          <div className={`pa-value ${performanceMetrics.totalReturn >= 0 ? 'pa-green' : 'pa-red'}`}>
-            {performanceMetrics.totalReturn >= 0 ? '+' : ''}{performanceMetrics.totalReturn.toFixed(2)}%
+            {portfolioSummary.totalPnL >= 0 ? '+' : ''}₹{Math.abs(portfolioSummary.totalPnL).toLocaleString(undefined, { maximumFractionDigits: 2 })} ({portfolioSummary.totalPnLPercent.toFixed(2)}%)
           </div>
         </div>
       </div>

@@ -15,140 +15,25 @@ import { io } from 'socket.io-client';
 import { WS_URL } from '../config/api';
 
 const ModernSummary = () => {
-  const { holdings = [], user } = useGeneralContext();
+  const { holdings = [], realTimePrices = {}, isSocketConnected, user } = useGeneralContext();
   const [mostTraded, setMostTraded] = useState([]);
   const [watchlistSummary, setWatchlistSummary] = useState({ count: 0, items: [], totalItems: 0 });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  
-  // Real-time price tracking (same as Holdings)
-  const [realTimePrices, setRealTimePrices] = useState({});
-  const [priceChanges, setPriceChanges] = useState({});
-  const [isConnected, setIsConnected] = useState(false);
-  const socketRef = useRef(null);
-  const priceUpdateTimeoutRef = useRef({});
 
-  // Function for smooth price transitions with better stability
-  const updatePricesSmoothly = (stockName, newPrice) => {
-    const currentPrice = realTimePrices[stockName];
-    
-    // Only update if price actually changed significantly (avoid micro-fluctuations)
-    // Increase threshold to 0.50 (50 paise) for more stability
-    if (currentPrice && Math.abs(newPrice - currentPrice) < 0.50) {
-      return; // Skip tiny changes
-    }
-    
-    // Clear any existing timeout for this stock
-    if (priceUpdateTimeoutRef.current[stockName]) {
-      clearTimeout(priceUpdateTimeoutRef.current[stockName]);
-    }
-    
-    // Smooth transition with longer debouncing for stability
-    priceUpdateTimeoutRef.current[stockName] = setTimeout(() => {
-      setRealTimePrices(prev => {
-        const updated = { ...prev, [stockName]: newPrice };
-        return updated;
-      });
-      
-      // Show subtle change indicator
-      if (currentPrice && newPrice !== currentPrice) {
-        setPriceChanges(prev => ({
-          ...prev,
-          [stockName]: newPrice > currentPrice ? 'up' : 'down'
-        }));
-        
-        // Remove change indicator after 5 seconds
-        setTimeout(() => {
-          setPriceChanges(prev => {
-            const updated = { ...prev };
-            delete updated[stockName];
-            return updated;
-          });
-        }, 5000);
-      }
-    }, 2000); // 2000ms (2 seconds) delay for much smoother updates
-  };
-
-  // Calculate summary values using real-time prices (same as Holdings)
+  // Calculate summary values using the same logic as Holdings page
+  // Total Investment: sum of (avg price * quantity) for all holdings
   const totalInvestment = holdings.reduce((sum, h) => sum + (h.avg || 0) * (h.qty || 0), 0);
+  
+  // Current Value: sum of (current price * quantity) for all holdings
   const currentValue = holdings.reduce((sum, h) => {
     const currentPrice = realTimePrices[h.name] || h.price || 0;
     return sum + currentPrice * (h.qty || 0);
   }, 0);
+  
+  // P&L calculations
   const pnl = currentValue - totalInvestment;
   const pnlPercent = totalInvestment > 0 ? (pnl / totalInvestment) * 100 : 0;
-
-  // WebSocket connection for real-time price updates (same as Holdings)
-  useEffect(() => {
-    if (!holdings || holdings.length === 0) return;
-    
-    console.log('ModernSummary: Setting up WebSocket connection for real-time prices');
-    
-    // Initialize socket connection
-    socketRef.current = io(WS_URL, {
-      transports: ['websocket', 'polling'],
-      timeout: 20000,
-      forceNew: true
-    });
-    
-    const socket = socketRef.current;
-    
-    // Connection events
-    socket.on('connect', () => {
-      console.log('ModernSummary: WebSocket connected');
-      setIsConnected(true);
-    });
-    
-    socket.on('disconnect', (reason) => {
-      console.log('ModernSummary: WebSocket disconnected:', reason);
-      setIsConnected(false);
-    });
-    
-    socket.on('connect_error', (error) => {
-      console.error('ModernSummary: WebSocket connection error:', error);
-      setIsConnected(false);
-    });
-    
-    // Listen for stock updates (individual updates)
-    socket.on('stockUpdate', (stock) => {
-      const holdingStock = holdings.find(h => h.name === stock.symbol || h.name === stock.name);
-      if (holdingStock) {
-        updatePricesSmoothly(holdingStock.name, stock.price);
-      }
-    });
-    
-    // Listen for bulk updates (smoother batch processing)
-    socket.on('bulkStockUpdate', (stocks) => {
-      // Process bulk updates with longer staggered timing to avoid jarring changes
-      stocks.forEach((stock, index) => {
-        const holdingStock = holdings.find(h => h.name === stock.symbol || h.name === stock.name);
-        if (holdingStock) {
-          // Stagger updates by 500ms each for much smoother bulk updates
-          setTimeout(() => {
-            updatePricesSmoothly(holdingStock.name, stock.price);
-          }, index * 500);
-        }
-      });
-    });
-    
-    // Request initial data
-    setTimeout(() => {
-      socket.emit('requestStockUpdate');
-    }, 1000);
-    
-    // Cleanup on unmount
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
-      
-      // Clear all price update timeouts
-      Object.values(priceUpdateTimeoutRef.current).forEach(timeout => {
-        if (timeout) clearTimeout(timeout);
-      });
-      priceUpdateTimeoutRef.current = {};
-    };
-  }, [holdings, realTimePrices]);
 
   // Fetch most traded stocks and watchlist summary
   useEffect(() => {
@@ -156,9 +41,7 @@ const ModernSummary = () => {
       try {
         setLoading(true);
         const userId = user?.id || user?.username || 'default';
-        
 
-        
         const stocks = await stockService.getMostTradedStocks();
         
         // Try to get watchlist summary, fallback if it fails
@@ -251,7 +134,7 @@ const ModernSummary = () => {
           </div>
           <div className="space-y-1">
             <p className="text-2xl font-bold text-gray-900">
-              ₹{totalInvestment.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              ₹{totalInvestment.toLocaleString(undefined, { maximumFractionDigits: 2 })}
             </p>
             <p className="text-sm text-gray-500">Your total invested amount</p>
           </div>
@@ -267,7 +150,7 @@ const ModernSummary = () => {
           </div>
           <div className="space-y-1">
             <p className="text-2xl font-bold text-gray-900">
-              ₹{currentValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              ₹{currentValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
             </p>
             <p className="text-sm text-gray-500">Current portfolio value</p>
           </div>
@@ -287,7 +170,7 @@ const ModernSummary = () => {
           </div>
           <div className="space-y-1">
             <p className={`text-2xl font-bold ${pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {pnl >= 0 ? '+' : ''}₹{pnl.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              {pnl >= 0 ? '+' : ''}₹{Math.abs(pnl).toLocaleString(undefined, { maximumFractionDigits: 2 })}
             </p>
             <p className={`text-sm ${pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(2)}%
