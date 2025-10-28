@@ -110,15 +110,9 @@ const SidebarWatchlist = () => {
           name: stock.name,
           lastUpdate: stock.lastUpdate
         }));
-        
-        // Only set stocks if we have a reasonable amount of data
-        if (processedData.length >= 10) {
-          setStocks(processedData);
-          setLastUpdateTime(new Date());
-          setLoading(false);
-        } else {
-          console.warn('Initial stock data has insufficient stocks:', processedData.length);
-        }
+        setStocks(processedData);
+        setLastUpdateTime(new Date());
+        setLoading(false);
       }
     });
 
@@ -147,54 +141,40 @@ const SidebarWatchlist = () => {
       } else {
         // Regular stock update
         setStocks(prevStocks => {
-          // Check if the stock already exists in our list
-          const existingStockIndex = prevStocks.findIndex(s => s.symbol === stock.symbol);
-          
-          // Create the updated stock object
-          const updatedStock = {
-            symbol: stock.symbol,
-            price: stock.price,
-            percent: stock.percentChange,
-            volume: stock.volume ? stock.volume.toLocaleString() : '-',
-            previousClose: stock.previousClose,
-            name: stock.name,
-            lastUpdate: stock.lastUpdate
-          };
-          
-          if (existingStockIndex !== -1) {
-            // Stock exists, update it
-            const updatedStocks = [...prevStocks];
-            // Show price change animation
-            const prevPrice = prevStocks[existingStockIndex].price;
-            const newPrice = stock.price;
-            if (prevPrice !== newPrice) {
-              setPriceChanges(prev => ({
-                ...prev,
-                [stock.symbol]: newPrice > prevPrice ? 'up' : 'down'
-              }));
+          const updatedStocks = prevStocks.map(prevStock => {
+            if (prevStock.symbol === stock.symbol) {
+              // Show price change animation
+              const prevPrice = prevStock.price;
+              const newPrice = stock.price;
+              if (prevPrice !== newPrice) {
+                setPriceChanges(prev => ({
+                  ...prev,
+                  [stock.symbol]: newPrice > prevPrice ? 'up' : 'down'
+                }));
+                
+                // Clear animation after 2 seconds
+                setTimeout(() => {
+                  setPriceChanges(prev => {
+                    const newChanges = { ...prev };
+                    delete newChanges[stock.symbol];
+                    return newChanges;
+                  });
+                }, 2000);
+              }
               
-              // Clear animation after 2 seconds
-              setTimeout(() => {
-                setPriceChanges(prev => {
-                  const newChanges = { ...prev };
-                  delete newChanges[stock.symbol];
-                  return newChanges;
-                });
-              }, 2000);
+              return {
+                ...prevStock,
+                price: stock.price,
+                percent: stock.percentChange,
+                volume: stock.volume ? stock.volume.toLocaleString() : '-',
+                previousClose: stock.previousClose,
+                name: stock.name,
+                lastUpdate: stock.lastUpdate
+              };
             }
-            
-            updatedStocks[existingStockIndex] = updatedStock;
-            return updatedStocks;
-          } else {
-            // Stock doesn't exist, add it to the list
-            // But only add if we don't already have too many stocks to avoid performance issues
-            if (prevStocks.length < 100) { // Limit to prevent performance issues
-              return [...prevStocks, updatedStock];
-            } else {
-              // If we have too many, just return the existing list
-              return prevStocks;
-            }
-          }
+            return prevStock;
+          });
+          return updatedStocks;
         });
       }
       
@@ -204,7 +184,6 @@ const SidebarWatchlist = () => {
     socket.on('bulkStockUpdate', (data) => {
       console.log('Received bulk stock update:', data.length, 'stocks');
       if (data && data.length > 0) {
-        // Process the incoming data
         const processedData = data.map(stock => ({
           symbol: stock.symbol,
           price: stock.price,
@@ -214,40 +193,7 @@ const SidebarWatchlist = () => {
           name: stock.name,
           lastUpdate: stock.lastUpdate
         }));
-        
-        // Only update stocks if we have a reasonable amount of data
-        // This prevents the watchlist from being cleared when only a few stocks are received
-        if (processedData.length >= 10) { // Adjust this threshold as needed
-          setStocks(processedData);
-        } else {
-          // If we receive a small batch, update existing stocks rather than replacing all
-          setStocks(prevStocks => {
-            // Create a map of incoming stocks for quick lookup
-            const incomingStocksMap = {};
-            processedData.forEach(stock => {
-              incomingStocksMap[stock.symbol] = stock;
-            });
-            
-            // Update existing stocks with new data, keep unchanged stocks
-            const updatedStocks = prevStocks.map(prevStock => {
-              if (incomingStocksMap[prevStock.symbol]) {
-                return {
-                  ...prevStock,
-                  ...incomingStocksMap[prevStock.symbol]
-                };
-              }
-              return prevStock;
-            });
-            
-            // Add any new stocks that weren't in the previous list
-            const newStocks = processedData.filter(stock => 
-              !prevStocks.some(prevStock => prevStock.symbol === stock.symbol)
-            );
-            
-            return [...updatedStocks, ...newStocks];
-          });
-        }
-        
+        setStocks(processedData);
         setLastUpdateTime(new Date());
         setLoading(false);
       }
@@ -285,32 +231,30 @@ const SidebarWatchlist = () => {
             volume: stock.volume || '-',
             previousClose: stock.previousClose || (stock.price ? stock.price * (1 + (stock.percent || 0) / 100) : 0),
             name: stock.name || stock.fullName || stock.symbol || 'Unknown Stock',
-            lastUpdate: new Date().toISOString()
           }));
           
-          // Only update if we have a reasonable number of stocks
-          if (processedStocks.length >= 10) {
-            setStocks(processedStocks);
-            setLoading(false);
-            console.log('Fallback data loaded:', processedStocks.length, 'stocks');
-          } else {
-            console.warn('Fallback data has insufficient stocks:', processedStocks.length);
-          }
+          setStocks(processedStocks);
+          setLoading(false);
+          console.log('Fallback data loaded:', processedStocks.length, 'stocks');
         } else {
           console.warn('Fallback data is empty or invalid');
+          setStocks([]);
+          setLoading(false);
         }
         
       } catch (error) {
         if (isMounted) {
           console.error('Error loading fallback data:', error);
           setError('Failed to load stock data');
+          setStocks([]); // Set empty array instead of keeping previous state
+          setLoading(false);
         }
       }
     };
     
     // Set timeout to load fallback data if WebSocket doesn't connect
     fallbackTimeout = setTimeout(() => {
-      if (!isConnected && stocks.length < 10) { // Only load fallback if we don't have enough stocks
+      if (!isConnected && stocks.length === 0) {
         console.log('WebSocket connection timeout, loading fallback data');
         loadFallbackData();
       }

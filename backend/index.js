@@ -1823,8 +1823,6 @@ app.post("/api/users/change-password", async (req, res) => {
 app.post('/api/support/contact', async (req, res) => {
   try {
     const { name, email, subject, purpose, message } = req.body || {};
-    console.log('📧 Support contact request received:', { name, email, subject, purpose, messageLength: message?.length });
-    
     if (!name || !email || !message) {
       return res.status(400).json({ success: false, message: 'Name, email and message are required' });
     }
@@ -1835,50 +1833,16 @@ app.post('/api/support/contact', async (req, res) => {
     const smtpPort = parseInt(process.env.MAIL_PORT || '587', 10);
     const supportTo = process.env.SUPPORT_TO || 'gjain0229@gmail.com';
 
-    console.log('📧 Email configuration check:', {
-      hasSmtpUser: !!smtpUser,
-      hasSmtpPass: !!smtpPass,
-      smtpHost,
-      smtpPort,
-      supportTo
-    });
-
     if (!smtpUser || !smtpPass) {
-      console.error('📧 Mailer not configured properly');
       return res.status(500).json({ success: false, message: 'Mailer is not configured on server' });
     }
-
-    // Log email configuration for debugging (remove in production)
-    console.log('📧 Email configuration:', {
-      smtpUser,
-      smtpHost,
-      smtpPort,
-      supportTo,
-      hasPassword: !!smtpPass
-    });
 
     const transporter = nodemailer.createTransport({
       host: smtpHost,
       port: smtpPort,
-      secure: smtpPort === 465, // true for 465, false for other ports
-      auth: { user: smtpUser, pass: smtpPass },
-      tls: {
-        rejectUnauthorized: false // Set to true in production with proper certificates
-      }
+      secure: smtpPort === 465,
+      auth: { user: smtpUser, pass: smtpPass }
     });
-
-    // Verify transporter configuration
-    try {
-      await transporter.verify();
-      console.log('📧 SMTP transporter verified successfully');
-    } catch (verifyError) {
-      console.error('📧 SMTP transporter verification failed:', verifyError);
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Email service configuration error. Please try again later.',
-        error: process.env.NODE_ENV === 'development' ? verifyError.message : undefined
-      });
-    }
 
     const mailSubjectBase = subject && subject.trim() ? subject : `Support: ${purpose || 'General inquiry'}`;
     const mailSubject = `[StockSathi] ${mailSubjectBase}`;
@@ -1940,10 +1904,7 @@ app.post('/api/support/contact', async (req, res) => {
       </div>
     `;
 
-    // Log email details before sending
-    console.log('📧 Preparing to send email to:', supportTo);
-    
-    const mailOptions = {
+    await transporter.sendMail({
       from: {
         name: 'StockSathi Support',
         address: smtpUser
@@ -1952,27 +1913,12 @@ app.post('/api/support/contact', async (req, res) => {
       replyTo: email,
       subject: mailSubject,
       html
-    };
-    
-    console.log('📧 Sending email with options:', {
-      from: mailOptions.from,
-      to: mailOptions.to,
-      replyTo: mailOptions.replyTo,
-      subject: mailOptions.subject
     });
-    
-    await transporter.sendMail(mailOptions);
 
-    console.log('📧 Email sent successfully');
     res.json({ success: true, message: 'Message sent. We will get back to you shortly.' });
   } catch (err) {
     console.error('❌ Support email error:', err);
-    // More detailed error response
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to send message. Please try again later or contact us directly at gjain0229@gmail.com',
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
+    res.status(500).json({ success: false, message: 'Failed to send message' });
   }
 });
 
@@ -2119,16 +2065,13 @@ async function fetchLiveStockData() {
       currentStockData.set(stock.symbol, stock);
       
       // Emit individual stock update
-      // Commenting out individual updates to prevent partial updates
-      // io.emit('stockUpdate', stock);
+      io.emit('stockUpdate', stock);
     });
 
-    // Emit bulk update - this ensures all stocks are sent together
+    // Emit bulk update
     if (validResults.length > 0) {
-      // Send the complete list of stocks instead of just the updated ones
-      const allStocks = Array.from(currentStockData.values());
-      io.emit('bulkStockUpdate', allStocks);
-      console.log(`Updated ${validResults.length} stocks, sent ${allStocks.length} total stocks at ${new Date().toLocaleTimeString()}`);
+      io.emit('bulkStockUpdate', validResults);
+      console.log(`Updated ${validResults.length} stocks at ${new Date().toLocaleTimeString()}`);
     } else {
       console.log('No valid stock data to emit');
     }
@@ -2159,7 +2102,6 @@ io.on('connection', (socket) => {
   // Send current data to newly connected client
   if (currentStockData.size > 0) {
     const allStocks = Array.from(currentStockData.values());
-    console.log(`Sending initial data to new client: ${allStocks.length} stocks`);
     socket.emit('initialStockData', allStocks);
   }
 
@@ -2171,7 +2113,6 @@ io.on('connection', (socket) => {
   socket.on('requestStockUpdate', () => {
     if (currentStockData.size > 0) {
       const allStocks = Array.from(currentStockData.values());
-      console.log(`Sending requested stock update: ${allStocks.length} stocks`);
       socket.emit('bulkStockUpdate', allStocks);
     }
   });
@@ -2195,10 +2136,8 @@ server.on('clientError', (error, socket) => {
 // Start periodic updates every 10 seconds
 setInterval(fetchLiveStockData, 10000);
 
-// Initial data fetch with delay to ensure database is ready
-setTimeout(() => {
-  fetchLiveStockData();
-}, 2000);
+// Initial data fetch
+fetchLiveStockData();
 
 server.listen(PORT, () => {
   console.log(`Server started on port ${PORT}!`);
