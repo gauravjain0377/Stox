@@ -39,9 +39,6 @@ const TradeConfirmModal = ({
 
   if (!isOpen) return null;
 
-  const headerGradient = isBuy
-    ? 'bg-gradient-to-r from-green-500 to-green-600'
-    : 'bg-gradient-to-r from-red-500 to-red-600';
   const total = (Number(price) || 0) * (Number(adjustedQuantity) || 0);
   const totalLabel = isBuy ? 'Total Cost' : 'Total Proceeds';
   
@@ -67,182 +64,209 @@ const TradeConfirmModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-scale-in">
+    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 overflow-hidden border border-gray-200">
         {/* Modal Header */}
-        <div className={`px-6 py-4 ${headerGradient} text-white`}>
+        <div className="px-8 py-6 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className={`p-2 rounded-full ${isBuy ? 'bg-green-400' : 'bg-red-400'}`}>
+            <div className="flex items-center space-x-4">
+              <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
                 {isBuy ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                 ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                   </svg>
                 )}
               </div>
               <div>
-                <h3 className="text-lg font-bold">
+                <h3 className="text-2xl font-bold text-gray-900">
                   {isBuy ? 'Confirm Purchase' : 'Confirm Sale'}
                 </h3>
-                <p className="text-sm opacity-90">
-                  {isBuy ? 'Review your buy order' : 'Review your sell order'}
+                <p className="text-gray-600 mt-1">
+                  {isBuy ? 'Review your buy order details' : 'Review your sell order details'}
                 </p>
               </div>
             </div>
             <button
               onClick={onCancel}
-              className="p-1 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
+              className="p-3 hover:bg-white hover:bg-opacity-50 rounded-xl transition-colors"
               aria-label="Close"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
         </div>
 
-        {/* Modal Body */}
-        <div className="px-6 py-6">
-          {/* Optional Note */}
-          {note && (
-            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-100 rounded text-sm text-yellow-800">
-              {note}
-            </div>
-          )}
-
-          {/* Stock Information */}
-          <div className="bg-gray-50 rounded-xl p-4 mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <h4 className="font-bold text-lg text-gray-900">{name}</h4>
-                <p className="text-sm text-gray-500">{symbol}</p>
-              </div>
-              <div className="text-right">
-                <p className="font-bold text-lg text-gray-900">₹{Number(price || 0).toLocaleString()}</p>
-                {(typeof changeAbs === 'number' && changePercent !== undefined) && (
-                  <p className={`text-sm font-medium ${isDown ? 'text-red-600' : 'text-green-600'}`}>
-                    {changeAbs !== 0 ? `${changeAbs < 0 ? '' : '+'}${changeAbs.toFixed(2)}` : '0.00'}{' '}
-                    ({typeof changePercent === 'number' ? `${isDown ? '-' : '+'}${changePercent.toFixed(2)}%` : `${changePercent}%`})
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Order Details */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <span className="text-gray-600 font-medium">Order Type</span>
-              <span className={`font-bold ${isBuy ? 'text-green-600' : 'text-red-600'}`}>
-                {isBuy ? 'BUY' : 'SELL'} ORDER
-              </span>
-            </div>
-
-            <div className="flex flex-col py-2 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600 font-medium">Quantity</span>
-                {!isBuy && (
-                  <span className="text-sm text-blue-600 font-medium">
-                    You own: {currentShares} {currentShares === 1 ? 'share' : 'shares'}
-                  </span>
-                )}
-              </div>
-              
-              <div className="flex items-center justify-end space-x-2 mt-2">
-                <button 
-                  onClick={handleDecrement}
-                  disabled={adjustedQuantity <= 1 || processing}
-                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors disabled:opacity-50"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                  </svg>
-                </button>
-                <input
-                  type="number"
-                  value={adjustedQuantity}
-                  onChange={handleQuantityChange}
-                  disabled={processing}
-                  className={`w-16 text-center border rounded-md py-1 px-2 font-bold ${error ? 'border-red-500 text-red-600' : 'border-gray-300 text-gray-900'}`}
-                  min="1"
-                />
-                <button 
-                  onClick={handleIncrement}
-                  disabled={processing || (!isBuy && adjustedQuantity >= currentShares)}
-                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors disabled:opacity-50"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </button>
-                <span className="font-medium text-gray-500">{Number(adjustedQuantity) === 1 ? 'share' : 'shares'}</span>
+        {/* Modal Body - Horizontal Layout */}
+        <div className="px-8 py-7">
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Left Column - Stock Info */}
+            <div className="lg:w-1/2">
+              <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                <h4 className="text-lg font-bold text-gray-900 mb-5">Stock Details</h4>
+                
+                <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-200">
+                  <div>
+                    <h5 className="font-bold text-xl text-gray-900">{name}</h5>
+                    <p className="text-gray-600">{symbol}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-2xl text-gray-900">₹{Number(price || 0).toLocaleString()}</p>
+                    {(typeof changeAbs === 'number' && changePercent !== undefined) && (
+                      <p className={`text-sm font-medium mt-1 ${isDown ? 'text-amber-600' : 'text-blue-600'}`}>
+                        {changeAbs !== 0 ? `${changeAbs < 0 ? '' : '+'}${changeAbs.toFixed(2)}` : '0.00'}{' '}
+                        ({typeof changePercent === 'number' ? `${isDown ? '-' : '+'}${changePercent.toFixed(2)}%` : `${changePercent}%`})
+                      </p>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white p-4 rounded-xl border border-gray-100">
+                    <p className="text-gray-600 text-sm">Order Type</p>
+                    <p className="font-bold text-lg mt-1">{isBuy ? 'Buy Order' : 'Sell Order'}</p>
+                  </div>
+                  
+                  <div className="bg-white p-4 rounded-xl border border-gray-100">
+                    <p className="text-gray-600 text-sm">Price per Share</p>
+                    <p className="font-bold text-lg mt-1">₹{Number(price || 0).toLocaleString()}</p>
+                  </div>
+                  
+                  <div className="bg-white p-4 rounded-xl border border-gray-100">
+                    <p className="text-gray-600 text-sm">Available Shares</p>
+                    <p className="font-bold text-lg mt-1">{!isBuy ? currentShares : '-'}</p>
+                  </div>
+                  
+                  <div className="bg-white p-4 rounded-xl border border-gray-100">
+                    <p className="text-gray-600 text-sm">Market Status</p>
+                    <p className={`font-bold text-lg mt-1 ${isConnected ? 'text-blue-600' : 'text-gray-500'}`}>
+                      {isConnected ? 'Live' : 'Delayed'}
+                    </p>
+                  </div>
+                </div>
               </div>
               
-              {error && (
-                <div className="mt-2 text-sm text-red-600 font-medium">
-                  {error}
+              {/* Optional Note */}
+              {note && (
+                <div className="mt-6 p-5 bg-amber-50 border border-amber-100 rounded-2xl">
+                  <div className="flex items-start">
+                    <svg className="w-6 h-6 text-amber-500 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <p className="text-amber-800">
+                      {note}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
-
-            <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <span className="text-gray-600 font-medium">Price per share</span>
-              <span className="font-bold text-gray-900">₹{Number(price || 0).toLocaleString()}</span>
-            </div>
-
-            <div className="flex items-center justify-between py-3 bg-gray-50 rounded-lg px-4">
-              <span className="text-gray-900 font-bold text-lg">{totalLabel}</span>
-              <span className={`font-bold text-xl ${isBuy ? 'text-green-600' : 'text-red-600'}`}>
-                ₹{Number(total).toLocaleString()}
-              </span>
-            </div>
-
-            {/* Market Status */}
-            {typeof isConnected !== 'undefined' && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <div className="flex items-center space-x-2">
-                  <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-blue-500 animate-pulse' : 'bg-gray-400'}`}></div>
-                  <span className="text-blue-800 text-sm font-medium">
-                    {isConnected ? 'Live Market Price' : 'Market Closed - Using Last Price'}
-                  </span>
+            
+            {/* Right Column - Order Details */}
+            <div className="lg:w-1/2">
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200 h-full">
+                <h4 className="text-lg font-bold text-gray-900 mb-5">Order Summary</h4>
+                
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-3">Quantity</label>
+                    <div className="flex items-center justify-center space-x-0">
+                      {/* Minus button integrated with input */}
+                      <button 
+                        onClick={handleDecrement}
+                        disabled={adjustedQuantity <= 1 || processing}
+                        className="w-14 h-14 rounded-l-2xl bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors disabled:opacity-40 shadow-sm -mr-px z-10"
+                      >
+                        <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                        </svg>
+                      </button>
+                      
+                      {/* Input field with integrated buttons */}
+                      <input
+                        type="number"
+                        value={adjustedQuantity}
+                        onChange={handleQuantityChange}
+                        disabled={processing}
+                        className={`w-24 h-14 text-center border-y border-gray-200 font-bold text-xl bg-white shadow-sm ${error ? 'border-red-300 text-red-600' : 'border-gray-200 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent z-0`}
+                        min="1"
+                      />
+                      
+                      {/* Plus button integrated with input */}
+                      <button 
+                        onClick={handleIncrement}
+                        disabled={processing || (!isBuy && adjustedQuantity >= currentShares)}
+                        className="w-14 h-14 rounded-r-2xl bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors disabled:opacity-40 shadow-sm -ml-px z-10"
+                      >
+                        <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                      </button>
+                    </div>
+                    
+                    {error && (
+                      <div className="mt-3 text-sm text-red-600 font-medium bg-red-50 px-4 py-3 rounded-xl flex items-center">
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {error}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="bg-white rounded-2xl p-5 border border-gray-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-gray-700 font-medium">Subtotal</span>
+                      <span className="font-bold text-lg">₹{Number(price || 0).toLocaleString()}</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-gray-700 font-medium">Quantity</span>
+                      <span className="font-bold text-lg">x {adjustedQuantity}</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                      <span className="text-gray-900 font-bold text-xl">{totalLabel}</span>
+                      <span className="font-bold text-2xl text-blue-600">
+                        ₹{Number(total).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <button
+                      onClick={onCancel}
+                      className="flex-1 px-6 py-4 bg-white border border-gray-200 rounded-2xl text-gray-700 font-bold hover:bg-gray-50 transition-colors shadow-sm"
+                      disabled={processing}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => onConfirm(adjustedQuantity)}
+                      disabled={processing || error !== ''}
+                      className="flex-1 px-6 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl text-white font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue-100"
+                    >
+                      {processing ? (
+                        <div className="flex items-center justify-center space-x-3">
+                          <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <span>Processing...</span>
+                        </div>
+                      ) : (
+                        `Confirm ${isBuy ? 'Purchase' : 'Sale'}`
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
-            )}
+            </div>
           </div>
-        </div>
-
-        {/* Modal Footer */}
-        <div className="px-6 py-4 bg-gray-50 flex space-x-3">
-          <button
-            onClick={onCancel}
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition-colors"
-            disabled={processing}
-          >
-            Cancel
-          </button>
-          <button
-              onClick={() => onConfirm(adjustedQuantity)}
-              disabled={processing || error !== ''}
-              className={`flex-1 px-4 py-3 rounded-lg text-white font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                isBuy ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
-              }`}
-            >
-            {processing ? (
-              <div className="flex items-center justify-center space-x-2">
-                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Processing...</span>
-              </div>
-            ) : (
-              `Confirm ${isBuy ? 'Purchase' : 'Sale'}`
-            )}
-          </button>
         </div>
       </div>
     </div>

@@ -601,36 +601,14 @@ const StockDetail = () => {
                     </button>
                   ))}
                 </div>
-                <div className="flex gap-2 mb-4">
-                  <button
-                    className={`px-3 py-1 rounded ${chartType === 'area' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
-                    onClick={() => setChartType('area')}
-                  >
-                    Area
-                  </button>
-                  {selectedRange !== '1D' && (
-                    <button
-                      className={`px-3 py-1 rounded ${chartType === 'candlestick' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
-                      onClick={() => setChartType('candlestick')}
-                    >
-                      Candlestick
-                    </button>
-                  )}
-                </div>
                 {/* Professional Chart using Lightweight Charts or Candlestick based on selection */}
-                {chartType === 'area' ? (
-                  <LightweightStockChart
-                    symbol={currentStock?.symbol || ''}
-                    price={currentStock?.price || 0}
-                    percent={currentStock?.percent || 0}
-                    range={selectedRange}
-                    realTimePrice={realPrice}
-                  />
-                ) : (
-                  <div className="text-center py-10 text-gray-500">
-                    Candlestick chart implementation coming soon
-                  </div>
-                )}
+                <LightweightStockChart
+                  symbol={currentStock?.symbol || ''}
+                  price={currentStock?.price || 0}
+                  percent={currentStock?.percent || 0}
+                  range={selectedRange}
+                  realTimePrice={realPrice}
+                />
               </div>
             </div>
             <div className="bg-white rounded-xl shadow-sm">
