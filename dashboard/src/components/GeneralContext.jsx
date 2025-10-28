@@ -292,10 +292,8 @@ export const GeneralContextProvider = ({ children }) => {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           localStorage.removeItem('isLoggedIn');
-          setTimeout(() => {
-            console.log("🔄 Redirecting to frontend due to parsing error");
-            window.location.href = "http://localhost:5173";
-          }, 2000);
+          console.log("🔄 Redirecting to frontend due to parsing error");
+          window.location.replace("http://localhost:5173");
         }
       } else {
         console.log("❌ No valid authentication found, redirecting to frontend");
@@ -305,10 +303,8 @@ export const GeneralContextProvider = ({ children }) => {
           isLoggedIn: isLoggedIn !== 'true'
         });
         // Redirect to frontend if not logged in
-        setTimeout(() => {
-          console.log("🔄 Redirecting to frontend due to missing auth");
-          window.location.href = FRONTEND_URL;
-        }, 2000);
+        console.log("🔄 Redirecting to frontend due to missing auth");
+        window.location.replace(FRONTEND_URL || 'http://localhost:5173/');
       }
     };
 
@@ -439,15 +435,15 @@ export const GeneralContextProvider = ({ children }) => {
   // Show loading screen while checking authentication
   if (!user) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        fontSize: '18px',
-        color: '#666'
-      }}>
-        🔐 Checking authentication...
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-blue-200 rounded-full animate-spin border-t-blue-600 mx-auto"></div>
+            <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full animate-ping border-t-blue-400 mx-auto opacity-30"></div>
+          </div>
+          <p className="mt-6 text-xl font-medium text-gray-700">Checking authentication</p>
+          <p className="mt-2 text-gray-500">Please wait while we verify your credentials</p>
+        </div>
       </div>
     );
   }

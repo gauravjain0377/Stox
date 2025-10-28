@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { FRONTEND_URL } from '../config/api';
 
 const AuthContext = createContext();
 
@@ -122,7 +123,8 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
     localStorage.removeItem('isLoggedIn');
     // Redirect to frontend home page using environment variable
-    window.location.href = FRONTEND_URL || 'http://localhost:5173/';
+    // Use replace instead of href for faster redirect
+    window.location.replace(FRONTEND_URL || 'http://localhost:5173/');
   };
 
   const value = {
