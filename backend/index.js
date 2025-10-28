@@ -1,5 +1,3 @@
-
-
 require("dotenv").config();
 
 const express = require("express");
@@ -1420,7 +1418,8 @@ const stockSymbols = [
   'ADANIPORTS.NS', 'COALINDIA.NS', 'BPCL.NS', 'UPL.NS', 'HINDALCO.NS',
   'EICHERMOT.NS', 'DIVISLAB.NS', 'CIPLA.NS', 'BRITANNIA.NS', 'M&M.NS',
   'BAJAJ_AUTO.NS', 'HERO.NS', 'DRREDDY.NS', 'DABUR.NS', 'APOLLOHOSP.NS',
-  'TATACONSUM.NS', 'ONGC.NS', 'INDUSINDBK.NS', 'HDFC.NS'
+  'TATACONSUM.NS', 'ONGC.NS', 'INDUSINDBK.NS', 'HDFC.NS',
+  '^NSEI', '^BSESN' // Add NIFTY 50 and SENSEX
 ];
 
 let currentStockData = new Map();
@@ -1450,9 +1449,17 @@ async function fetchLiveStockData() {
           const lowerCircuit = previousClose ? Number((previousClose * 0.95).toFixed(2)) : null;
           const upperCircuit = previousClose ? Number((previousClose * 1.05).toFixed(2)) : null;
           
+          // Handle index symbols
+          let displaySymbol = symbol.replace('.NS', '');
+          if (symbol === '^NSEI') {
+            displaySymbol = 'NIFTY 50';
+          } else if (symbol === '^BSESN') {
+            displaySymbol = 'SENSEX';
+          }
+          
           return {
-            symbol: symbol.replace('.NS', ''),
-            name: data?.shortName || symbol.replace('.NS', ''),
+            symbol: displaySymbol,
+            name: data?.shortName || displaySymbol,
             price: regularMarketPrice,
             change: regularMarketChange,
             percentChange: regularMarketChangePercent,

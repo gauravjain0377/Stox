@@ -1,5 +1,6 @@
 // Stock service for fetching and managing stock data
 import { getApiUrl, API_URL } from '../config/api';
+import { isMarketOpen, getMarketDataStorageKey } from '../lib/utils';
 
 // Fallback stock data from the seed file - All 50 stocks
 const fallbackStocks = [
@@ -129,6 +130,64 @@ export const stockService = {
     } catch (error) {
       console.error('StockService: Error fetching all stocks with data:', error);
       return fallbackStocks;
+    }
+  },
+
+  // Fetch real-time market data for top gainers and losers
+  async getMarketMovers() {
+    try {
+      // Check if we have cached data for today
+      const storageKey = getMarketDataStorageKey();
+      const cachedData = localStorage.getItem(storageKey);
+      
+      // If market is closed, return cached data if available
+      if (!isMarketOpen()) {
+        if (cachedData) {
+          return JSON.parse(cachedData);
+        }
+      }
+      
+      // Fetch fresh data from API
+      const allStocks = await this.getAllStocks();
+      
+      // Sort by percentage change to get top gainers and losers
+      const sortedStocks = [...allStocks].sort((a, b) => 
+        Math.abs(b.percent) - Math.abs(a.percent)
+      );
+      
+      const topGainers = sortedStocks
+        .filter(stock => stock.percent > 0)
+        .slice(0, 5);
+        
+      const topLosers = sortedStocks
+        .filter(stock => stock.percent < 0)
+        .slice(0, 5);
+      
+      const marketData = {
+        topGainers,
+        topLosers,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Cache the data if market is closed
+      if (!isMarketOpen()) {
+        localStorage.setItem(storageKey, JSON.stringify(marketData));
+      }
+      
+      return marketData;
+    } catch (error) {
+      console.error('StockService: Error fetching market movers:', error);
+      // Return cached data if available, otherwise fallback
+      const storageKey = getMarketDataStorageKey();
+      const cachedData = localStorage.getItem(storageKey);
+      if (cachedData) {
+        return JSON.parse(cachedData);
+      }
+      return {
+        topGainers: fallbackStocks.filter(s => s.percent > 0).slice(0, 5),
+        topLosers: fallbackStocks.filter(s => s.percent < 0).slice(0, 5),
+        timestamp: new Date().toISOString()
+      };
     }
   },
 
@@ -279,4 +338,4 @@ export const stockService = {
       };
     }
   }
-}; 
+};

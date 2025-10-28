@@ -229,7 +229,7 @@ const LightweightStockChart = ({
   
   const { labels, data, startPrice } = generateRealisticChartData(range, price, symbol, percent);
   
-  // Determine if overall trend is gain or loss
+  // Determine if overall trend is gain or loss based on the actual data
   const finalPrice = data[data.length - 1];
   const overallGain = finalPrice >= startPrice;
   

@@ -3,24 +3,12 @@ import { Line, Doughnut, Bar, Pie } from "react-chartjs-2";
 import "chart.js/auto";
 import { useTheme } from "../context/ThemeContext";
 import { useGeneralContext } from "./GeneralContext";
+import { stockService } from "../services/stockService";
+import { isMarketOpen } from "../lib/utils";
 import "../styles/PortfolioAnalytics.css";
 
-// Mock data for market movers and news
+// Mock data for news (keeping this as it's not related to real-time stock data)
 const mockData = {
-  topGainers: [
-    { stock: "INFY", price: 1567.90, change: "+1.15%", volume: "2.1M" },
-    { stock: "TCS", price: 3194.80, change: "+0.75%", volume: "1.8M" },
-    { stock: "WIPRO", price: 577.75, change: "+0.32%", volume: "1.5M" },
-    { stock: "HDFCBANK", price: 1578.40, change: "+0.75%", volume: "2.9M" },
-    { stock: "RELIANCE", price: 2745.30, change: "+0.42%", volume: "3.2M" }
-  ],
-  topLosers: [
-    { stock: "TATASTEEL", price: 158.80, change: "-0.37%", volume: "6.4M" },
-    { stock: "TITAN", price: 3667.50, change: "-0.51%", volume: "780K" },
-    { stock: "ULTRACEMCO", price: 10235.60, change: "-1.23%", volume: "410K" },
-    { stock: "TECHM", price: 1352.90, change: "-0.47%", volume: "920K" },
-    { stock: "ITC", price: 207.90, change: "-0.80%", volume: "5.2M" }
-  ],
   newsFeed: [
     { category: "Markets", title: "Sensex, Nifty close at record highs", time: "2 hours ago" },
     { category: "Economy", title: "RBI keeps repo rate unchanged at 4%", time: "5 hours ago" },
@@ -53,6 +41,7 @@ const PortfolioAnalytics = () => {
   const [recentTransactions, setRecentTransactions] = useState([]);
   const [topGainers, setTopGainers] = useState([]);
   const [topLosers, setTopLosers] = useState([]);
+  const [marketMovers, setMarketMovers] = useState({ topGainers: [], topLosers: [] });
   const [performanceMetrics, setPerformanceMetrics] = useState({
     totalReturn: 0,
     annualizedReturn: 0,
@@ -362,6 +351,32 @@ const PortfolioAnalytics = () => {
     }
   }, [orders, holdingsLoading, userHoldings]);
   
+  // Fetch real-time market movers data
+  useEffect(() => {
+    const fetchMarketMovers = async () => {
+      try {
+        const movers = await stockService.getMarketMovers();
+        setMarketMovers(movers);
+      } catch (error) {
+        console.error("Error fetching market movers:", error);
+      }
+    };
+
+    // Fetch immediately
+    fetchMarketMovers();
+
+    // Set up interval for real-time updates during market hours
+    let interval;
+    if (isMarketOpen()) {
+      interval = setInterval(fetchMarketMovers, 60000); // Update every minute
+    }
+
+    // Clean up interval
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, []);
+
   // Helper function to calculate portfolio value on a specific date
   const calculatePortfolioValueOnDate = (orders, targetDate) => {
     // Filter orders that occurred before or on the target date
@@ -504,9 +519,9 @@ const PortfolioAnalytics = () => {
   const topPortfolioGainers = [...sortedHoldings].sort((a, b) => b.percent - a.percent).slice(0, 3);
   const topPortfolioLosers = [...sortedHoldings].sort((a, b) => a.percent - b.percent).slice(0, 3);
 
-  // Market movers (top 2 gainers/losers from mockData)
-  const marketGainers = mockData.topGainers.slice(0, 2);
-  const marketLosers = mockData.topLosers.slice(0, 2);
+  // Market movers (top 2 gainers/losers from real-time data)
+  const marketGainers = marketMovers.topGainers.slice(0, 2);
+  const marketLosers = marketMovers.topLosers.slice(0, 2);
 
   // Drag handlers
   const onWidgetMouseDown = (e) => {
@@ -703,15 +718,15 @@ const PortfolioAnalytics = () => {
         <div className="pa-gainers-card pa-card">
           <div className="pa-section-title">Top Gainers Today</div>
           <ul className="pa-gainers-list">
-            {mockData.topGainers.map((stock, idx) => (
+            {marketMovers.topGainers.map((stock, idx) => (
               <li key={idx} className="pa-gainer-item">
                 <div className="pa-gain-main">
-                  <span className="pa-gain-symbol">{stock.stock}</span>
+                  <span className="pa-gain-symbol">{stock.symbol}</span>
                   <span className="pa-gain-price">₹{stock.price}</span>
                 </div>
                 <div className="pa-gain-meta">
                   <span className="pa-gain-arrow pa-green">▲</span>
-                  <span className="pa-gain-change pa-green">{stock.change}</span>
+                  <span className="pa-gain-change pa-green">{stock.percent > 0 ? '+' : ''}{stock.percent.toFixed(2)}%</span>
                   <span className="pa-gain-volume">{stock.volume}</span>
                 </div>
               </li>
@@ -721,15 +736,15 @@ const PortfolioAnalytics = () => {
         <div className="pa-losers-card pa-card">
           <div className="pa-section-title">Top Losers Today</div>
           <ul className="pa-losers-list">
-            {mockData.topLosers.map((stock, idx) => (
+            {marketMovers.topLosers.map((stock, idx) => (
               <li key={idx} className="pa-loser-item">
                 <div className="pa-gain-main">
-                  <span className="pa-gain-symbol">{stock.stock}</span>
+                  <span className="pa-gain-symbol">{stock.symbol}</span>
                   <span className="pa-gain-price">₹{stock.price}</span>
                 </div>
                 <div className="pa-gain-meta">
                   <span className="pa-gain-arrow pa-red">▼</span>
-                  <span className="pa-gain-change pa-red">{stock.change}</span>
+                  <span className="pa-gain-change pa-red">{stock.percent > 0 ? '+' : ''}{stock.percent.toFixed(2)}%</span>
                   <span className="pa-gain-volume">{stock.volume}</span>
                 </div>
               </li>
@@ -839,15 +854,15 @@ const PortfolioAnalytics = () => {
           {marketGainers.map((m, idx) => (
             <div className="pa-market-mover-pill pa-mover-gain" key={"mg"+idx}>
               <span className="pa-mover-icon">▲</span>
-              <span className="pa-mover-symbol">{m.stock}</span>
-              <span className="pa-mover-pct">{m.change}</span>
+              <span className="pa-mover-symbol">{m.symbol}</span>
+              <span className="pa-mover-pct">{m.percent > 0 ? '+' : ''}{m.percent.toFixed(2)}%</span>
             </div>
           ))}
           {marketLosers.map((m, idx) => (
             <div className="pa-market-mover-pill pa-mover-loss" key={"ml"+idx}>
               <span className="pa-mover-icon">▼</span>
-              <span className="pa-mover-symbol">{m.stock}</span>
-              <span className="pa-mover-pct">{m.change}</span>
+              <span className="pa-mover-symbol">{m.symbol}</span>
+              <span className="pa-mover-pct">{m.percent > 0 ? '+' : ''}{m.percent.toFixed(2)}%</span>
             </div>
           ))}
         </div>

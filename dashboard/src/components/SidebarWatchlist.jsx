@@ -8,10 +8,11 @@ import { useSidebar } from '../context/SidebarContext';
 import { useGeneralContext } from './GeneralContext';
 import { stockService } from '../services/stockService';
 import { io } from 'socket.io-client';
+import { shouldShowLiveStatus } from '../lib/utils';
 
-const indices = [
-  { name: "NIFTY 50", value: 11504.95, change: -0.10, percent: -0.10 },
-  { name: "SENSEX", value: 38845.82, change: -0.34, percent: -0.34 },
+const initialIndices = [
+  { symbol: "NIFTY 50", name: "NIFTY 50", value: 11504.95, change: -0.10, percent: -0.10 },
+  { symbol: "SENSEX", name: "SENSEX", value: 38845.82, change: -0.34, percent: -0.34 },
 ];
 
 const SidebarWatchlist = () => {
@@ -21,6 +22,7 @@ const SidebarWatchlist = () => {
   const stocksPerPage = 8;
   const navigate = useNavigate();
   const [stocks, setStocks] = useState([]);
+  const [indices, setIndices] = useState(initialIndices);
   const [previousStocks, setPreviousStocks] = useState([]);
   const [priceChanges, setPriceChanges] = useState({});
   const [loading, setLoading] = useState(true);
@@ -109,42 +111,66 @@ const SidebarWatchlist = () => {
 
     socket.on('stockUpdate', (stock) => {
       console.log('Received stock update for:', stock.symbol);
-      setStocks(prevStocks => {
-        const updatedStocks = prevStocks.map(prevStock => {
-          if (prevStock.symbol === stock.symbol) {
-            // Show price change animation
-            const prevPrice = prevStock.price;
-            const newPrice = stock.price;
-            if (prevPrice !== newPrice) {
-              setPriceChanges(prev => ({
-                ...prev,
-                [stock.symbol]: newPrice > prevPrice ? 'up' : 'down'
-              }));
+      
+      // Check if this is an index update
+      if (stock.symbol === 'NIFTY 50' || stock.symbol === 'SENSEX') {
+        setIndices(prevIndices => {
+          return prevIndices.map(idx => {
+            if (idx.symbol === stock.symbol) {
+              // Calculate change and percent change
+              const change = stock.price - stock.previousClose;
+              const percent = ((change / stock.previousClose) * 100);
               
-              // Clear animation after 2 seconds
-              setTimeout(() => {
-                setPriceChanges(prev => {
-                  const newChanges = { ...prev };
-                  delete newChanges[stock.symbol];
-                  return newChanges;
-                });
-              }, 2000);
+              return {
+                ...idx,
+                value: stock.price,
+                change: change,
+                percent: percent
+              };
             }
-            
-            return {
-              ...prevStock,
-              price: stock.price,
-              percent: stock.percentChange,
-              volume: stock.volume ? stock.volume.toLocaleString() : '-',
-              previousClose: stock.previousClose,
-              name: stock.name,
-              lastUpdate: stock.lastUpdate
-            };
-          }
-          return prevStock;
+            return idx;
+          });
         });
-        return updatedStocks;
-      });
+      } else {
+        // Regular stock update
+        setStocks(prevStocks => {
+          const updatedStocks = prevStocks.map(prevStock => {
+            if (prevStock.symbol === stock.symbol) {
+              // Show price change animation
+              const prevPrice = prevStock.price;
+              const newPrice = stock.price;
+              if (prevPrice !== newPrice) {
+                setPriceChanges(prev => ({
+                  ...prev,
+                  [stock.symbol]: newPrice > prevPrice ? 'up' : 'down'
+                }));
+                
+                // Clear animation after 2 seconds
+                setTimeout(() => {
+                  setPriceChanges(prev => {
+                    const newChanges = { ...prev };
+                    delete newChanges[stock.symbol];
+                    return newChanges;
+                  });
+                }, 2000);
+              }
+              
+              return {
+                ...prevStock,
+                price: stock.price,
+                percent: stock.percentChange,
+                volume: stock.volume ? stock.volume.toLocaleString() : '-',
+                previousClose: stock.previousClose,
+                name: stock.name,
+                lastUpdate: stock.lastUpdate
+              };
+            }
+            return prevStock;
+          });
+          return updatedStocks;
+        });
+      }
+      
       setLastUpdateTime(new Date());
     });
 
@@ -361,7 +387,7 @@ const SidebarWatchlist = () => {
               'bg-red-500'
             }`}></div>
             <span className="font-bold text-lg text-gray-900 tracking-tight">NIFTY 50</span>
-            {isConnected && lastUpdateTime && (
+            {isConnected && lastUpdateTime && shouldShowLiveStatus() && (
               <span className="text-xs text-gray-500 ml-2">
                 Live • {lastUpdateTime.toLocaleTimeString()}
               </span>
@@ -401,32 +427,13 @@ const SidebarWatchlist = () => {
             </svg>
             <span>
               {(() => {
-                const now = new Date();
-                const day = now.getDay(); // 0 is Sunday, 1 is Monday, etc.
-                const hours = now.getHours();
-                const minutes = now.getMinutes();
-                const currentTime = hours * 60 + minutes;
-                const marketOpenTime = 9 * 60; // 9:00 AM
-                const marketCloseTime = 15 * 60 + 30; // 3:30 PM
-                
-                // Check if it's a weekday (Monday to Friday) and within trading hours
-                if (day >= 1 && day <= 5 && currentTime >= marketOpenTime && currentTime <= marketCloseTime) {
+                // Check if we should show live status (9:00 AM to 3:30 PM, Mon-Fri)
+                if (shouldShowLiveStatus()) {
+                  const now = new Date();
                   return `Live • ${now.toLocaleTimeString()}`;
                 } else {
-                  // Market is closed
-                  const tomorrow = new Date(now);
-                  tomorrow.setDate(now.getDate() + 1);
-                  
-                  // If it's Friday after hours or weekend, show Monday
-                  if (day === 5 && currentTime > marketCloseTime) {
-                    tomorrow.setDate(now.getDate() + 3); // Next Monday
-                  } else if (day === 6) {
-                    tomorrow.setDate(now.getDate() + 2); // Next Monday
-                  } else if (day === 0) {
-                    tomorrow.setDate(now.getDate() + 1); // Next Monday
-                  }
-                  
-                  return `Market is closed. It will open tomorrow at 09:00 AM`;
+                  // Show 24/7 trading message
+                  return "Buy & Sell available 24/7. Real-time prices shown during market hours (Mon-Fri 9:00 AM - 3:30 PM)";
                 }
               })()}
             </span>
@@ -472,11 +479,11 @@ const SidebarWatchlist = () => {
         <div className="flex-1 flex flex-col animate-fade-in sidebar-content">
           <div className="flex items-center gap-4 px-4 py-3 border-b border-gray-50 bg-gray-50">
             {indices.map((idx) => (
-              <div key={idx.name} className="flex flex-col items-start text-xs">
+              <div key={idx.symbol} className="flex flex-col items-start text-xs">
                 <span className="font-semibold text-gray-700 tracking-tight">{idx.name}</span>
                 <span className={`flex items-center gap-1 font-bold ${idx.change >= 0 ? "text-green-600" : "text-red-500"}`}>
                   {idx.value.toLocaleString()}
-                  <span className="ml-1 flex items-center">{idx.change >= 0 ? <ArrowUpRight size={12}/> : <ArrowDownRight size={12}/>} {idx.percent}%</span>
+                  <span className="ml-1 flex items-center">{idx.change >= 0 ? <ArrowUpRight size={12}/> : <ArrowDownRight size={12}/>} {Math.abs(idx.percent).toFixed(2)}%</span>
                 </span>
               </div>
             ))}

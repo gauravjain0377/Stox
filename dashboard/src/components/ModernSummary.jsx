@@ -223,6 +223,22 @@ const ModernSummary = () => {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Information Banner */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-start">
+          <div className="flex-shrink-0">
+            <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div className="ml-3 flex-1">
+            <p className="text-sm text-blue-700">
+              <span className="font-medium">Trading Availability:</span> Buy and sell stocks are available 24/7. Real-time stock prices are shown during market hours (Monday to Friday, 9:00 AM to 3:30 PM IST).
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Investment Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Total Investment */}

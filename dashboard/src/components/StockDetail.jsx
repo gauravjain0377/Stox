@@ -11,6 +11,7 @@ import { stockService } from '../services/stockService';
 import { io } from 'socket.io-client';
 import { WS_URL, getApiUrl } from '../config/api';
 import LightweightStockChart from './LightweightStockChart';
+import { shouldShowLiveStatus } from '../lib/utils';
 
 // Simple seeded pseudo-random generator
 function seededRandom(seed) {
@@ -544,7 +545,7 @@ const StockDetail = () => {
                     ) : (
                       <WifiOff size={16} className="text-red-500" title="Connection lost" />
                     )}
-                    {lastUpdateTime && (
+                    {lastUpdateTime && shouldShowLiveStatus() && (
                       <span className="text-xs text-gray-500">
                         Live • {lastUpdateTime.toLocaleTimeString()}
                       </span>
@@ -616,15 +617,20 @@ const StockDetail = () => {
                     </button>
                   )}
                 </div>
-                {/* Professional Chart using Lightweight Charts */}
-                <LightweightStockChart
-                  symbol={currentStock?.symbol || ''}
-                  price={currentStock?.price || 0}
-                  percent={currentStock?.percent || 0}
-                  range={selectedRange}
-                  type={chartType}
-                  realTimePrice={realPrice}
-                />
+                {/* Professional Chart using Lightweight Charts or Candlestick based on selection */}
+                {chartType === 'area' ? (
+                  <LightweightStockChart
+                    symbol={currentStock?.symbol || ''}
+                    price={currentStock?.price || 0}
+                    percent={currentStock?.percent || 0}
+                    range={selectedRange}
+                    realTimePrice={realPrice}
+                  />
+                ) : (
+                  <div className="text-center py-10 text-gray-500">
+                    Candlestick chart implementation coming soon
+                  </div>
+                )}
               </div>
             </div>
             <div className="bg-white rounded-xl shadow-sm">
@@ -671,10 +677,20 @@ const StockDetail = () => {
             <div className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Market Stats</h3>
-                {isConnected && (
+                {isConnected && shouldShowLiveStatus() ? (
                   <div className="flex items-center gap-1 text-green-600">
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                     <span className="text-xs">Live</span>
+                  </div>
+                ) : isConnected ? (
+                  <div className="flex items-center gap-1 text-gray-600">
+                    <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                    <span className="text-xs">Connected</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-red-600">
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <span className="text-xs">Offline</span>
                   </div>
                 )}
               </div>
