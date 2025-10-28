@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Eye, EyeOff, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { getApiUrl } from '../config/api';
 
 function getPasswordStrength(password) {
   if (!password) return 0;

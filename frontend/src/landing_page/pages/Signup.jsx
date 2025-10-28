@@ -93,34 +93,14 @@ const Signup = () => {
         }, 100);
         
         // Show success message
-        setErrorMsg("Account created successfully! Redirecting to dashboard...");
+        setErrorMsg("Account created successfully! Please check your email for verification code.");
         
-        // Final check before redirect
+        // Redirect to email verification page
         setTimeout(() => {
-          const finalToken = localStorage.getItem('token');
-          const finalUser = localStorage.getItem('user');
-          const finalLogin = localStorage.getItem('isLoggedIn');
-          console.log("🎯 Final check before redirect:", {
-            token: finalToken ? "EXISTS" : "MISSING",
-            tokenValue: finalToken,
-            user: finalUser ? "EXISTS" : "MISSING",
-            isLoggedIn: finalLogin
-          });
-          
-          if (!finalToken || !finalUser || finalLogin !== 'true') {
-            console.error("❌ CRITICAL: Auth data missing before redirect!");
-            setErrorMsg("Authentication error. Please try again.");
-            return;
-          }
-          
-          console.log("🔄 Redirecting to dashboard with auth data...");
-          // Pass auth data through URL parameters
-          const authParams = new URLSearchParams({
-            token: finalToken,
-            user: finalUser,
-            isLoggedIn: finalLogin
-          });
-          window.location.href = `${DASHBOARD_URL}?${authParams.toString()}`;
+          // Store email in localStorage for verification page
+          localStorage.setItem('verificationEmail', form.email);
+          // Redirect to email verification page
+          window.location.href = `/verify-email?email=${encodeURIComponent(form.email)}`;
         }, 2000);
       } else {
         setErrorMsg(res.data.message || "Registration failed. Please try again.");

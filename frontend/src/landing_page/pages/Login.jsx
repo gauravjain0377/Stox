@@ -247,7 +247,7 @@ const Login = () => {
                 </button>
               </div>
               <div style={{ textAlign: 'right', marginBottom: 18 }}>
-                <a href="#" style={{ color: ACCENT, fontWeight: 500, fontSize: 14, textDecoration: 'none' }}>Forgot your password?</a>
+                <Link to="/password-reset" style={{ color: ACCENT, fontWeight: 500, fontSize: 14, textDecoration: 'none' }}>Forgot your password?</Link>
               </div>
               <button type="submit" style={{ width: '100%', background: ACCENT, color: 'white', fontWeight: 700, fontSize: 18, border: 'none', borderRadius: 22, padding: '12px 0', marginBottom: 8, boxShadow: '0 2px 8px rgba(25,195,125,0.10)', cursor: 'pointer', transition: 'background 0.18s' }}>SIGN IN</button>
             </form>

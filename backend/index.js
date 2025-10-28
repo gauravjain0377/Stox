@@ -113,6 +113,11 @@ async function generateUniqueClientCode() {
   return code;
 }
 
+// Helper to generate 6-digit verification codes
+function generateVerificationCode() {
+  return String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
+}
+
 passport.serializeUser((user, done) => {
   done(null, user.id);
 });
@@ -508,7 +513,7 @@ app.put('/api/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const allowed = [
-      'username','email','dateOfBirth','gender','phone','clientCode','pan','maritalStatus','fatherName','demat','incomeRange','avatar'
+      'username','email','dateOfBirth','gender','phone','pan','maritalStatus','fatherName','demat','incomeRange','avatar'
     ];
     const update = {};
     for (const key of allowed) {
@@ -879,16 +884,92 @@ app.post("/api/users/register", async (req, res) => {
     // Create a simple token (in production, use JWT)
     const token = Buffer.from(`${newUser._id}-${Date.now()}`).toString('base64');
     
+    // Generate and send verification code
+    const verificationCode = generateVerificationCode();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    
+    newUser.emailVerificationCode = verificationCode;
+    newUser.emailVerificationExpires = expiresAt;
+    await newUser.save();
+    
+    // Send verification email
+    const smtpUser = process.env.MAIL_USER;
+    const smtpPass = process.env.MAIL_PASS;
+    const smtpHost = process.env.MAIL_HOST || 'smtp.gmail.com';
+    const smtpPort = parseInt(process.env.MAIL_PORT || '587', 10);
+    
+    if (smtpUser && smtpPass) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: smtpHost,
+          port: smtpPort,
+          secure: smtpPort === 465,
+          auth: { user: smtpUser, pass: smtpPass }
+        });
+        
+        const mailSubject = `[StockSathi] Email Verification Code`;
+        const html = `
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0f172a;background:#f8fafc;padding:20px;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+              <thead>
+                <tr>
+                  <th style="text-align:left;background:#0ea5e9;padding:16px 20px;color:#ffffff;font-size:18px;">
+                    StockSathi
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="padding:16px 20px;border-bottom:1px solid #f1f5f9;">
+                    <div style="color:#0f172a;font-weight:600;font-size:16px;margin-bottom:8px;">Welcome to StockSathi!</div>
+                    <div style="color:#475569">Please use the following code to verify your email address and complete your registration.</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:20px;">
+                    <div style="text-align:center;margin:20px 0;">
+                      <div style="font-size:32px;font-weight:bold;color:#0ea5e9;letter-spacing:8px;padding:15px 0;">${verificationCode}</div>
+                      <div style="color:#64748b;margin-top:10px;">This code will expire in 15 minutes.</div>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:16px 20px;background:#f1f5f9;text-align:center;">
+                    <div style="color:#64748b;font-size:12px;">
+                      If you didn't register for StockSathi, please ignore this email.
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        `;
+        
+        await transporter.sendMail({
+          from: {
+            name: 'StockSathi',
+            address: smtpUser
+          },
+          to: newUser.email,
+          subject: mailSubject,
+          html
+        });
+      } catch (emailError) {
+        console.error('❌ Failed to send verification email:', emailError);
+      }
+    }
+    
     res.json({ 
       success: true, 
-      message: "User created successfully",
+      message: "User created successfully. Please check your email for verification code.",
       token: token,
       user: {
         id: newUser._id,
         name: newUser.username,
         email: newUser.email,
         clientCode: newUser.clientCode,
-        role: "user"
+        role: "user",
+        isEmailVerified: newUser.isEmailVerified
       }
     });
   } catch (error) {
@@ -941,6 +1022,14 @@ app.post("/api/users/login", async (req, res) => {
       });
     }
     
+    // Check if email is verified
+    if (!user.isEmailVerified) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Please verify your email address before logging in" 
+      });
+    }
+    
     // Ensure clientCode exists
     if (!user.clientCode) {
       user.clientCode = await generateUniqueClientCode();
@@ -964,6 +1053,285 @@ app.post("/api/users/login", async (req, res) => {
   } catch (error) {
     console.error("Error in login:", error);
     res.status(500).json({ success: false, message: "Error during login" });
+  }
+});
+
+// Send email verification code
+app.post('/api/users/send-verification-code', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    // Validate email
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+    
+    // Check if user exists
+    const user = await UserModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    // Generate 6-digit verification code
+    const verificationCode = generateVerificationCode();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    
+    // Save code to user
+    user.emailVerificationCode = verificationCode;
+    user.emailVerificationExpires = expiresAt;
+    await user.save();
+    
+    // Send email with verification code
+    const smtpUser = process.env.MAIL_USER;
+    const smtpPass = process.env.MAIL_PASS;
+    const smtpHost = process.env.MAIL_HOST || 'smtp.gmail.com';
+    const smtpPort = parseInt(process.env.MAIL_PORT || '587', 10);
+    
+    if (!smtpUser || !smtpPass) {
+      return res.status(500).json({ success: false, message: 'Mailer is not configured on server' });
+    }
+    
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      auth: { user: smtpUser, pass: smtpPass }
+    });
+    
+    const mailSubject = `[StockSathi] Email Verification Code`;
+    const html = `
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0f172a;background:#f8fafc;padding:20px;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+          <thead>
+            <tr>
+              <th style="text-align:left;background:#0ea5e9;padding:16px 20px;color:#ffffff;font-size:18px;">
+                StockSathi
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding:16px 20px;border-bottom:1px solid #f1f5f9;">
+                <div style="color:#0f172a;font-weight:600;font-size:16px;margin-bottom:8px;">Email Verification</div>
+                <div style="color:#475569">Please use the following code to verify your email address.</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:20px;">
+                <div style="text-align:center;margin:20px 0;">
+                  <div style="font-size:32px;font-weight:bold;color:#0ea5e9;letter-spacing:8px;padding:15px 0;">${verificationCode}</div>
+                  <div style="color:#64748b;margin-top:10px;">This code will expire in 15 minutes.</div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 20px;background:#f1f5f9;text-align:center;">
+                <div style="color:#64748b;font-size:12px;">
+                  If you didn't request this code, please ignore this email.
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+    
+    await transporter.sendMail({
+      from: {
+        name: 'StockSathi',
+        address: smtpUser
+      },
+      to: email,
+      subject: mailSubject,
+      html
+    });
+    
+    res.json({ success: true, message: 'Verification code sent to your email' });
+  } catch (err) {
+    console.error('❌ Error sending verification code:', err);
+    res.status(500).json({ success: false, message: 'Failed to send verification code' });
+  }
+});
+
+// Verify email with code
+app.post('/api/users/verify-email', async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    
+    // Validate input
+    if (!email || !code) {
+      return res.status(400).json({ success: false, message: 'Email and code are required' });
+    }
+    
+    // Find user
+    const user = await UserModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    // Check if code is valid and not expired
+    if (user.emailVerificationCode !== code) {
+      return res.status(400).json({ success: false, message: 'Invalid verification code' });
+    }
+    
+    if (user.emailVerificationExpires < new Date()) {
+      return res.status(400).json({ success: false, message: 'Verification code has expired' });
+    }
+    
+    // Update user as verified
+    user.isEmailVerified = true;
+    user.emailVerificationCode = undefined;
+    user.emailVerificationExpires = undefined;
+    await user.save();
+    
+    res.json({ success: true, message: 'Email verified successfully' });
+  } catch (err) {
+    console.error('❌ Error verifying email:', err);
+    res.status(500).json({ success: false, message: 'Failed to verify email' });
+  }
+});
+
+// Send password reset code
+app.post('/api/users/send-password-reset-code', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    // Validate email
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+    
+    // Check if user exists
+    const user = await UserModel.findOne({ email });
+    if (!user) {
+      // For security, we don't reveal if the email exists or not
+      return res.json({ success: true, message: 'If the email exists, a reset code has been sent' });
+    }
+    
+    // Generate 6-digit reset code
+    const resetCode = generateVerificationCode();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    
+    // Save code to user
+    user.passwordResetCode = resetCode;
+    user.passwordResetExpires = expiresAt;
+    await user.save();
+    
+    // Send email with reset code
+    const smtpUser = process.env.MAIL_USER;
+    const smtpPass = process.env.MAIL_PASS;
+    const smtpHost = process.env.MAIL_HOST || 'smtp.gmail.com';
+    const smtpPort = parseInt(process.env.MAIL_PORT || '587', 10);
+    
+    if (!smtpUser || !smtpPass) {
+      return res.status(500).json({ success: false, message: 'Mailer is not configured on server' });
+    }
+    
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      auth: { user: smtpUser, pass: smtpPass }
+    });
+    
+    const mailSubject = `[StockSathi] Password Reset Code`;
+    const html = `
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0f172a;background:#f8fafc;padding:20px;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+          <thead>
+            <tr>
+              <th style="text-align:left;background:#0ea5e9;padding:16px 20px;color:#ffffff;font-size:18px;">
+                StockSathi
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding:16px 20px;border-bottom:1px solid #f1f5f9;">
+                <div style="color:#0f172a;font-weight:600;font-size:16px;margin-bottom:8px;">Password Reset</div>
+                <div style="color:#475569">Please use the following code to reset your password.</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:20px;">
+                <div style="text-align:center;margin:20px 0;">
+                  <div style="font-size:32px;font-weight:bold;color:#0ea5e9;letter-spacing:8px;padding:15px 0;">${resetCode}</div>
+                  <div style="color:#64748b;margin-top:10px;">This code will expire in 15 minutes.</div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 20px;background:#f1f5f9;text-align:center;">
+                <div style="color:#64748b;font-size:12px;">
+                  If you didn't request this code, please ignore this email.
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+    
+    await transporter.sendMail({
+      from: {
+        name: 'StockSathi',
+        address: smtpUser
+      },
+      to: email,
+      subject: mailSubject,
+      html
+    });
+    
+    res.json({ success: true, message: 'Password reset code sent to your email' });
+  } catch (err) {
+    console.error('❌ Error sending password reset code:', err);
+    res.status(500).json({ success: false, message: 'Failed to send password reset code' });
+  }
+});
+
+// Reset password with code
+app.post('/api/users/reset-password', async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+    
+    // Validate input
+    if (!email || !code || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Email, code, and new password are required' });
+    }
+    
+    // Validate password strength
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long' });
+    }
+    
+    // Find user
+    const user = await UserModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    // Check if code is valid and not expired
+    if (user.passwordResetCode !== code) {
+      return res.status(400).json({ success: false, message: 'Invalid reset code' });
+    }
+    
+    if (user.passwordResetExpires < new Date()) {
+      return res.status(400).json({ success: false, message: 'Reset code has expired' });
+    }
+    
+    // Hash new password
+    const hashedPassword = await hashPassword(newPassword);
+    
+    // Update user password and clear reset code
+    user.password = hashedPassword;
+    user.passwordResetCode = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+    
+    res.json({ success: true, message: 'Password reset successfully' });
+  } catch (err) {
+    console.error('❌ Error resetting password:', err);
+    res.status(500).json({ success: false, message: 'Failed to reset password' });
   }
 });
 

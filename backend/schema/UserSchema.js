@@ -18,6 +18,15 @@ const UserSchema = new Schema({
   demat: { type: String },
   incomeRange: { type: String },
   createdAt: { type: Date, default: Date.now },
+  
+  // Email verification fields
+  emailVerificationCode: { type: String },
+  emailVerificationExpires: { type: Date },
+  isEmailVerified: { type: Boolean, default: false },
+  
+  // Password reset fields
+  passwordResetCode: { type: String },
+  passwordResetExpires: { type: Date }
 });
 
 module.exports = { UserSchema }; 

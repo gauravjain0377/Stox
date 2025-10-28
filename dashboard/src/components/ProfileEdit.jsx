@@ -5,12 +5,12 @@ import { getApiUrl } from '../config/api';
 
 const ProfileEdit = () => {
   const context = useContext(GeneralContext);
-  const { setUser } = useAuth();
+  const { setUser, updateAuthUser } = useAuth();
   const user = context.user || {};
   const [profile, setProfile] = useState({
     name: user?.username || '',
     email: user?.email || '',
-    dob: user?.dateOfBirth || '',
+    dob: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
     gender: user?.gender || '',
     mobile: user?.phone || '',
     clientCode: user?.clientCode || '',
@@ -44,7 +44,7 @@ const ProfileEdit = () => {
           dateOfBirth: profile.dob,
           gender: profile.gender,
           phone: profile.mobile,
-          clientCode: profile.clientCode,
+          // clientCode is read-only and should not be updated
           pan: profile.pan,
           maritalStatus: profile.maritalStatus,
           fatherName: profile.fatherName,
@@ -56,14 +56,37 @@ const ProfileEdit = () => {
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message || 'Failed to update');
 
-      // Update auth context and localStorage
+      // Update auth context and localStorage using updateAuthUser
       const updatedUserForAuth = {
         id: data.user.id,
         name: data.user.username,
-        email: data.user.email
+        email: data.user.email,
+        clientCode: data.user.clientCode,
+        dateOfBirth: data.user.dateOfBirth,
+        gender: data.user.gender,
+        phone: data.user.phone,
+        pan: data.user.pan,
+        maritalStatus: data.user.maritalStatus,
+        fatherName: data.user.fatherName,
+        demat: data.user.demat,
+        incomeRange: data.user.incomeRange
       };
-      localStorage.setItem('user', JSON.stringify(updatedUserForAuth));
-      setUser(updatedUserForAuth);
+      updateAuthUser(updatedUserForAuth);
+      
+      // Update the local state to reflect the saved data
+      setProfile({
+        name: data.user.username || '',
+        email: data.user.email || '',
+        dob: data.user.dateOfBirth ? new Date(data.user.dateOfBirth).toISOString().split('T')[0] : '',
+        gender: data.user.gender || '',
+        mobile: data.user.phone || '',
+        clientCode: data.user.clientCode || '',
+        pan: data.user.pan || '',
+        maritalStatus: data.user.maritalStatus || '',
+        fatherName: data.user.fatherName || '',
+        demat: data.user.demat || '',
+        incomeRange: data.user.incomeRange || '',
+      });
 
       setSuccess('Profile updated successfully!');
       setTimeout(() => setSuccess(''), 1500);

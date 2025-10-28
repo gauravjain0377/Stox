@@ -2,6 +2,7 @@ import React, { useState, useContext } from "react";
 import GeneralContext from "./GeneralContext";
 import { useTheme } from "../context/ThemeContext";
 import "../styles/Settings.css";
+import { getApiUrl } from '../config/api';
 
 const Settings = ({ user }) => {
   const context = useContext(GeneralContext);
@@ -559,7 +560,7 @@ const Settings = ({ user }) => {
             message: form.message.value,
           };
           try {
-            const res = await fetch('http://localhost:3000/api/support/contact', {
+            const res = await fetch(getApiUrl('/api/support/contact'), {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload)
