@@ -135,5 +135,3 @@ const ContactSupport = () => {
 };
 
 export default ContactSupport;
-
-

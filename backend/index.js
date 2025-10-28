@@ -8,14 +8,10 @@ const bcrypt = require("bcryptjs");
 const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const YahooFinance = require('yahoo-finance2').default;
+const yahooFinance = require('yahoo-finance2').default;
 const nodemailer = require('nodemailer');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
-
-// Initialize Yahoo Finance with suppress notices
-const yahooFinance = new YahooFinance();
-yahooFinance._notices.suppress(['yahooSurvey']);
 
 // Suppress Yahoo Finance API notices
 yahooFinance.suppressNotices(['yahooSurvey']);
