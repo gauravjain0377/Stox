@@ -6,8 +6,8 @@ const isValidEmail = (value) => /[^\s@]+@[^\s@]+\.[^\s@]+/.test(value);
 
 const ContactSupport = () => {
   const { user } = useAuth();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState(user?.username || "");
+  const [email, setEmail] = useState(user?.email || "");
   const [purpose, setPurpose] = useState("General inquiry");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
@@ -34,13 +34,27 @@ const ContactSupport = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, subject, purpose, message })
       });
+      
       const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message || "Failed to send message");
+      
+      if (!res.ok) {
+        throw new Error(data.message || `HTTP ${res.status}: ${res.statusText}`);
+      }
+      
+      if (!data.success) {
+        throw new Error(data.message || "Failed to send message");
+      }
+      
       setNotice({ type: "success", text: data.message || "Message sent successfully." });
+      // Reset form fields
       setSubject("");
       setMessage("");
     } catch (err) {
-      setNotice({ type: "error", text: err.message || "Failed to send message." });
+      console.error("Contact form error:", err);
+      setNotice({ 
+        type: "error", 
+        text: err.message || "Failed to send message. Please try again later or contact us directly at gjain0229@gmail.com" 
+      });
     } finally {
       setSubmitting(false);
     }
@@ -65,7 +79,7 @@ const ContactSupport = () => {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={user?.name || "Gaurav Jain"}
+              placeholder={user?.username || "Your Name"}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             />
@@ -135,5 +149,3 @@ const ContactSupport = () => {
 };
 
 export default ContactSupport;
-
-
