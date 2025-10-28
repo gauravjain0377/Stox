@@ -213,7 +213,9 @@ const PortfolioAnalytics = () => {
             sectorValues[sector] = 0;
           }
           
-          sectorValues[sector] += holding.price * holding.qty;
+          // Use real-time prices for current value calculation
+          const currentPrice = (realTimePrices && realTimePrices[holding.name]) || holding.price || 0;
+          sectorValues[sector] += currentPrice * (holding.qty || 0);
         });
         
         // Convert to arrays for chart
@@ -222,7 +224,7 @@ const PortfolioAnalytics = () => {
         
         // Calculate percentages
         const totalValue = sectorData.reduce((sum, value) => sum + value, 0);
-        const sectorPercentages = sectorData.map(value => (value / totalValue) * 100);
+        const sectorPercentages = totalValue > 0 ? sectorData.map(value => (value / totalValue) * 100) : [];
         
         setSectorAllocation({
           labels: sectorLabels,
@@ -256,8 +258,8 @@ const PortfolioAnalytics = () => {
           // Simulate market indices (in a real app, these would come from an API)
           // Using portfolio value with some variation to simulate correlation
           const baseValue = yearData[index];
-          niftyData.push(baseValue * 7 * (0.9 + Math.random() * 0.2));
-          sensexData.push(baseValue * 20 * (0.9 + Math.random() * 0.2));
+          niftyData.push(baseValue * 0.95 * (0.9 + Math.random() * 0.2));
+          sensexData.push(baseValue * 1.05 * (0.9 + Math.random() * 0.2));
         }
       }
       
@@ -268,18 +270,19 @@ const PortfolioAnalytics = () => {
         sensex: sensexData
       });
       
-      // Calculate top gainers and losers from holdings
+      // Calculate top gainers and losers from holdings using real-time prices
       if (userHoldings && userHoldings.length > 0) {
-        // Calculate percent change for each holding
+        // Calculate percent change for each holding using real-time prices
         const holdingsWithChange = userHoldings.map(holding => {
-          const currentValue = holding.price * holding.qty;
-          const investedValue = holding.avg * holding.qty;
-          const percentChange = ((currentValue - investedValue) / investedValue) * 100;
+          const currentPrice = (realTimePrices && realTimePrices[holding.name]) || holding.price || 0;
+          const currentValue = currentPrice * (holding.qty || 0);
+          const investedValue = (holding.avg || 0) * (holding.qty || 0);
+          const percentChange = investedValue > 0 ? ((currentValue - investedValue) / investedValue) * 100 : 0;
           
           return {
             stock: holding.name,
-            change: percentChange > 0 ? `+${percentChange.toFixed(1)}%` : `${percentChange.toFixed(1)}%`,
-            price: holding.price,
+            change: percentChange > 0 ? `+${percentChange.toFixed(2)}%` : `${percentChange.toFixed(2)}%`,
+            price: currentPrice,
             volume: `${holding.qty} shares`
           };
         });
@@ -300,7 +303,7 @@ const PortfolioAnalytics = () => {
       }
       
       // Calculate performance metrics
-      if (yearData.length > 0) {
+      if (yearData.length > 0 && yearData[0] > 0) {
         const startValue = yearData[0];
         const endValue = yearData[yearData.length - 1];
         const totalReturn = ((endValue - startValue) / startValue) * 100;
@@ -311,37 +314,53 @@ const PortfolioAnalytics = () => {
         // Calculate volatility (standard deviation of returns)
         const returns = [];
         for (let i = 1; i < yearData.length; i++) {
-          returns.push((yearData[i] - yearData[i-1]) / yearData[i-1]);
+          if (yearData[i-1] > 0) {
+            returns.push((yearData[i] - yearData[i-1]) / yearData[i-1]);
+          }
         }
-        const avgReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-        const volatility = Math.sqrt(returns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) / returns.length) * 100;
         
-        // Approximate Sharpe ratio (assuming risk-free rate of 4%)
-        const sharpeRatio = (annualizedReturn - 4) / volatility;
-        
-        // Calculate maximum drawdown
-        let maxDrawdown = 0;
-        let peak = yearData[0];
-        
-        for (const value of yearData) {
-          if (value > peak) {
-            peak = value;
+        if (returns.length > 0) {
+          const avgReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+          const volatility = Math.sqrt(returns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) / returns.length) * 100;
+          
+          // Approximate Sharpe ratio (assuming risk-free rate of 4%)
+          const sharpeRatio = volatility > 0 ? (annualizedReturn - 4) / volatility : 0;
+          
+          // Calculate maximum drawdown
+          let maxDrawdown = 0;
+          let peak = yearData[0];
+          
+          for (const value of yearData) {
+            if (value > peak) {
+              peak = value;
+            }
+            
+            if (peak > 0) {
+              const drawdown = (peak - value) / peak * 100;
+              if (drawdown > maxDrawdown) {
+                maxDrawdown = drawdown;
+              }
+            }
           }
           
-          const drawdown = (peak - value) / peak * 100;
-          if (drawdown > maxDrawdown) {
-            maxDrawdown = drawdown;
-          }
+          setPerformanceMetrics({
+            totalReturn: totalReturn,
+            annualizedReturn: annualizedReturn,
+            sharpeRatio: isNaN(sharpeRatio) ? 0 : sharpeRatio,
+            maxDrawdown: -maxDrawdown,
+            volatility: isNaN(volatility) ? 0 : volatility,
+            beta: 0.95 // Placeholder - would need market data to calculate
+          });
+        } else {
+          setPerformanceMetrics({
+            totalReturn: totalReturn,
+            annualizedReturn: annualizedReturn,
+            sharpeRatio: 0,
+            maxDrawdown: 0,
+            volatility: 0,
+            beta: 0.95
+          });
         }
-        
-        setPerformanceMetrics({
-          totalReturn: totalReturn,
-          annualizedReturn: annualizedReturn,
-          sharpeRatio: sharpeRatio,
-          maxDrawdown: -maxDrawdown,
-          volatility: volatility,
-          beta: 0.95 // Placeholder - would need market data to calculate
-        });
       }
       
       setIsLoading(false);
@@ -349,7 +368,7 @@ const PortfolioAnalytics = () => {
       console.error("Error generating portfolio history:", error);
       setIsLoading(false);
     }
-  }, [orders, holdingsLoading, userHoldings]);
+  }, [orders, holdingsLoading, userHoldings, realTimePrices]);
   
   // Fetch real-time market movers data
   useEffect(() => {
@@ -389,25 +408,35 @@ const PortfolioAnalytics = () => {
       const { name, qty, price, mode } = order;
       
       if (!holdings[name]) {
-        holdings[name] = { qty: 0, value: 0 };
+        holdings[name] = { qty: 0, avgPrice: 0 };
       }
+      
+      const quantity = parseInt(qty);
       
       if (mode === "BUY") {
-        holdings[name].qty += parseInt(qty);
-        holdings[name].value = holdings[name].qty * price;
+        // Calculate new average price
+        const totalValue = holdings[name].avgPrice * holdings[name].qty + price * quantity;
+        const totalQty = holdings[name].qty + quantity;
+        holdings[name].avgPrice = totalQty > 0 ? totalValue / totalQty : 0;
+        holdings[name].qty = totalQty;
       } else if (mode === "SELL") {
-        holdings[name].qty -= parseInt(qty);
-        holdings[name].value = holdings[name].qty * price;
-      }
-      
-      // Remove stocks with zero quantity
-      if (holdings[name].qty <= 0) {
-        delete holdings[name];
+        holdings[name].qty -= quantity;
+        // Keep the same average price for remaining shares
+        if (holdings[name].qty <= 0) {
+          delete holdings[name];
+        }
       }
     });
     
-    // Calculate total portfolio value
-    return Object.values(holdings).reduce((total, stock) => total + stock.value, 0);
+    // Calculate total portfolio value using real-time prices if available
+    let totalValue = 0;
+    Object.keys(holdings).forEach(stockName => {
+      const holding = holdings[stockName];
+      const currentPrice = (realTimePrices && realTimePrices[stockName]) || holding.avgPrice || 0;
+      totalValue += currentPrice * holding.qty;
+    });
+    
+    return totalValue;
   };
 
   // Portfolio Value Over Time
@@ -629,13 +658,13 @@ const PortfolioAnalytics = () => {
         <div className="pa-top-movers-card">
           <div className="pa-section-title">Top Gainers in Your Portfolio</div>
           <div className="pa-movers-list">
-            {topGainers.length > 0 ? (
-              topGainers.map((h, idx) => (
+            {topPortfolioGainers.length > 0 ? (
+              topPortfolioGainers.map((h, idx) => (
                 <div className="pa-mover-pill pa-mover-gain" key={idx}>
                   <span className="pa-mover-icon">▲</span>
-                  <span className="pa-mover-symbol">{h.stock}</span>
-                  <span className="pa-mover-pct">{h.change}</span>
-                  <span className="pa-mover-price">₹{h.price}</span>
+                  <span className="pa-mover-symbol">{h.name}</span>
+                  <span className="pa-mover-pct">{h.percent > 0 ? '+' : ''}{h.percent.toFixed(2)}%</span>
+                  <span className="pa-mover-price">₹{h.currentPrice.toFixed(2)}</span>
                 </div>
               ))
             ) : (
@@ -646,13 +675,13 @@ const PortfolioAnalytics = () => {
         <div className="pa-top-movers-card">
           <div className="pa-section-title">Top Losers in Your Portfolio</div>
           <div className="pa-movers-list">
-            {topLosers.length > 0 ? (
-              topLosers.map((h, idx) => (
+            {topPortfolioLosers.length > 0 ? (
+              topPortfolioLosers.map((h, idx) => (
                 <div className="pa-mover-pill pa-mover-loss" key={idx}>
                   <span className="pa-mover-icon">▼</span>
-                  <span className="pa-mover-symbol">{h.stock}</span>
-                  <span className="pa-mover-pct">{h.change}</span>
-                  <span className="pa-mover-price">₹{h.price}</span>
+                  <span className="pa-mover-symbol">{h.name}</span>
+                  <span className="pa-mover-pct">{h.percent > 0 ? '+' : ''}{h.percent.toFixed(2)}%</span>
+                  <span className="pa-mover-price">₹{h.currentPrice.toFixed(2)}</span>
                 </div>
               ))
             ) : (
@@ -691,19 +720,19 @@ const PortfolioAnalytics = () => {
       <div className="pa-metrics-grid">
         <div className="pa-metric">
           <div className="pa-metric-label">Sharpe Ratio</div>
-          <div className="pa-metric-value">{performanceMetrics.sharpeRatio}</div>
+          <div className="pa-metric-value">{performanceMetrics.sharpeRatio.toFixed(2)}</div>
         </div>
         <div className="pa-metric">
           <div className="pa-metric-label">Beta</div>
-          <div className="pa-metric-value">{performanceMetrics.beta}</div>
+          <div className="pa-metric-value">{performanceMetrics.beta.toFixed(2)}</div>
         </div>
         <div className="pa-metric">
           <div className="pa-metric-label">Volatility</div>
-          <div className="pa-metric-value">{performanceMetrics.volatility}%</div>
+          <div className="pa-metric-value">{performanceMetrics.volatility.toFixed(2)}%</div>
         </div>
         <div className="pa-metric">
           <div className="pa-metric-label">Max Drawdown</div>
-          <div className="pa-metric-value pa-red">{performanceMetrics.maxDrawdown}%</div>
+          <div className="pa-metric-value pa-red">{performanceMetrics.maxDrawdown.toFixed(2)}%</div>
         </div>
       </div>
 
@@ -724,11 +753,11 @@ const PortfolioAnalytics = () => {
               <li key={idx} className="pa-gainer-item">
                 <div className="pa-gain-main">
                   <span className="pa-gain-symbol">{stock.symbol}</span>
-                  <span className="pa-gain-price">₹{stock.price}</span>
+                  <span className="pa-gain-price">₹{stock.price?.toFixed(2)}</span>
                 </div>
                 <div className="pa-gain-meta">
                   <span className="pa-gain-arrow pa-green">▲</span>
-                  <span className="pa-gain-change pa-green">{stock.percent > 0 ? '+' : ''}{stock.percent.toFixed(2)}%</span>
+                  <span className="pa-gain-change pa-green">{stock.percent > 0 ? '+' : ''}{stock.percent?.toFixed(2)}%</span>
                   <span className="pa-gain-volume">{stock.volume}</span>
                 </div>
               </li>
@@ -742,11 +771,11 @@ const PortfolioAnalytics = () => {
               <li key={idx} className="pa-loser-item">
                 <div className="pa-gain-main">
                   <span className="pa-gain-symbol">{stock.symbol}</span>
-                  <span className="pa-gain-price">₹{stock.price}</span>
+                  <span className="pa-gain-price">₹{stock.price?.toFixed(2)}</span>
                 </div>
                 <div className="pa-gain-meta">
                   <span className="pa-gain-arrow pa-red">▼</span>
-                  <span className="pa-gain-change pa-red">{stock.percent > 0 ? '+' : ''}{stock.percent.toFixed(2)}%</span>
+                  <span className="pa-gain-change pa-red">{stock.percent > 0 ? '+' : ''}{stock.percent?.toFixed(2)}%</span>
                   <span className="pa-gain-volume">{stock.volume}</span>
                 </div>
               </li>
@@ -778,8 +807,8 @@ const PortfolioAnalytics = () => {
                     <span className={`pa-rt-type-badge ${tx.type.toLowerCase()}`}>{tx.type}</span>
                   </td>
                   <td>{tx.quantity}</td>
-                  <td>₹{tx.price.toFixed(2)}</td>
-                  <td>₹{tx.total.toFixed(2)}</td>
+                  <td>₹{tx.price?.toFixed(2)}</td>
+                  <td>₹{tx.total?.toFixed(2)}</td>
                 </tr>
               ))
             ) : (
@@ -797,10 +826,11 @@ const PortfolioAnalytics = () => {
           <h4>Current Holdings</h4>
           <div className="holdings-summary">
             {userHoldings?.slice(0, 5).map((holding, index) => {
-              const currentValue = holding.price * holding.qty;
-              const investedValue = holding.avg * holding.qty;
+              const currentPrice = (realTimePrices && realTimePrices[holding.name]) || holding.price || 0;
+              const currentValue = currentPrice * (holding.qty || 0);
+              const investedValue = (holding.avg || 0) * (holding.qty || 0);
               const pnl = currentValue - investedValue;
-              const pnlPercent = (pnl / investedValue) * 100;
+              const pnlPercent = investedValue > 0 ? (pnl / investedValue) * 100 : 0;
               
               return (
                 <div key={index} className="holding-item">
@@ -811,7 +841,7 @@ const PortfolioAnalytics = () => {
                       {pnlPercent.toFixed(2)}%
                     </span>
                   </div>
-                  <div className="holding-value">₹{currentValue.toFixed(0)}</div>
+                  <div className="holding-value">₹{currentValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
                 </div>
               );
             })}
@@ -857,14 +887,14 @@ const PortfolioAnalytics = () => {
             <div className="pa-market-mover-pill pa-mover-gain" key={"mg"+idx}>
               <span className="pa-mover-icon">▲</span>
               <span className="pa-mover-symbol">{m.symbol}</span>
-              <span className="pa-mover-pct">{m.percent > 0 ? '+' : ''}{m.percent.toFixed(2)}%</span>
+              <span className="pa-mover-pct">{m.percent > 0 ? '+' : ''}{m.percent?.toFixed(2)}%</span>
             </div>
           ))}
           {marketLosers.map((m, idx) => (
             <div className="pa-market-mover-pill pa-mover-loss" key={"ml"+idx}>
               <span className="pa-mover-icon">▼</span>
               <span className="pa-mover-symbol">{m.symbol}</span>
-              <span className="pa-mover-pct">{m.percent > 0 ? '+' : ''}{m.percent.toFixed(2)}%</span>
+              <span className="pa-mover-pct">{m.percent > 0 ? '+' : ''}{m.percent?.toFixed(2)}%</span>
             </div>
           ))}
         </div>
