@@ -87,6 +87,13 @@ const ProfileEdit = () => {
         demat: data.user.demat || '',
         incomeRange: data.user.incomeRange || '',
       });
+      
+      // Refresh user data in GeneralContext
+      if (context.refreshUserData) {
+        setTimeout(() => {
+          context.refreshUserData();
+        }, 500);
+      }
 
       setSuccess('Profile updated successfully!');
       setTimeout(() => setSuccess(''), 1500);

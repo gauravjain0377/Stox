@@ -1,73 +1,134 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
+import PropTypes from 'prop-types';
 
 const TABS = ['Overview', 'Financials', 'News', 'History'];
 
-// Add CSS for smooth tab transitions
-const tabContentStyle = {
-  transition: 'opacity 0.5s ease-out, transform 0.5s ease-out',
-  opacity: 1,
-  transform: 'translateX(0)',
-  display: 'block'
-};
-const tabContentHiddenStyle = {
-  opacity: 0,
-  transform: 'translateX(20px)',
-  transition: 'opacity 0.3s ease-in, transform 0.3s ease-in'
-};
-
 export default function StockInfoTabs({ symbol }) {
+  // Validate input
+  if (!symbol || typeof symbol !== 'string') {
+    console.error('Invalid symbol prop provided to StockInfoTabs:', symbol);
+    return (
+      <div style={{ maxWidth: 700, margin: '0 auto', background: '#fff', borderRadius: 16, boxShadow: '0 4px 24px rgba(0,0,0,0.08)', padding: 0, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+        <div style={{ padding: '32px', textAlign: 'center', color: '#ef4444' }}>
+          Invalid stock symbol provided
+        </div>
+      </div>
+    );
+  }
   const [activeTab, setActiveTab] = useState('Overview');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showingTab, setShowingTab] = useState(activeTab);
-  const [tabVisible, setTabVisible] = useState(true);
-
-  // Animate tab change with smoother transitions
-  useEffect(() => {
-    // Start fade out
-    setTabVisible(false);
-    
-    // After fade out completes, change content and start fade in
-    const timeout = setTimeout(() => {
-      setShowingTab(activeTab);
-      // Small delay before fade in for smoother effect
-      setTimeout(() => {
-        setTabVisible(true);
-      }, 50);
-    }, 250);
-    
-    return () => clearTimeout(timeout);
-  }, [activeTab]);
 
   // Remove .NS or .BSE for company info lookup
   const cleanSymbol = symbol.replace(/\.(NS|BSE)$/i, '');
   const getEndpoint = (tab) => `/api/stocks/${cleanSymbol}/companyinfo`;
 
   useEffect(() => {
-    console.log('Requesting company info for:', cleanSymbol, 'Endpoint:', getEndpoint(activeTab));
-    setLoading(true);
-    setError('');
-    setData(null);
-    axios.get(getEndpoint(activeTab))
-      .then(res => {
-        console.log('Company info data:', res.data); // Debug: log the received data
-        setData(res.data);
-      })
-      .catch(err => setError(err.response?.data?.error || 'Failed to fetch data'))
-      .finally(() => setLoading(false));
-  }, [activeTab, symbol]);
+    let isMounted = true; // Flag to prevent state updates after component unmount
+    
+    const fetchCompanyInfo = async (retryCount = 0) => {
+      const maxRetries = 2;
+      
+      if (!isMounted) return;
+      
+      console.log('Requesting company info for:', cleanSymbol, 'Endpoint:', getEndpoint(activeTab));
+      setLoading(true);
+      setError('');
+      setData(null);
+      
+      try {
+        const response = await axios.get(getEndpoint(activeTab), {
+          timeout: 10000 // 10 second timeout
+        });
+        
+        if (!isMounted) return;
+        
+        console.log('Company info data:', response.data); // Debug: log the received data
+        
+        // Handle new response structure
+        if (response.data.success === false) {
+          // Backend returned an error
+          setError(response.data.error || 'No data available for this stock');
+        } else if (response.data && Object.keys(response.data).length > 0) {
+          // Extract data from new structure
+          const companyData = response.data.data || response.data;
+          setData(companyData);
+        } else {
+          setError('No data available for this stock');
+        }
+      } catch (err) {
+        if (!isMounted) return;
+        
+        console.error('Error fetching company info:', err);
+        
+        // Retry mechanism for network errors
+        if ((err.code === 'ECONNABORTED' || err.request) && retryCount < maxRetries) {
+          console.log(`Retrying... (${retryCount + 1}/${maxRetries})`);
+          setTimeout(() => {
+            if (isMounted) {
+              fetchCompanyInfo(retryCount + 1);
+            }
+          }, 1000 * (retryCount + 1)); // Exponential backoff
+          return;
+        }
+        
+        // More detailed error handling
+        if (err.code === 'ECONNABORTED') {
+          setError('Request timeout. Please try again.');
+        } else if (err.response) {
+          // Server responded with error status
+          if (err.response.status === 404) {
+            setError('Company information not found for this stock');
+          } else {
+            const errorMessage = err.response.data?.error || 
+                                err.response.data?.message || 
+                                `Server error: ${err.response.status}`;
+            setError(errorMessage);
+          }
+        } else if (err.request) {
+          // Network error
+          setError('Network error. Please check your connection.');
+        } else {
+          // Other error
+          setError('Failed to fetch data. Please try again.');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+    
+    StockInfoTabs.propTypes = {
+      symbol: PropTypes.string.isRequired
+    };
+    
+    // Only fetch if we have a valid symbol
+    if (cleanSymbol) {
+      fetchCompanyInfo();
+    } else {
+      setError('Invalid stock symbol');
+      setLoading(false);
+    }
+    
+    // Cleanup function
+    return () => {
+      isMounted = false;
+    };
+  }, [activeTab, symbol, cleanSymbol]);
 
   return (
-    <div style={{ maxWidth: 700, margin: '0 auto', background: '#fff', borderRadius: 16, boxShadow: '0 2px 16px rgba(0,0,0,0.07)', padding: 0, border: '1px solid #e5e7eb' }}>
-      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #e5e7eb', background: '#f9fafb', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}>
+    <div style={{ maxWidth: 700, margin: '0 auto', background: '#fff', borderRadius: 16, boxShadow: '0 4px 24px rgba(0,0,0,0.08)', padding: 0, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #e5e7eb', background: 'linear-gradient(to bottom, #f9fafb, #f3f4f6)', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}>
         {TABS.map(tab => (
           <button
             key={tab}
             style={{
               flex: 1,
-              padding: '14px 0',
+              padding: '16px 0',
               border: 'none',
               background: activeTab === tab ? '#fff' : 'transparent',
               color: activeTab === tab ? '#2563eb' : '#6b7280',
@@ -76,12 +137,14 @@ export default function StockInfoTabs({ symbol }) {
               borderBottom: activeTab === tab ? '3px solid #2563eb' : '3px solid transparent',
               borderTopLeftRadius: tab === TABS[0] ? 16 : 0,
               borderTopRightRadius: tab === TABS[TABS.length-1] ? 16 : 0,
-              transition: 'all 0.3s ease-in-out',
+              transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
               cursor: 'pointer',
               outline: 'none',
-              boxShadow: activeTab === tab ? '0 2px 8px rgba(37,99,235,0.04)' : 'none',
+              boxShadow: activeTab === tab ? '0 2px 8px rgba(37,99,235,0.08)' : 'none',
               position: 'relative',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              transform: 'translateZ(0)', // Enable hardware acceleration
+              zIndex: activeTab === tab ? 2 : 1
             }}
             onClick={() => setActiveTab(tab)}
             onMouseOver={e => {
@@ -95,60 +158,184 @@ export default function StockInfoTabs({ symbol }) {
             aria-selected={activeTab === tab}
             aria-label={tab}
           >
-            {tab}
+            <motion.span
+              whileHover={{ y: -2 }}
+              whileTap={{ y: 1 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+            >
+              {tab}
+            </motion.span>
           </button>
         ))}
       </div>
       <div style={{ minHeight: 220, padding: '32px 32px 24px 32px', borderBottomLeftRadius: 16, borderBottomRightRadius: 16, background: '#fff', overflow: 'hidden' }}>
-        {loading && <div style={{ color: '#2563eb', fontWeight: 500 }}>Loading...</div>}
-        {error && <div style={{ color: '#ef4444', fontWeight: 500 }}>{error}</div>}
-        {!loading && !error && data && (
-          <div
-            key={showingTab}
-            style={tabVisible ? tabContentStyle : tabContentHiddenStyle}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
           >
-            {showingTab === 'Overview' && (
-              <div>
-                <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>{data.company_name || <span style={{color: 'gray'}}>No Name</span>}</h2>
-                <p style={{ fontSize: 16, color: '#2563eb', fontWeight: 600, marginBottom: 8 }}><b>Sector:</b> {data.sector || <span style={{color: 'gray'}}>N/A</span>}</p>
-                <p style={{ fontSize: 16, marginBottom: 16 }}><b>About:</b> {data.about || <span style={{color: 'gray'}}>N/A</span>}</p>
-                <p style={{ fontSize: 15, color: '#374151' }}><b>History:</b> {data.history || <span style={{color: 'gray'}}>N/A</span>}</p>
-              </div>
+            {loading && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                style={{ color: '#2563eb', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}
+              >
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  style={{ width: 16, height: 16, border: '2px solid #2563eb', borderRightColor: 'transparent', borderRadius: '50%' }}
+                />
+                Loading...
+              </motion.div>
             )}
-            {showingTab === 'Financials' && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
-                <div><b>Market Cap (Cr):</b><br />{data.financials_2025?.market_cap_crore ?? <span style={{color: 'gray'}}>N/A</span>}</div>
-                <div><b>Close Price:</b><br />{data.financials_2025?.close_price ?? <span style={{color: 'gray'}}>N/A</span>}</div>
-                <div><b>PE Ratio:</b><br />{data.financials_2025?.pe_ratio ?? <span style={{color: 'gray'}}>N/A</span>}</div>
-                <div><b>PB Ratio:</b><br />{data.financials_2025?.pb_ratio ?? <span style={{color: 'gray'}}>N/A</span>}</div>
-                <div><b>ROE (%):</b><br />{data.financials_2025?.roe_percent ?? <span style={{color: 'gray'}}>N/A</span>}</div>
-                <div><b>ROCE (%):</b><br />{data.financials_2025?.roce_percent ?? <span style={{color: 'gray'}}>N/A</span>}</div>
-                <div style={{ gridColumn: '1 / span 2', marginTop: 8 }}>
-                  <b>Latest Returns:</b><br />
-                  1M: {data.financials_2025?.latest_returns?.['1_month'] ?? <span style={{color: 'gray'}}>N/A</span>}%, {' '}
-                  6M: {data.financials_2025?.latest_returns?.['6_month'] ?? <span style={{color: 'gray'}}>N/A</span>}%, {' '}
-                  1Y: {data.financials_2025?.latest_returns?.['1_year'] ?? <span style={{color: 'gray'}}>N/A</span>}%
-                </div>
-              </div>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                style={{ color: '#ef4444', fontWeight: 500 }}
+              >
+                {error}
+              </motion.div>
             )}
-            {showingTab === 'News' && (
-              <ul style={{ paddingLeft: 0, listStyle: 'none' }}>
-                {Array.isArray(data.news_2025) && data.news_2025.length > 0 ? (
-                  data.news_2025.map((n, i) => (
-                    <li key={i} style={{ marginBottom: 16, background: '#f3f4f6', borderRadius: 8, padding: '12px 16px', color: '#374151', fontSize: 15 }}>{n}</li>
-                  ))
-                ) : (
-                  <li style={{color: 'gray'}}>No news available.</li>
-                )}
-              </ul>
+            {!loading && !error && (
+              data ? (
+                <>
+                  {activeTab === 'Overview' && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <motion.h2 
+                        style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                      >
+                        {data.company_name || <span style={{color: 'gray'}}>No Name</span>}
+                      </motion.h2>
+                      <motion.p 
+                        style={{ fontSize: 16, color: '#2563eb', fontWeight: 600, marginBottom: 8 }}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        <b>Sector:</b> {data.sector || <span style={{color: 'gray'}}>N/A</span>}
+                      </motion.p>
+                      <motion.p 
+                        style={{ fontSize: 16, marginBottom: 16 }}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                      >
+                        <b>About:</b> {data.about || <span style={{color: 'gray'}}>N/A</span>}
+                      </motion.p>
+                      <motion.p 
+                        style={{ fontSize: 15, color: '#374151' }}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 }}
+                      >
+                        <b>History:</b> {data.history || <span style={{color: 'gray'}}>N/A</span>}
+                      </motion.p>
+                    </motion.div>
+                  )}
+                  {activeTab === 'Financials' && (
+                    <motion.div 
+                      style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                    >
+                      {Object.entries({
+                        'Market Cap (Cr)': data.financials_2025?.market_cap_crore,
+                        'Close Price': data.financials_2025?.close_price,
+                        'PE Ratio': data.financials_2025?.pe_ratio,
+                        'PB Ratio': data.financials_2025?.pb_ratio,
+                        'ROE (%)': data.financials_2025?.roe_percent,
+                        'ROCE (%)': data.financials_2025?.roce_percent
+                      }).map(([label, value], index) => (
+                        <motion.div 
+                          key={label}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.1 + index * 0.05 }}
+                          style={{ padding: '12px', background: '#f9fafb', borderRadius: 8, border: '1px solid #e5e7eb' }}
+                        >
+                          <b>{label}:</b><br />
+                          {value ?? <span style={{color: 'gray'}}>N/A</span>}
+                        </motion.div>
+                      ))}
+                      <motion.div 
+                        style={{ gridColumn: '1 / span 2', marginTop: 8, padding: '12px', background: '#f9fafb', borderRadius: 8, border: '1px solid #e5e7eb' }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.4 }}
+                      >
+                        <b>Latest Returns:</b><br />
+                        1M: {data.financials_2025?.latest_returns?.['1_month'] ?? <span style={{color: 'gray'}}>N/A</span>}%, {' '}
+                        6M: {data.financials_2025?.latest_returns?.['6_month'] ?? <span style={{color: 'gray'}}>N/A</span>}%, {' '}
+                        1Y: {data.financials_2025?.latest_returns?.['1_year'] ?? <span style={{color: 'gray'}}>N/A</span>}%
+                      </motion.div>
+                    </motion.div>
+                  )}
+                  {activeTab === 'News' && (
+                    <ul style={{ paddingLeft: 0, listStyle: 'none' }}>
+                      {Array.isArray(data.news_2025) && data.news_2025.length > 0 ? (
+                        data.news_2025.map((n, i) => (
+                          <motion.li 
+                            key={i} 
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.1 }}
+                            style={{ marginBottom: 16, background: '#f3f4f6', borderRadius: 8, padding: '12px 16px', color: '#374151', fontSize: 15 }}
+                          >
+                            {n}
+                          </motion.li>
+                        ))
+                      ) : (
+                        <li style={{color: 'gray'}}>No news available.</li>
+                      )}
+                    </ul>
+                  )}
+                  {activeTab === 'History' && (
+                    <motion.div 
+                      style={{ fontSize: 15, color: '#374151' }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.1 }}
+                      >
+                        {data.history || <span style={{color: 'gray'}}>N/A</span>}
+                      </motion.p>
+                    </motion.div>
+                  )}
+                </>
+              ) : (
+                // Fallback when no data is available
+                <motion.div 
+                  style={{ textAlign: 'center', padding: '40px 20px', color: '#6b7280' }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <p>No information available for this stock</p>
+                  <p style={{ fontSize: '14px', marginTop: '8px' }}>
+                    Company data may be temporarily unavailable
+                  </p>
+                </motion.div>
+              )
             )}
-            {showingTab === 'History' && (
-              <div style={{ fontSize: 15, color: '#374151' }}>
-                <p>{data.history || <span style={{color: 'gray'}}>N/A</span>}</p>
-              </div>
-            )}
-          </div>
-        )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );

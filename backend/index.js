@@ -36,9 +36,10 @@ const allowedOrigins = [
   process.env.DASHBOARD_URL
 ].filter(Boolean);
 
-// Add wildcard for Vercel preview deployments
+// Add wildcard for Vercel preview deployments and Render deployments
 if (process.env.NODE_ENV === 'production') {
   allowedOrigins.push(/vercel\.app$/);
+  allowedOrigins.push(/onrender\.com$/);
 }
 
 const app = express();
@@ -59,10 +60,10 @@ app.use(cors({
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
     
-    // In production, be more permissive for Vercel deployments
+    // In production, be more permissive for Vercel and Render deployments
     if (process.env.NODE_ENV === 'production') {
-      // Allow all vercel.app origins
-      if (origin && origin.includes('vercel.app')) {
+      // Allow all vercel.app and onrender.com origins
+      if (origin && (origin.includes('vercel.app') || origin.includes('onrender.com'))) {
         return callback(null, true);
       }
       
@@ -94,8 +95,10 @@ app.use(session({
   cookie: { 
     secure: NODE_ENV === 'production', // Use secure cookies in production (HTTPS)
     sameSite: NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site cookies in production
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    domain: NODE_ENV === 'production' ? '.onrender.com' : undefined // Set domain for Render deployment
+  },
+  proxy: true // Trust the reverse proxy (important for Render)
 }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -508,6 +511,43 @@ app.get('/api/holdings', authenticateUser, async (req, res) => {
   }
 });
 
+// Get user profile
+app.get('/api/users/:id', authenticateUser, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Ensure users can only access their own profile
+    if (req.user._id.toString() !== id) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+    
+    const user = await UserModel.findById(id);
+    if (!user) return res.status(404).json({ success:false, message:'User not found' });
+
+    return res.json({
+      success: true,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        dateOfBirth: user.dateOfBirth,
+        gender: user.gender,
+        phone: user.phone,
+        clientCode: user.clientCode,
+        pan: user.pan,
+        maritalStatus: user.maritalStatus,
+        fatherName: user.fatherName,
+        demat: user.demat,
+        incomeRange: user.incomeRange,
+        avatar: user.avatar
+      }
+    });
+  } catch (err) {
+    console.error('❌ Error fetching user profile:', err);
+    res.status(500).json({ success:false, message:'Server error' });
+  }
+});
+
 // Update user profile
 app.put('/api/users/:id', async (req, res) => {
   try {
@@ -553,11 +593,6 @@ app.put('/api/users/:id', async (req, res) => {
   }
 });
 
-// Add test endpoint
-app.get("/api/test", (req, res) => {
-  res.json({ message: "Backend is running!" });
-});
-
 // Health check endpoint
 app.get("/api/health", (req, res) => {
   res.json({ 
@@ -565,7 +600,10 @@ app.get("/api/health", (req, res) => {
     timestamp: new Date().toISOString(),
     clientsConnected: connectedClients,
     stocksTracked: currentStockData.size,
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    uptime: process.uptime(),
+    memoryUsage: process.memoryUsage(),
+    version: "1.0.0"
   });
 });
 
@@ -595,12 +633,71 @@ app.get("/api/test-db", async (req, res) => {
       message: "Database connection test",
       status: states[dbState] || "unknown",
       readyState: dbState,
-      connected: dbState === 1
+      connected: dbState === 1,
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
     res.status(500).json({ 
       error: "Database test failed", 
-      details: error.message 
+      details: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Add API test endpoint
+app.get("/api/test", (req, res) => {
+  res.json({ 
+    message: "Backend API is running!",
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Add comprehensive health check endpoint
+app.get("/api/health-check", async (req, res) => {
+  try {
+    const dbState = mongoose.connection.readyState;
+    const dbStates = {
+      0: "disconnected",
+      1: "connected", 
+      2: "connecting",
+      3: "disconnecting"
+    };
+    
+    // Test database connectivity
+    const dbTest = await UserModel.findOne().limit(1).then(() => true).catch(() => false);
+    
+    res.json({ 
+      status: "OK",
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      uptime: process.uptime(),
+      memoryUsage: process.memoryUsage(),
+      clientsConnected: connectedClients,
+      stocksTracked: currentStockData.size,
+      database: {
+        status: dbStates[dbState] || "unknown",
+        connected: dbState === 1,
+        testQuery: dbTest
+      },
+      api: {
+        version: "1.0.0",
+        endpoints: {
+          "/api/health": "OK",
+          "/api/stocks": "OK",
+          "/api/users": "OK",
+          "/api/orders": "OK",
+          "/api/holdings": "OK"
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: "ERROR",
+      error: "Health check failed", 
+      details: error.message,
+      timestamp: new Date().toISOString()
     });
   }
 });
@@ -969,7 +1066,15 @@ app.post("/api/users/register", async (req, res) => {
         email: newUser.email,
         clientCode: newUser.clientCode,
         role: "user",
-        isEmailVerified: newUser.isEmailVerified
+        isEmailVerified: newUser.isEmailVerified,
+        dateOfBirth: newUser.dateOfBirth,
+        gender: newUser.gender,
+        phone: newUser.phone,
+        pan: newUser.pan,
+        maritalStatus: newUser.maritalStatus,
+        fatherName: newUser.fatherName,
+        demat: newUser.demat,
+        incomeRange: newUser.incomeRange
       }
     });
   } catch (error) {
@@ -1047,7 +1152,15 @@ app.post("/api/users/login", async (req, res) => {
         name: user.username,
         email: user.email,
         clientCode: user.clientCode,
-        role: "user"
+        role: "user",
+        dateOfBirth: user.dateOfBirth,
+        gender: user.gender,
+        phone: user.phone,
+        pan: user.pan,
+        maritalStatus: user.maritalStatus,
+        fatherName: user.fatherName,
+        demat: user.demat,
+        incomeRange: user.incomeRange
       }
     });
   } catch (error) {

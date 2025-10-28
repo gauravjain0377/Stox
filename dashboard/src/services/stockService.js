@@ -62,35 +62,55 @@ const fallbackStocks = [
 // Helper function to get user-specific storage key
 const getWatchlistKey = (userId) => `watchlists_${userId || 'default'}`;
 
+// Enhanced fetch helper with better error handling
+const fetchWithErrorHandling = async (url, options = {}) => {
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
+    
+    // Check if response is OK
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`HTTP ${response.status}: ${errorData.message || response.statusText}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error(`Fetch error for ${url}:`, error);
+    throw error;
+  }
+};
+
 export const stockService = {
   async getAllStocks() {
     try {
-      const response = await fetch(getApiUrl('/api/stocks'));
-      if (response.ok) {
-        const data = await response.json();
-        const stocks = data.stocks || [];
-        
-        // If backend returns empty or insufficient data, use fallback
-        if (stocks.length === 0 || stocks.length < 50) {
-          return fallbackStocks;
-        }
-        
-        return stocks;
+      const data = await fetchWithErrorHandling(getApiUrl('/api/stocks'));
+      // Handle new response structure
+      const stocks = (data.success === true ? data.stocks || data.data : []) || [];
+      
+      // If backend returns empty or insufficient data, use fallback
+      if (stocks.length === 0 || stocks.length < 50) {
+        console.warn('StockService: Insufficient stock data, using fallback');
+        return fallbackStocks;
       }
-      return fallbackStocks;
+      
+      return stocks;
     } catch (error) {
-      console.error('StockService: Error fetching stocks:', error);
+      console.error('StockService: Error fetching stocks, using fallback:', error);
       return fallbackStocks;
     }
   },
 
   async getStockData(symbol) {
     try {
-      const response = await fetch(getApiUrl(`/api/stocks/${symbol}`));
-      if (response.ok) {
-        return await response.json();
-      }
-      return null;
+      const data = await fetchWithErrorHandling(getApiUrl(`/api/stocks/${symbol}`));
+      // Handle new response structure
+      return data.success === true ? data.data : data;
     } catch (error) {
       console.error('StockService: Error fetching stock data:', error);
       return null;
@@ -99,12 +119,13 @@ export const stockService = {
 
   async getCompanyInfo() {
     try {
-      const response = await fetch(getApiUrl('/api/stocks/company-info'));
-      if (response.ok) {
-        const data = await response.json();
-        return data.companies || [];
+      const data = await fetchWithErrorHandling(getApiUrl('/api/stocks/company-info'));
+      // Handle new response structure
+      if (data.success === false) {
+        console.warn('StockService: Company info request failed:', data.error);
+        return [];
       }
-      return [];
+      return data.companies || data.data || [];
     } catch (error) {
       console.error('StockService: Error fetching company info:', error);
       return [];
@@ -139,13 +160,9 @@ export const stockService = {
   // Health check function
   async healthCheck() {
     try {
-      const response = await fetch(getApiUrl('/api/health'));
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Health check response:', data);
-        return data;
-      }
-      return { status: 'error', message: 'Health check endpoint not available' };
+      const data = await fetchWithErrorHandling(getApiUrl('/api/health'));
+      console.log('Health check response:', data);
+      return data;
     } catch (error) {
       console.error('StockService: Health check failed:', error);
       return { status: 'error', message: error.message };

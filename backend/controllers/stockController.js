@@ -140,15 +140,49 @@ exports.getCompanyHistory = async (req, res) => {
 };
 
 exports.getCompanyInfo = async (req, res) => {
-  const info = await CompanyInfo.findOne({ symbol: req.params.symbol });
-  if (info) {
-    res.json(info);
-  } else {
-    res.status(404).json({ error: 'No company info found.' });
+  try {
+    const symbol = req.params.symbol;
+    
+    if (!symbol) {
+      return res.status(400).json({ error: 'Stock symbol is required' });
+    }
+    
+    const info = await CompanyInfo.findOne({ symbol: symbol });
+    
+    if (info) {
+      // Return consistent data structure
+      res.json({
+        success: true,
+        data: info
+      });
+    } else {
+      // Return consistent error structure
+      res.status(404).json({ 
+        success: false,
+        error: 'No company info found for this stock symbol' 
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching company info:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Internal server error while fetching company information' 
+    });
   }
 };
 
 exports.getAllCompanyInfo = async (req, res) => {
-  const all = await CompanyInfo.find({});
-  res.json(all);
+  try {
+    const all = await CompanyInfo.find({});
+    res.json({
+      success: true,
+      data: all
+    });
+  } catch (error) {
+    console.error('Error fetching all company info:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Internal server error while fetching company information' 
+    });
+  }
 };

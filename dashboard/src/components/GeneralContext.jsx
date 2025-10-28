@@ -191,6 +191,77 @@ export const GeneralContextProvider = ({ children }) => {
     selectedStock,
     setSelectedStock,
   };
+  
+  // Function to refresh user data from backend
+  const refreshUserData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const userData = localStorage.getItem('user');
+      
+      if (token && userData) {
+        const user = JSON.parse(userData);
+        const userId = user.id;
+        
+        // Fetch updated user data from backend
+        const response = await fetch(getApiUrl(`/api/users/${userId}`), {
+          method: 'GET',
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.user) {
+            // Update localStorage with fresh user data
+            const updatedUser = {
+              id: data.user.id,
+              name: data.user.username,
+              email: data.user.email,
+              clientCode: data.user.clientCode,
+              dateOfBirth: data.user.dateOfBirth,
+              gender: data.user.gender,
+              phone: data.user.phone,
+              pan: data.user.pan,
+              maritalStatus: data.user.maritalStatus,
+              fatherName: data.user.fatherName,
+              demat: data.user.demat,
+              incomeRange: data.user.incomeRange
+            };
+            
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            
+            // Update context state
+            setUser({
+              userId: data.user.id,
+              username: data.user.username,
+              email: data.user.email,
+              clientCode: data.user.clientCode,
+              id: data.user.id,
+              dateOfBirth: data.user.dateOfBirth,
+              gender: data.user.gender,
+              phone: data.user.phone,
+              pan: data.user.pan,
+              maritalStatus: data.user.maritalStatus,
+              fatherName: data.user.fatherName,
+              demat: data.user.demat,
+              incomeRange: data.user.incomeRange
+            });
+            
+            console.log("✅ User data refreshed from backend");
+            return true;
+          }
+        }
+      }
+    } catch (error) {
+      console.error("❌ Error refreshing user data:", error);
+    }
+    return false;
+  };
+  
+  // Add refreshUserData to mockData so it can be accessed by components
+  mockData.refreshUserData = refreshUserData;
 
   // Check authentication on mount
   useEffect(() => {
@@ -270,7 +341,15 @@ export const GeneralContextProvider = ({ children }) => {
             username: user.name,
             email: user.email,
             clientCode: user.clientCode,
-            id: user.id // Keep both for compatibility
+            id: user.id, // Keep both for compatibility
+            dateOfBirth: user.dateOfBirth,
+            gender: user.gender,
+            phone: user.phone,
+            pan: user.pan,
+            maritalStatus: user.maritalStatus,
+            fatherName: user.fatherName,
+            demat: user.demat,
+            incomeRange: user.incomeRange
           };
           console.log("✅ User authenticated and set:", { 
             userId: user.id, 
@@ -284,8 +363,23 @@ export const GeneralContextProvider = ({ children }) => {
             username: user.name,
             email: user.email,
             clientCode: user.clientCode,
-            id: user.id
+            id: user.id,
+            dateOfBirth: user.dateOfBirth,
+            gender: user.gender,
+            phone: user.phone,
+            pan: user.pan,
+            maritalStatus: user.maritalStatus,
+            fatherName: user.fatherName,
+            demat: user.demat,
+            incomeRange: user.incomeRange
           });
+          
+          // Refresh user data from backend to get latest profile info
+          setTimeout(() => {
+            if (typeof mockData.refreshUserData === 'function') {
+              mockData.refreshUserData();
+            }
+          }, 500);
         } catch (error) {
           console.error("❌ Error parsing user data:", error);
           // Clear invalid data and redirect
