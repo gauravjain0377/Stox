@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { getApiUrl } from '../config/api';
 
 const FaqItem = ({ q, a, isOpen, onToggle }) => {
   return (

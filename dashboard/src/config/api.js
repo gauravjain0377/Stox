@@ -8,5 +8,5 @@ export const getApiUrl = (endpoint) => {
   return `${API_URL}${endpoint}`;
 };
 
-// WebSocket URL (same as API_URL for Socket.IO)
-export const WS_URL = API_URL;
+// WebSocket URL (can be different from API_URL for Socket.IO)
+export const WS_URL = import.meta.env.VITE_WS_URL || API_URL;

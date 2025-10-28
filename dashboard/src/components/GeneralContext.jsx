@@ -356,12 +356,18 @@ export const GeneralContextProvider = ({ children }) => {
     if (!holdings || holdings.length === 0) return;
     
     console.log('GeneralContext: Setting up WebSocket for real-time prices');
+    console.log('WebSocket URL:', WS_URL);
     
-    // Initialize socket connection
+    // Initialize socket connection with better reconnection settings
     socketRef.current = io(WS_URL, {
       transports: ['websocket', 'polling'],
       timeout: 20000,
-      forceNew: true
+      forceNew: true,
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      randomizationFactor: 0.5
     });
     
     const socket = socketRef.current;
@@ -384,7 +390,16 @@ export const GeneralContextProvider = ({ children }) => {
     
     socket.on('connect_error', (error) => {
       console.error('GeneralContext: WebSocket connection error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        type: error.type,
+        description: error.description
+      });
       setIsSocketConnected(false);
+    });
+    
+    socket.on('error', (error) => {
+      console.error('GeneralContext: WebSocket error:', error);
     });
     
     // Listen for individual stock updates

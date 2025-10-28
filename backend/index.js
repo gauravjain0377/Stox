@@ -36,6 +36,11 @@ const allowedOrigins = [
   process.env.DASHBOARD_URL
 ].filter(Boolean);
 
+// Add wildcard for Vercel preview deployments
+if (process.env.NODE_ENV === 'production') {
+  allowedOrigins.push(/vercel\.app$/);
+}
+
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
@@ -43,7 +48,9 @@ const io = new Server(server, {
     origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-user-data']
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-user-data'],
+    // Allow all origins in development
+    ...(process.env.NODE_ENV === 'development' && { origin: '*' })
   }
 });
 
@@ -52,11 +59,29 @@ app.use(cors({
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
+    // In production, be more permissive for Vercel deployments
+    if (process.env.NODE_ENV === 'production') {
+      // Allow all vercel.app origins
+      if (origin && origin.includes('vercel.app')) {
+        return callback(null, true);
+      }
+      
+      // Check against allowed origins
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        return callback(null, true);
+      }
+      
       console.log('⚠️  CORS blocked origin:', origin);
-      callback(null, true); // Allow in production to prevent issues, log for monitoring
+      // Still allow in production to prevent issues, but log for monitoring
+      return callback(null, true);
+    } else {
+      // In development, be more strict but still allow localhost
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        return callback(null, true);
+      }
+      
+      console.log('⚠️  CORS blocked origin:', origin);
+      return callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true
@@ -526,6 +551,28 @@ app.put('/api/users/:id', async (req, res) => {
 // Add test endpoint
 app.get("/api/test", (req, res) => {
   res.json({ message: "Backend is running!" });
+});
+
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.json({ 
+    status: "OK", 
+    timestamp: new Date().toISOString(),
+    clientsConnected: connectedClients,
+    stocksTracked: currentStockData.size,
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// WebSocket test endpoint
+app.get("/api/ws-test", (req, res) => {
+  res.json({ 
+    status: "OK", 
+    message: "WebSocket server is running",
+    clientsConnected: connectedClients,
+    stocksTracked: currentStockData.size,
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Add database test endpoint
@@ -1208,6 +1255,49 @@ app.post("/newOrder", async (req, res) => {
   }
 });
 
+// Test stock data endpoint
+app.get("/api/stocks/test", async (req, res) => {
+  try {
+    console.log('Testing stock data fetch');
+    // Test with a few known symbols
+    const testSymbols = ['RELIANCE.NS', 'HDFCBANK.NS', 'TCS.NS'];
+    const results = await Promise.all(
+      testSymbols.map(async (symbol) => {
+        try {
+          console.log('Fetching data for:', symbol);
+          const data = await yahooFinance.quote(symbol);
+          console.log('Received data for:', symbol, data.regularMarketPrice);
+          return {
+            symbol,
+            price: data.regularMarketPrice,
+            name: data.shortName,
+            success: true
+          };
+        } catch (error) {
+          console.error('Error fetching data for:', symbol, error.message);
+          return {
+            symbol,
+            error: error.message,
+            success: false
+          };
+        }
+      })
+    );
+    
+    res.json({ 
+      success: true,
+      timestamp: new Date().toISOString(),
+      results
+    });
+  } catch (error) {
+    console.error('Error in stock test endpoint:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
 // Register stockRoutes before the hardcoded endpoints
 app.use('/api/stocks', stockRoutes);
 
@@ -1428,6 +1518,8 @@ let connectedClients = 0;
 // Fetch live stock data
 async function fetchLiveStockData() {
   try {
+    console.log('Fetching live stock data for', stockSymbols.length, 'symbols');
+    
     const results = await Promise.allSettled(
       stockSymbols.map(async (symbol) => {
         try {
@@ -1491,14 +1583,22 @@ async function fetchLiveStockData() {
       io.emit('stockUpdate', stock);
     });
 
-    // Emit bulk update every 30 seconds
+    // Emit bulk update
     if (validResults.length > 0) {
       io.emit('bulkStockUpdate', validResults);
       console.log(`Updated ${validResults.length} stocks at ${new Date().toLocaleTimeString()}`);
+    } else {
+      console.log('No valid stock data to emit');
     }
 
   } catch (error) {
     console.error('Error in fetchLiveStockData:', error);
+    // Emit fallback data if available
+    if (currentStockData.size > 0) {
+      const fallbackData = Array.from(currentStockData.values());
+      io.emit('bulkStockUpdate', fallbackData);
+      console.log('Emitted fallback data due to fetch error');
+    }
   }
 }
 
@@ -1507,15 +1607,22 @@ io.on('connection', (socket) => {
   connectedClients++;
   console.log(`Client connected. Total clients: ${connectedClients}`);
   
+  // Log connection details
+  console.log('Socket connection details:', {
+    id: socket.id,
+    remoteAddress: socket.conn.remoteAddress,
+    transport: socket.conn.transport.name
+  });
+  
   // Send current data to newly connected client
   if (currentStockData.size > 0) {
     const allStocks = Array.from(currentStockData.values());
     socket.emit('initialStockData', allStocks);
   }
 
-  socket.on('disconnect', () => {
+  socket.on('disconnect', (reason) => {
     connectedClients--;
-    console.log(`Client disconnected. Total clients: ${connectedClients}`);
+    console.log(`Client disconnected. Total clients: ${connectedClients}, Reason: ${reason}`);
   });
 
   socket.on('requestStockUpdate', () => {
@@ -1524,6 +1631,21 @@ io.on('connection', (socket) => {
       socket.emit('bulkStockUpdate', allStocks);
     }
   });
+  
+  // Handle connection errors
+  socket.on('error', (error) => {
+    console.error('Socket error:', error);
+  });
+});
+
+// Add better error handling for the HTTP server
+server.on('error', (error) => {
+  console.error('Server error:', error);
+});
+
+server.on('clientError', (error, socket) => {
+  console.error('Client error:', error);
+  socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
 });
 
 // Start periodic updates every 10 seconds

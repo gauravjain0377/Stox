@@ -9,6 +9,7 @@ import { useGeneralContext } from './GeneralContext';
 import { stockService } from '../services/stockService';
 import { io } from 'socket.io-client';
 import { shouldShowLiveStatus } from '../lib/utils';
+import { WS_URL } from '../config/api';
 
 const initialIndices = [
   { symbol: "NIFTY 50", name: "NIFTY 50", value: 11504.95, change: -0.10, percent: -0.10 },
@@ -56,12 +57,18 @@ const SidebarWatchlist = () => {
   // WebSocket connection setup
   useEffect(() => {
     console.log('Setting up WebSocket connection...');
+    console.log('WebSocket URL:', WS_URL);
     
-    // Initialize socket connection
-    socketRef.current = io('http://localhost:3000', {
+    // Initialize socket connection with better reconnection settings
+    socketRef.current = io(WS_URL, {
       transports: ['websocket', 'polling'],
       timeout: 20000,
-      forceNew: true
+      forceNew: true,
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      randomizationFactor: 0.5
     });
 
     const socket = socketRef.current;
@@ -215,23 +222,31 @@ const SidebarWatchlist = () => {
         
         if (!isMounted) return;
         
-        const processedStocks = allStocks.map(stock => ({
-          symbol: stock.symbol,
-          price: stock.price,
-          percent: stock.percent,
-          volume: stock.volume,
-          previousClose: stock.price * (1 + stock.percent / 100),
-          name: stock.fullName,
-        }));
-        
-        setStocks(processedStocks);
-        setLoading(false);
-        console.log('Fallback data loaded:', processedStocks.length, 'stocks');
+        // Validate the data before setting it
+        if (Array.isArray(allStocks) && allStocks.length > 0) {
+          const processedStocks = allStocks.map(stock => ({
+            symbol: stock.symbol || 'UNKNOWN',
+            price: stock.price || 0,
+            percent: stock.percent || 0,
+            volume: stock.volume || '-',
+            previousClose: stock.previousClose || (stock.price ? stock.price * (1 + (stock.percent || 0) / 100) : 0),
+            name: stock.name || stock.fullName || stock.symbol || 'Unknown Stock',
+          }));
+          
+          setStocks(processedStocks);
+          setLoading(false);
+          console.log('Fallback data loaded:', processedStocks.length, 'stocks');
+        } else {
+          console.warn('Fallback data is empty or invalid');
+          setStocks([]);
+          setLoading(false);
+        }
         
       } catch (error) {
         if (isMounted) {
           console.error('Error loading fallback data:', error);
           setError('Failed to load stock data');
+          setStocks([]); // Set empty array instead of keeping previous state
           setLoading(false);
         }
       }

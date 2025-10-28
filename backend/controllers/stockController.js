@@ -4,19 +4,27 @@ const CompanyInfo = require('../model/CompanyInfoModel');
 
 exports.getStocks = async (req, res, next) => {
   try {
+    console.log('Fetching all stocks from database');
     const stocks = await Stock.find();
+    console.log(`Found ${stocks.length} stocks`);
     res.json(stocks);
   } catch (err) {
+    console.error('Error fetching stocks:', err);
     next(err);
   }
 };
 
 exports.getStockBySymbol = async (req, res, next) => {
   try {
+    console.log('Fetching stock by symbol:', req.params.symbol);
     const stock = await Stock.findOne({ symbol: req.params.symbol.toUpperCase() });
-    if (!stock) return res.status(404).json({ error: 'Stock not found' });
+    if (!stock) {
+      console.log('Stock not found:', req.params.symbol);
+      return res.status(404).json({ error: 'Stock not found' });
+    }
     res.json(stock);
   } catch (err) {
+    console.error('Error fetching stock by symbol:', err);
     next(err);
   }
 };
@@ -24,6 +32,7 @@ exports.getStockBySymbol = async (req, res, next) => {
 exports.getStocksData = async (req, res) => {
   try {
     const symbols = req.query.symbols;
+    console.log('Fetching stock data for symbols:', symbols);
     if (!symbols) {
       return res.status(400).json({ data: [], error: 'No symbols provided' });
     }
@@ -33,6 +42,7 @@ exports.getStocksData = async (req, res) => {
         try {
           // Append .NS if not present for Indian stocks
           const yfSymbol = /\.(NS|BSE)$/i.test(symbol) ? symbol : symbol + '.NS';
+          console.log('Fetching Yahoo Finance data for:', yfSymbol);
           const data = await yahooFinance.quote(yfSymbol);
           // Calculate lower and upper circuit limits (5% from previous close)
           const previousClose = data.regularMarketPreviousClose || 0;
@@ -51,12 +61,14 @@ exports.getStocksData = async (req, res) => {
             marketCap: data.marketCap || null,
           };
         } catch (err) {
+          console.error(`Error fetching data for ${symbol}:`, err.message);
           return { symbol, error: 'Not found or unavailable' };
         }
       })
     );
     res.json({ data: results });
   } catch (error) {
+    console.error('Error in getStocksData:', error);
     res.status(500).json({ data: [], error: error.message });
   }
 };

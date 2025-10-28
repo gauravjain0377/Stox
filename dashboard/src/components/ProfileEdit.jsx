@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import GeneralContext from './GeneralContext';
 import { useAuth } from '../context/AuthContext';
+import { getApiUrl } from '../config/api';
 
 const ProfileEdit = () => {
   const context = useContext(GeneralContext);

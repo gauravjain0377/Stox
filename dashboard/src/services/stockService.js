@@ -2,6 +2,9 @@
 import { getApiUrl, API_URL } from '../config/api';
 import { isMarketOpen, getMarketDataStorageKey } from '../lib/utils';
 
+// Log the API URL being used
+console.log('StockService: API_URL =', API_URL);
+
 // Fallback stock data from the seed file - All 50 stocks
 const fallbackStocks = [
   { symbol: "RELIANCE", fullName: "Reliance Industries Ltd", price: 2745.30, percent: 0.42, volume: "3.2M", marketCap: "18.3T" },
@@ -130,6 +133,22 @@ export const stockService = {
     } catch (error) {
       console.error('StockService: Error fetching all stocks with data:', error);
       return fallbackStocks;
+    }
+  },
+
+  // Health check function
+  async healthCheck() {
+    try {
+      const response = await fetch(getApiUrl('/api/health'));
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Health check response:', data);
+        return data;
+      }
+      return { status: 'error', message: 'Health check endpoint not available' };
+    } catch (error) {
+      console.error('StockService: Health check failed:', error);
+      return { status: 'error', message: error.message };
     }
   },
 
