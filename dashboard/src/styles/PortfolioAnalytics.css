@@ -552,8 +552,9 @@
 }
 
 .holding-item {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto auto; /* symbol | qty/pnl | value */
+  column-gap: 12px;
   align-items: center;
   padding: 12px 16px;
   background: var(--bg-primary);
@@ -570,7 +571,7 @@
 .holding-details {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end; /* right-align to line up column */
   gap: 4px;
 }
 
@@ -582,6 +583,7 @@
 .holding-pnl {
   font-weight: 700;
   font-size: 12px;
+  font-variant-numeric: tabular-nums; /* align numbers */
 }
 
 .holding-pnl.positive {
@@ -596,6 +598,8 @@
   font-weight: 600;
   color: var(--text-primary);
   font-size: 14px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 /* News Feed */
