@@ -1,5 +1,7 @@
 const Stock = require('../model/StockModel');
-const yahooFinance = require('yahoo-finance2').default;
+const YahooFinance = require('yahoo-finance2').default;
+const yahooFinance = new YahooFinance();
+yahooFinance._notices.suppress(['yahooSurvey']);
 const CompanyInfo = require('../model/CompanyInfoModel');
 
 exports.getStocks = async (req, res, next) => {
@@ -44,6 +46,13 @@ exports.getStocksData = async (req, res) => {
           const yfSymbol = /\.(NS|BSE)$/i.test(symbol) ? symbol : symbol + '.NS';
           console.log('Fetching Yahoo Finance data for:', yfSymbol);
           const data = await yahooFinance.quote(yfSymbol);
+          
+          // Check if data is valid
+          if (!data) {
+            console.warn(`⚠️  No data returned for ${yfSymbol}`);
+            return { symbol, error: 'No data returned' };
+          }
+          
           // Calculate lower and upper circuit limits (5% from previous close)
           const previousClose = data.regularMarketPreviousClose || 0;
           const lowerCircuit = previousClose ? Number((previousClose * 0.95).toFixed(2)) : null;
@@ -88,6 +97,12 @@ exports.getStockInfo = async (req, res, next) => {
 exports.getStockPrice = async (req, res, next) => {
   try {
     const data = await yahooFinance.quote(req.params.symbol);
+    
+    // Check if data is valid
+    if (!data) {
+      return res.status(404).json({ error: 'No data found' });
+    }
+    
     res.json({ price: data.regularMarketPrice, percent: data.regularMarketChangePercent });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch price' });

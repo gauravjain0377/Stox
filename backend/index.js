@@ -8,13 +8,14 @@ const bcrypt = require("bcryptjs");
 const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const yahooFinance = require('yahoo-finance2').default;
+const YahooFinance = require('yahoo-finance2').default;
+const yahooFinance = new YahooFinance();
+yahooFinance._notices.suppress(['yahooSurvey']);
 const nodemailer = require('nodemailer');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 
-// Suppress Yahoo Finance API notices
-yahooFinance.suppressNotices(['yahooSurvey']);
+
 
 const { HoldingsModel } = require("./model/HoldingsModel");
 const { PositionsModel } = require("./model/PositionsModel");
@@ -36,10 +37,9 @@ const allowedOrigins = [
   process.env.DASHBOARD_URL
 ].filter(Boolean);
 
-// Add wildcard for Vercel preview deployments and Render deployments
+// Add wildcard for Vercel preview deployments
 if (process.env.NODE_ENV === 'production') {
   allowedOrigins.push(/vercel\.app$/);
-  allowedOrigins.push(/onrender\.com$/);
 }
 
 const app = express();
@@ -57,17 +57,17 @@ const io = new Server(server, {
 
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
+
     if (!origin) return callback(null, true);
     
-    // In production, be more permissive for Vercel and Render deployments
+   
     if (process.env.NODE_ENV === 'production') {
-      // Allow all vercel.app and onrender.com origins
-      if (origin && (origin.includes('vercel.app') || origin.includes('onrender.com'))) {
+ 
+      if (origin && origin.includes('vercel.app')) {
         return callback(null, true);
       }
       
-      // Check against allowed origins
+    
       if (allowedOrigins.indexOf(origin) !== -1) {
         return callback(null, true);
       }
@@ -95,10 +95,8 @@ app.use(session({
   cookie: { 
     secure: NODE_ENV === 'production', // Use secure cookies in production (HTTPS)
     sameSite: NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site cookies in production
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    domain: NODE_ENV === 'production' ? '.onrender.com' : undefined // Set domain for Render deployment
-  },
-  proxy: true // Trust the reverse proxy (important for Render)
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
 }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -511,43 +509,6 @@ app.get('/api/holdings', authenticateUser, async (req, res) => {
   }
 });
 
-// Get user profile
-app.get('/api/users/:id', authenticateUser, async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    // Ensure users can only access their own profile
-    if (req.user._id.toString() !== id) {
-      return res.status(403).json({ success: false, message: 'Access denied' });
-    }
-    
-    const user = await UserModel.findById(id);
-    if (!user) return res.status(404).json({ success:false, message:'User not found' });
-
-    return res.json({
-      success: true,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        dateOfBirth: user.dateOfBirth,
-        gender: user.gender,
-        phone: user.phone,
-        clientCode: user.clientCode,
-        pan: user.pan,
-        maritalStatus: user.maritalStatus,
-        fatherName: user.fatherName,
-        demat: user.demat,
-        incomeRange: user.incomeRange,
-        avatar: user.avatar
-      }
-    });
-  } catch (err) {
-    console.error('❌ Error fetching user profile:', err);
-    res.status(500).json({ success:false, message:'Server error' });
-  }
-});
-
 // Update user profile
 app.put('/api/users/:id', async (req, res) => {
   try {
@@ -593,6 +554,11 @@ app.put('/api/users/:id', async (req, res) => {
   }
 });
 
+// Add test endpoint
+app.get("/api/test", (req, res) => {
+  res.json({ message: "Backend is running!" });
+});
+
 // Health check endpoint
 app.get("/api/health", (req, res) => {
   res.json({ 
@@ -600,10 +566,7 @@ app.get("/api/health", (req, res) => {
     timestamp: new Date().toISOString(),
     clientsConnected: connectedClients,
     stocksTracked: currentStockData.size,
-    environment: process.env.NODE_ENV || 'development',
-    uptime: process.uptime(),
-    memoryUsage: process.memoryUsage(),
-    version: "1.0.0"
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
@@ -633,71 +596,12 @@ app.get("/api/test-db", async (req, res) => {
       message: "Database connection test",
       status: states[dbState] || "unknown",
       readyState: dbState,
-      connected: dbState === 1,
-      timestamp: new Date().toISOString()
+      connected: dbState === 1
     });
   } catch (error) {
     res.status(500).json({ 
       error: "Database test failed", 
-      details: error.message,
-      timestamp: new Date().toISOString()
-    });
-  }
-});
-
-// Add API test endpoint
-app.get("/api/test", (req, res) => {
-  res.json({ 
-    message: "Backend API is running!",
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
-
-// Add comprehensive health check endpoint
-app.get("/api/health-check", async (req, res) => {
-  try {
-    const dbState = mongoose.connection.readyState;
-    const dbStates = {
-      0: "disconnected",
-      1: "connected", 
-      2: "connecting",
-      3: "disconnecting"
-    };
-    
-    // Test database connectivity
-    const dbTest = await UserModel.findOne().limit(1).then(() => true).catch(() => false);
-    
-    res.json({ 
-      status: "OK",
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'development',
-      uptime: process.uptime(),
-      memoryUsage: process.memoryUsage(),
-      clientsConnected: connectedClients,
-      stocksTracked: currentStockData.size,
-      database: {
-        status: dbStates[dbState] || "unknown",
-        connected: dbState === 1,
-        testQuery: dbTest
-      },
-      api: {
-        version: "1.0.0",
-        endpoints: {
-          "/api/health": "OK",
-          "/api/stocks": "OK",
-          "/api/users": "OK",
-          "/api/orders": "OK",
-          "/api/holdings": "OK"
-        }
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      status: "ERROR",
-      error: "Health check failed", 
-      details: error.message,
-      timestamp: new Date().toISOString()
+      details: error.message 
     });
   }
 });
@@ -1066,15 +970,7 @@ app.post("/api/users/register", async (req, res) => {
         email: newUser.email,
         clientCode: newUser.clientCode,
         role: "user",
-        isEmailVerified: newUser.isEmailVerified,
-        dateOfBirth: newUser.dateOfBirth,
-        gender: newUser.gender,
-        phone: newUser.phone,
-        pan: newUser.pan,
-        maritalStatus: newUser.maritalStatus,
-        fatherName: newUser.fatherName,
-        demat: newUser.demat,
-        incomeRange: newUser.incomeRange
+        isEmailVerified: newUser.isEmailVerified
       }
     });
   } catch (error) {
@@ -1152,15 +1048,7 @@ app.post("/api/users/login", async (req, res) => {
         name: user.username,
         email: user.email,
         clientCode: user.clientCode,
-        role: "user",
-        dateOfBirth: user.dateOfBirth,
-        gender: user.gender,
-        phone: user.phone,
-        pan: user.pan,
-        maritalStatus: user.maritalStatus,
-        fatherName: user.fatherName,
-        demat: user.demat,
-        incomeRange: user.incomeRange
+        role: "user"
       }
     });
   } catch (error) {
@@ -2005,6 +1893,12 @@ async function fetchLiveStockData() {
       stockSymbols.map(async (symbol) => {
         try {
           const data = await yahooFinance.quote(symbol);
+          
+          // Check if data is valid
+          if (!data) {
+            console.warn(`⚠️  Skipping ${symbol}: No data returned`);
+            return null;
+          }
           
           // Safely extract data with fallbacks
           const previousClose = data?.regularMarketPreviousClose || null;
