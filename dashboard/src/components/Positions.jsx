@@ -178,7 +178,73 @@ const Positions = () => {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      {/* Mobile-friendly card view */}
+      <div className="md:hidden space-y-4">
+        {filtered.length === 0 ? (
+          <div className="text-center text-gray-500 py-8">
+            No open positions. Place a buy order to create one.
+          </div>
+        ) : (
+          filtered.map((p, index) => {
+            const ltp = p.ltp || p.price || 0;
+            const value = ltp * (p.qty || 0);
+            const pnl = (ltp - (p.avg || 0)) * (p.qty || 0);
+            const pnlClass = pnl >= 0 ? "text-green-600" : "text-red-600";
+            
+            return (
+              <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="font-semibold text-gray-900">{p.name}</div>
+                    <div className="text-sm text-gray-500">{p.product || "CNC"} · {p.qty} shares</div>
+                  </div>
+                  <div className={`text-right font-medium ${pnlClass}`}>
+                    ₹{currency(pnl)}
+                    <div className="text-xs text-gray-500">P&L</div>
+                  </div>
+                </div>
+                
+                <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <div className="text-gray-500">Avg. Price</div>
+                    <div className="font-medium">₹{currency(p.avg)}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500">LTP</div>
+                    <div className="font-medium">₹{currency(ltp)}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500">Value</div>
+                    <div className="font-medium">₹{currency(value)}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500">Qty</div>
+                    <div className="font-medium">{p.qty}</div>
+                  </div>
+                </div>
+                
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={() => handleSquareOff(p.name)}
+                    className="flex-1 py-2 px-3 rounded-md border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium"
+                  >
+                    Square-off
+                  </button>
+                  <button
+                    onClick={() => handlePartialClose(p.name)}
+                    className="flex-1 py-2 px-3 rounded-md border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium"
+                  >
+                    Partial Close
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Desktop table view */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="min-w-full bg-white border border-gray-200 rounded-lg">
           <thead className="bg-gray-50">
             <tr>
@@ -251,7 +317,7 @@ const Positions = () => {
 
       {/* Confirmation Modal */}
       {confirmOpen && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-5">
             <div className="text-lg font-semibold text-gray-900 mb-1">
               {confirmType === "square" ? "Square-off position" : "Partial close"}

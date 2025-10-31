@@ -11,6 +11,7 @@ const Holdings = () => {
   const { holdings: allHoldings, holdingsLoading, openSellWindow, usingFallbackData, setSelectedStock, refreshHoldings, refreshOrders, realTimePrices, isSocketConnected } = useGeneralContext();
   const navigate = useNavigate();
   const [lastUpdateTime, setLastUpdateTime] = useState(null);
+  const [expandedRows, setExpandedRows] = useState(new Set());
   
   // Trade confirmation modal state
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -27,6 +28,17 @@ const Holdings = () => {
       setLastUpdateTime(new Date());
     }
   }, [realTimePrices]);
+
+  // Toggle row expansion for mobile view
+  const toggleRowExpansion = (index) => {
+    const newExpandedRows = new Set(expandedRows);
+    if (newExpandedRows.has(index)) {
+      newExpandedRows.delete(index);
+    } else {
+      newExpandedRows.add(index);
+    }
+    setExpandedRows(newExpandedRows);
+  };
 
   // Show loading message while fetching holdings
   if (holdingsLoading) {
@@ -81,8 +93,6 @@ const Holdings = () => {
     return sum + (stock.curValue || (stock.currentPrice || stock.price) * stock.qty);
   }, 0);
 
-
-
   return (
     <>
       {tradeNotification && (
@@ -123,78 +133,68 @@ const Holdings = () => {
           </div>
         </div>
         <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 12px #0001', padding: 24, marginBottom: 32 }}>
-          <div className="order-table" style={{ overflowX: 'auto' }}>
-            <table className="premium-table" style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed' }}>
-              <thead>
-                <tr>
-                  <th style={{ width: '20%' }}>Symbol</th>
-                  <th style={{ width: '10%', textAlign: 'right' }}>Qty</th>
-                  <th style={{ width: '15%', textAlign: 'right' }}>Avg. Buy</th>
-                  <th style={{ width: '15%', textAlign: 'right' }}>LTP</th>
-                  <th style={{ width: '15%', textAlign: 'right' }}>Current Value</th>
-                  <th style={{ width: '10%', textAlign: 'right' }}>P&L (₹)</th>
-                  <th style={{ width: '10%', textAlign: 'right' }}>P&L (%)</th>
-                  <th style={{ width: '5%', textAlign: 'center' }}>Sell</th>
-                </tr>
-              </thead>
-              <tbody>
-                {allHoldings.map((stock, index) => {
-                  // Use precomputed values from context (instant, no calculation needed)
-                  const currentPrice = stock.currentPrice || stock.price;
-                  const curValue = stock.curValue || (currentPrice * stock.qty);
-                  const profit = stock.profit !== undefined ? stock.profit : (curValue - stock.avg * stock.qty);
-                  const profitPercent = stock.profitPercent !== undefined ? stock.profitPercent : (stock.avg > 0 ? (profit / (stock.avg * stock.qty)) * 100 : 0);
-                  const profClass = profit >= 0 ? "profit" : "loss";
+          {/* Mobile-friendly card view for holdings */}
+          <div className="md:hidden space-y-4">
+            {allHoldings.map((stock, index) => {
+              // Use precomputed values from context (instant, no calculation needed)
+              const currentPrice = stock.currentPrice || stock.price;
+              const curValue = stock.curValue || (currentPrice * stock.qty);
+              const profit = stock.profit !== undefined ? stock.profit : (curValue - stock.avg * stock.qty);
+              const profitPercent = stock.profitPercent !== undefined ? stock.profitPercent : (stock.avg > 0 ? (profit / (stock.avg * stock.qty)) * 100 : 0);
+              const isExpanded = expandedRows.has(index);
+              
+              return (
+                <div 
+                  key={index}
+                  className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm"
+                >
+                  {/* Main row with essential info */}
+                  <div 
+                    className="flex items-center justify-between cursor-pointer"
+                    onClick={() => toggleRowExpansion(index)}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <span className="font-semibold text-blue-600">{stock.name}</span>
+                      {isSocketConnected && (
+                        <div className="w-2 h-2 rounded-full bg-green-400"></div>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold">₹{currentPrice.toFixed(2)}</div>
+                      <div className={`text-sm font-medium ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {profit >= 0 ? '+' : ''}{profitPercent.toFixed(2)}%
+                      </div>
+                    </div>
+                  </div>
                   
-                  return (
-                    <tr 
-                      key={index}
-                      className="holdings-row cursor-pointer"
-                      onClick={() => handleStockClick(stock)}
-                    >
-                      <td style={{ width: '20%' }}>
-                        <div className="flex items-center space-x-2">
-                          <span className="stock-link-text font-semibold text-blue-600 hover:text-blue-800">
-                            {stock.name}
-                          </span>
-                          {isSocketConnected && (
-                            <div className="w-1.5 h-1.5 rounded-full bg-green-400" style={{
-                              animation: 'subtle-pulse 2s ease-in-out infinite'
-                            }}></div>
-                          )}
+                  {/* Expanded details */}
+                  {isExpanded && (
+                    <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <div className="text-xs text-gray-500">Quantity</div>
+                          <div className="font-medium">{stock.qty}</div>
                         </div>
-                      </td>
-                      <td style={{ width: '10%', textAlign: 'right' }}>
-                        <span className="font-medium">{stock.qty}</span>
-                      </td>
-                      <td style={{ width: '15%', textAlign: 'right' }}>
-                        <span className="text-gray-600">₹{stock.avg.toFixed(2)}</span>
-                      </td>
-                      <td style={{ width: '15%', textAlign: 'right' }}>
-                        <div className="font-semibold text-gray-900">
-                          ₹{currentPrice.toFixed(2)}
-                          {isSocketConnected && (
-                            <span className="ml-1 text-xs opacity-60" style={{
-                              color: '#10b981',
-                              fontSize: '8px'
-                            }}>●</span>
-                          )}
+                        <div>
+                          <div className="text-xs text-gray-500">Avg. Buy</div>
+                          <div className="font-medium">₹{stock.avg.toFixed(2)}</div>
                         </div>
-                      </td>
-                      <td style={{ width: '15%', textAlign: 'right' }}>
-                        <span className="font-medium">₹{curValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
-                      </td>
-                      <td style={{ width: '10%', textAlign: 'right', color: profit >= 0 ? '#2ecc40' : '#e74c3c', fontWeight: 600 }}>
-                        {profit >= 0 ? '+' : ''}₹{profit.toFixed(2)}
-                      </td>
-                      <td style={{ width: '10%', textAlign: 'right', color: profitPercent >= 0 ? '#2ecc40' : '#e74c3c', fontWeight: 600 }}>
-                        {profitPercent >= 0 ? '+' : ''}{profitPercent.toFixed(2)}%
-                      </td>
-                      <td style={{ width: '5%', textAlign: 'center' }}>
+                        <div>
+                          <div className="text-xs text-gray-500">Current Value</div>
+                          <div className="font-medium">₹{curValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500">P&L</div>
+                          <div className={`font-medium ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {profit >= 0 ? '+' : ''}₹{profit.toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="pt-2">
                         <button 
-                          className="px-3 py-1 text-xs font-medium text-white bg-red-500 rounded hover:bg-red-600 transition"
+                          className="w-full py-2 px-4 text-sm font-medium text-white bg-red-500 rounded hover:bg-red-600 transition"
                           onClick={(e) => {
-                            e.stopPropagation(); // Prevent row click when selling
+                            e.stopPropagation(); // Prevent row expansion toggle
                             setSelectedSellStock({
                               ...stock,
                               price: currentPrice, // Use current real-time price for selling
@@ -206,13 +206,108 @@ const Holdings = () => {
                         >
                           Sell
                         </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
+          
+          {/* Desktop table view */}
+          <div className="hidden md:block">
+            <div className="order-table" style={{ overflowX: 'auto' }}>
+              <table className="premium-table" style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed' }}>
+                <thead>
+                  <tr>
+                    <th style={{ width: '20%' }}>Symbol</th>
+                    <th style={{ width: '10%', textAlign: 'right' }}>Qty</th>
+                    <th style={{ width: '15%', textAlign: 'right' }}>Avg. Buy</th>
+                    <th style={{ width: '15%', textAlign: 'right' }}>LTP</th>
+                    <th style={{ width: '15%', textAlign: 'right' }}>Current Value</th>
+                    <th style={{ width: '10%', textAlign: 'right' }}>P&L (₹)</th>
+                    <th style={{ width: '10%', textAlign: 'right' }}>P&L (%)</th>
+                    <th style={{ width: '5%', textAlign: 'center' }}>Sell</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allHoldings.map((stock, index) => {
+                    // Use precomputed values from context (instant, no calculation needed)
+                    const currentPrice = stock.currentPrice || stock.price;
+                    const curValue = stock.curValue || (currentPrice * stock.qty);
+                    const profit = stock.profit !== undefined ? stock.profit : (curValue - stock.avg * stock.qty);
+                    const profitPercent = stock.profitPercent !== undefined ? stock.profitPercent : (stock.avg > 0 ? (profit / (stock.avg * stock.qty)) * 100 : 0);
+                    const profClass = profit >= 0 ? "profit" : "loss";
+                    
+                    return (
+                      <tr 
+                        key={index}
+                        className="holdings-row cursor-pointer"
+                        onClick={() => handleStockClick(stock)}
+                      >
+                        <td style={{ width: '20%' }}>
+                          <div className="flex items-center space-x-2">
+                            <span className="stock-link-text font-semibold text-blue-600 hover:text-blue-800">
+                              {stock.name}
+                            </span>
+                            {isSocketConnected && (
+                              <div className="w-1.5 h-1.5 rounded-full bg-green-400" style={{
+                                animation: 'subtle-pulse 2s ease-in-out infinite'
+                              }}></div>
+                            )}
+                          </div>
+                        </td>
+                        <td style={{ width: '10%', textAlign: 'right' }}>
+                          <span className="font-medium">{stock.qty}</span>
+                        </td>
+                        <td style={{ width: '15%', textAlign: 'right' }}>
+                          <span className="text-gray-600">₹{stock.avg.toFixed(2)}</span>
+                        </td>
+                        <td style={{ width: '15%', textAlign: 'right' }}>
+                          <div className="font-semibold text-gray-900">
+                            ₹{currentPrice.toFixed(2)}
+                            {isSocketConnected && (
+                              <span className="ml-1 text-xs opacity-60" style={{
+                                color: '#10b981',
+                                fontSize: '8px'
+                              }}>●</span>
+                            )}
+                          </div>
+                        </td>
+                        <td style={{ width: '15%', textAlign: 'right' }}>
+                          <span className="font-medium">₹{curValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                        </td>
+                        <td style={{ width: '10%', textAlign: 'right', color: profit >= 0 ? '#2ecc40' : '#e74c3c', fontWeight: 600 }}>
+                          {profit >= 0 ? '+' : ''}₹{profit.toFixed(2)}
+                        </td>
+                        <td style={{ width: '10%', textAlign: 'right', color: profitPercent >= 0 ? '#2ecc40' : '#e74c3c', fontWeight: 600 }}>
+                          {profitPercent >= 0 ? '+' : ''}{profitPercent.toFixed(2)}%
+                        </td>
+                        <td style={{ width: '5%', textAlign: 'center' }}>
+                          <button 
+                            className="px-3 py-1 text-xs font-medium text-white bg-red-500 rounded hover:bg-red-600 transition"
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent row click when selling
+                              setSelectedSellStock({
+                                ...stock,
+                                price: currentPrice, // Use current real-time price for selling
+                                symbol: stock.name
+                              });
+                              setSellQuantity(1); // Default to 1 share
+                              setShowConfirmModal(true);
+                            }}
+                          >
+                            Sell
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 24 }}>
             <div style={{ fontSize: 18, fontWeight: 600, color: '#333' }}>
               Total Portfolio Value: <span style={{ color: '#007bff' }}>₹{totalPortfolioValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
