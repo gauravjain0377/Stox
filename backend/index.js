@@ -72,7 +72,7 @@ app.use(cors({
         return callback(null, true);
       }
       
-      console.log('⚠️  CORS blocked origin:', origin);
+      console.log('CORS blocked origin:', origin);
       // Still allow in production to prevent issues, but log for monitoring
       return callback(null, true);
     } else {
@@ -81,7 +81,7 @@ app.use(cors({
         return callback(null, true);
       }
       
-      console.log('⚠️  CORS blocked origin:', origin);
+      console.log('CORS blocked origin:', origin);
       return callback(new Error('Not allowed by CORS'));
     }
   },

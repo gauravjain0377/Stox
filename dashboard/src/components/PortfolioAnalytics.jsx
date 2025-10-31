@@ -898,7 +898,6 @@ const PortfolioAnalytics = () => {
     }
   };
   
-  // Benchmark chart options
   const benchmarkChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
