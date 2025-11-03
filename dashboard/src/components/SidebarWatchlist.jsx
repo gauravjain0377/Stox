@@ -392,23 +392,23 @@ const SidebarWatchlist = () => {
   };
   
   return (
-    <aside className={`h-full bg-white shadow-lg rounded-xl flex flex-col overflow-y-auto transition-all duration-300 ease-in-out ${collapsed ? 'sidebar-collapsed w-20' : 'w-80'}`}>
-      <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 sidebar-toggle">
+    <aside className={`h-full bg-white shadow-lg rounded-xl flex flex-col overflow-y-auto transition-all duration-300 ease-in-out ${collapsed ? 'sidebar-collapsed w-20' : 'w-full md:w-80'} max-w-full`}>
+      <div className="flex items-center justify-between p-2 sm:p-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 sidebar-toggle">
         {!collapsed && (
-          <div className="flex items-center gap-2 animate-fade-in">
-            <div className={`w-2 h-2 rounded-full animate-pulse ${
+          <div className="flex items-center gap-1.5 sm:gap-2 animate-fade-in min-w-0 flex-1">
+            <div className={`w-2 h-2 rounded-full animate-pulse flex-shrink-0 ${
               isConnected ? 'bg-green-500' : 
               connectionStatus === 'connecting' ? 'bg-yellow-500' : 
               'bg-red-500'
             }`}></div>
-            <span className="font-bold text-lg text-gray-900 tracking-tight">NIFTY 50</span>
+            <span className="font-bold text-sm sm:text-lg text-gray-900 tracking-tight truncate">NIFTY 50</span>
             {isConnected && lastUpdateTime && shouldShowLiveStatus() && (
-              <span className="text-xs text-gray-500 ml-2">
+              <span className="text-xs text-gray-500 ml-1 sm:ml-2 whitespace-nowrap hidden sm:inline">
                 Live • {lastUpdateTime.toLocaleTimeString()}
               </span>
             )}
             {!isConnected && connectionStatus === 'connecting' && (
-              <span className="text-xs text-gray-500 ml-2">
+              <span className="text-xs text-gray-500 ml-1 sm:ml-2 whitespace-nowrap hidden sm:inline">
                 Connecting...
               </span>
             )}
@@ -539,28 +539,27 @@ const SidebarWatchlist = () => {
                         return (
                             <li
                                 key={stock.symbol}
-                                className={`stock-item grid grid-cols-[1fr,auto,auto] items-center gap-3 px-4 py-3 group hover:bg-gray-50 transition-all cursor-pointer border-l-2 border-transparent hover:border-blue-200 ${priceChanges[stock.symbol] === 'up' ? 'price-up' : priceChanges[stock.symbol] === 'down' ? 'price-down' : ''}`}
+                                className={`stock-item grid grid-cols-[1fr,auto] items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 group hover:bg-gray-50 transition-all cursor-pointer border-l-2 border-transparent hover:border-blue-200 ${priceChanges[stock.symbol] === 'up' ? 'price-up' : priceChanges[stock.symbol] === 'down' ? 'price-down' : ''}`}
                                 onClick={() => handleStockClick(stock)}
                             >
                                 <div className="min-w-0">
                                     <Tooltip title={fullName} arrow>
-                                        <span className="font-bold text-sm text-gray-900 tabular-nums block">{stock.symbol}</span>
+                                        <span className="font-bold text-xs sm:text-sm text-gray-900 tabular-nums block truncate">{stock.symbol}</span>
                                     </Tooltip>
                                     <Tooltip title={`Volume: ${stock.volume} `} arrow>
-                                        <span className="text-xs text-gray-500 block cursor-pointer">{stock.volume} </span>
+                                        <span className="text-xs text-gray-500 block cursor-pointer truncate">{stock.volume} </span>
                                     </Tooltip>
                                 </div>
-                                <div className="flex flex-col items-end min-w-[96px] text-right">
+                                <div className="flex flex-col items-end min-w-[80px] sm:min-w-[96px] text-right">
                                     <Tooltip title={`Price: ₹${stock.price.toLocaleString()}`} arrow>
-                                        <span className={`font-bold text-lg text-black tabular-nums leading-tight ${priceChanges[stock.symbol] === 'up' ? 'price-up' : priceChanges[stock.symbol] === 'down' ? 'price-down' : ''}`}>
+                                        <span className={`font-bold text-base sm:text-lg text-black tabular-nums leading-tight ${priceChanges[stock.symbol] === 'up' ? 'price-up' : priceChanges[stock.symbol] === 'down' ? 'price-down' : ''}`}>
                                             ₹{typeof stock.price === 'number' ? stock.price.toLocaleString() : 'N/A'}
                                         </span>
                                     </Tooltip>
                                     <Tooltip title={tooltipText} arrow>
-                                        <span className={`inline-flex items-center justify-end gap-1 text-sm font-semibold ${isDown ? 'text-red-500' : 'text-green-600'}`} style={{ marginTop: 2 }}>
-                                            {isDown ? <ArrowDownRight size={14}/> : <ArrowUpRight size={14}/>}
-                                            {absChange < 0 ? '' : '+'}{typeof absChange === 'number' ? absChange.toFixed(2) : 'N/A'}
-                                            <span>({formattedPercent}%)</span>
+                                        <span className={`inline-flex items-center justify-end gap-0.5 sm:gap-1 text-xs sm:text-sm font-semibold ${isDown ? 'text-red-500' : 'text-green-600'}`} style={{ marginTop: 2 }}>
+                                            {isDown ? <ArrowDownRight size={12} className="sm:w-3.5 sm:h-3.5"/> : <ArrowUpRight size={12} className="sm:w-3.5 sm:h-3.5"/>}
+                                            <span className="whitespace-nowrap">{absChange < 0 ? '' : '+'}{typeof absChange === 'number' ? absChange.toFixed(2) : 'N/A'} ({formattedPercent}%)</span>
                                         </span>
                                     </Tooltip>
                                 </div>

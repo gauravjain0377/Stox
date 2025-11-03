@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const BuySellModal = ({
   symbol = "INFY",
@@ -13,7 +13,16 @@ const BuySellModal = ({
   const [price, setPrice] = useState(ltp);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 480);
   const isBuy = mode === "BUY";
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 480);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Calculate total cost/proceeds
   const total = orderType === "Market" ? ltp * quantity : price * quantity;
@@ -47,7 +56,9 @@ const BuySellModal = ({
         zIndex: 1000,
         display: "flex",
         alignItems: "center",
-        justifyContent: "center"
+        justifyContent: "center",
+        padding: "16px",
+        overflowY: "auto"
       }}
     >
       <div
@@ -55,10 +66,12 @@ const BuySellModal = ({
           background: "#fff",
           borderRadius: 16,
           boxShadow: "0 4px 32px #0002",
-          padding: 32,
-          minWidth: 350,
+          padding: isMobile ? "20px" : "32px",
+          minWidth: isMobile ? "calc(100% - 32px)" : 350,
           maxWidth: 400,
           width: "100%",
+          maxHeight: "95vh",
+          overflowY: "auto",
           fontFamily: "Inter, Arial, sans-serif",
           position: "relative"
         }}
@@ -67,14 +80,21 @@ const BuySellModal = ({
         <button
           onClick={onClose}
           style={{
-            position: "absolute", top: 16, right: 16,
-            background: "none", border: "none", fontSize: 22, color: "#888", cursor: "pointer"
+            position: "absolute", 
+            top: isMobile ? 12 : 16, 
+            right: isMobile ? 12 : 16,
+            background: "none", 
+            border: "none", 
+            fontSize: isMobile ? 20 : 22, 
+            color: "#888", 
+            cursor: "pointer",
+            zIndex: 10
           }}
           aria-label="Close"
         >×</button>
 
         {/* Toggle Buy/Sell */}
-        <div style={{ display: "flex", marginBottom: 24 }}>
+        <div style={{ display: "flex", marginBottom: isMobile ? 16 : 24 }}>
           <button
             onClick={() => setMode("BUY")}
             style={{
@@ -84,8 +104,8 @@ const BuySellModal = ({
               border: "none",
               borderRadius: "8px 0 0 8px",
               fontWeight: 700,
-              fontSize: 18,
-              padding: "12px 0",
+              fontSize: isMobile ? 16 : 18,
+              padding: isMobile ? "10px 0" : "12px 0",
               cursor: "pointer",
               transition: "background 0.2s"
             }}
@@ -99,8 +119,8 @@ const BuySellModal = ({
               border: "none",
               borderRadius: "0 8px 8px 0",
               fontWeight: 700,
-              fontSize: 18,
-              padding: "12px 0",
+              fontSize: isMobile ? 16 : 18,
+              padding: isMobile ? "10px 0" : "12px 0",
               cursor: "pointer",
               transition: "background 0.2s"
             }}
@@ -108,22 +128,24 @@ const BuySellModal = ({
         </div>
 
         {/* Stock Info */}
-        <div style={{ marginBottom: 18, fontSize: 18, fontWeight: 600, color: "#2563eb" }}>
-          {symbol} <span style={{ color: "#888", fontWeight: 400, fontSize: 15 }}>LTP: ₹{ltp}</span>
+        <div style={{ marginBottom: isMobile ? 14 : 18, fontSize: isMobile ? 16 : 18, fontWeight: 600, color: "#2563eb" }}>
+          {symbol} <span style={{ color: "#888", fontWeight: 400, fontSize: isMobile ? 13 : 15 }}>LTP: ₹{ltp}</span>
         </div>
 
         {/* Order Type */}
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ fontWeight: 600, color: "#222", marginRight: 8 }}>Order Type:</label>
+        <div style={{ marginBottom: isMobile ? 12 : 16 }}>
+          <label style={{ fontWeight: 600, color: "#222", marginRight: 8, fontSize: isMobile ? 14 : 16 }}>Order Type:</label>
           <select
             value={orderType}
             onChange={e => setOrderType(e.target.value)}
             style={{
-              padding: "6px 12px",
+              padding: isMobile ? "6px 10px" : "6px 12px",
               borderRadius: 6,
               border: "1px solid #ddd",
-              fontSize: 16,
-              background: "#fafbfc"
+              fontSize: isMobile ? 14 : 16,
+              background: "#fafbfc",
+              width: "100%",
+              marginTop: 4
             }}
           >
             <option value="Market">Market</option>
@@ -132,9 +154,9 @@ const BuySellModal = ({
         </div>
 
         {/* Quantity and Price */}
-        <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-          <div style={{ flex: 1 }}>
-            <label style={{ fontWeight: 600, color: "#222" }}>Quantity</label>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 12, marginBottom: isMobile ? 12 : 16 }}>
+          <div style={{ flex: 1, width: "100%" }}>
+            <label style={{ fontWeight: 600, color: "#222", fontSize: isMobile ? 14 : 16 }}>Quantity</label>
             <input
               type="number"
               min={1}
@@ -145,13 +167,13 @@ const BuySellModal = ({
                 padding: "8px 10px",
                 borderRadius: 6,
                 border: "1px solid #ddd",
-                fontSize: 16,
+                fontSize: isMobile ? 14 : 16,
                 marginTop: 4
               }}
             />
           </div>
-          <div style={{ flex: 1 }}>
-            <label style={{ fontWeight: 600, color: "#222" }}>Price</label>
+          <div style={{ flex: 1, width: "100%" }}>
+            <label style={{ fontWeight: 600, color: "#222", fontSize: isMobile ? 14 : 16 }}>Price</label>
             <input
               type="number"
               min={1}
@@ -163,7 +185,7 @@ const BuySellModal = ({
                 padding: "8px 10px",
                 borderRadius: 6,
                 border: "1px solid #ddd",
-                fontSize: 16,
+                fontSize: isMobile ? 14 : 16,
                 marginTop: 4,
                 background: orderType === "Market" ? "#f5f7fa" : "#fff"
               }}
@@ -172,17 +194,18 @@ const BuySellModal = ({
         </div>
 
         {/* Margin Info */}
-        <div style={{ marginBottom: 10, color: "#888", fontSize: 15 }}>
+        <div style={{ marginBottom: 10, color: "#888", fontSize: isMobile ? 13 : 15, wordBreak: "break-word" }}>
           Margin available: <b style={{ color: "#2563eb" }}>₹{marginAvailable}</b> &nbsp; | &nbsp;
           Funds: <b style={{ color: "#2563eb" }}>₹{availableFunds}</b>
         </div>
 
         {/* Total Cost/Proceeds */}
         <div style={{
-          marginBottom: 18,
+          marginBottom: isMobile ? 14 : 18,
           fontWeight: 600,
-          fontSize: 18,
-          color: isBuy ? "#2563eb" : "#e74c3c"
+          fontSize: isMobile ? 16 : 18,
+          color: isBuy ? "#2563eb" : "#e74c3c",
+          wordBreak: "break-word"
         }}>
           {isBuy ? "Total Cost" : "Total Proceeds"}: ₹{total.toLocaleString(undefined, { maximumFractionDigits: 2 })}
         </div>
@@ -200,9 +223,9 @@ const BuySellModal = ({
             color: "#fff",
             border: "none",
             borderRadius: 8,
-            padding: "14px 0",
+            padding: isMobile ? "12px 0" : "14px 0",
             fontWeight: 700,
-            fontSize: 20,
+            fontSize: isMobile ? 18 : 20,
             marginTop: 8,
             boxShadow: isBuy ? "0 2px 8px #2563eb22" : "0 2px 8px #e74c3c22",
             cursor: "pointer",

@@ -297,39 +297,24 @@ const StockDetail = () => {
     };
   }, [symbolParam, stockData?.price, setSelectedStock]);
 
-  // Fetch stock data if not available in context
+  // Fetch stock data when symbol changes
   useEffect(() => {
     const fetchStockData = async () => {
-      console.log('StockDetail: Fetching stock data', { selectedStock, symbolParam });
-      if (!selectedStock && symbolParam) {
-        setLoading(true);
-        try {
-          // Fetch stock data from the service
-          const stocks = await stockService.getAllStocksWithData();
-          console.log('StockDetail: Fetched stocks', stocks.length);
-          const stock = stocks.find(s => s.symbol === symbolParam);
-          console.log('StockDetail: Found stock', stock);
-          if (stock) {
-            setStockData(stock);
-            setSelectedStock(stock);
-          } else {
-            // If not found in service, create a fallback stock object
-            const fallbackStock = {
-              symbol: symbolParam,
-              name: `${symbolParam} Ltd`,
-              price: 1000,
-              change: 0,
-              percent: 0,
-              volume: "1M",
-              marketCap: "1T"
-            };
-            console.log('StockDetail: Using fallback stock', fallbackStock);
-            setStockData(fallbackStock);
-            setSelectedStock(fallbackStock);
-          }
-        } catch (error) {
-          console.error('Error fetching stock data:', error);
-          // Create fallback stock object
+      console.log('StockDetail: Fetching stock data for symbol:', symbolParam);
+      if (!symbolParam) return;
+      
+      setLoading(true);
+      try {
+        // Fetch stock data from the service
+        const stocks = await stockService.getAllStocksWithData();
+        console.log('StockDetail: Fetched stocks', stocks.length);
+        const stock = stocks.find(s => s.symbol === symbolParam);
+        console.log('StockDetail: Found stock', stock);
+        if (stock) {
+          setStockData(stock);
+          setSelectedStock(stock);
+        } else {
+          // If not found in service, create a fallback stock object
           const fallbackStock = {
             symbol: symbolParam,
             name: `${symbolParam} Ltd`,
@@ -339,19 +324,31 @@ const StockDetail = () => {
             volume: "1M",
             marketCap: "1T"
           };
+          console.log('StockDetail: Using fallback stock', fallbackStock);
           setStockData(fallbackStock);
           setSelectedStock(fallbackStock);
-        } finally {
-          setLoading(false);
         }
-      } else if (selectedStock) {
-        console.log('StockDetail: Using selectedStock from context', selectedStock);
-        setStockData(selectedStock);
+      } catch (error) {
+        console.error('Error fetching stock data:', error);
+        // Create fallback stock object
+        const fallbackStock = {
+          symbol: symbolParam,
+          name: `${symbolParam} Ltd`,
+          price: 1000,
+          change: 0,
+          percent: 0,
+          volume: "1M",
+          marketCap: "1T"
+        };
+        setStockData(fallbackStock);
+        setSelectedStock(fallbackStock);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchStockData();
-  }, [selectedStock, symbolParam, setSelectedStock]);
+  }, [symbolParam, setSelectedStock]);
 
   // Use stockData instead of selectedStock for rendering
   const currentStock = stockData || selectedStock;
@@ -700,13 +697,19 @@ const StockDetail = () => {
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Lower Circuit</span>
                   <span className="font-semibold text-red-600">
-                    {currentStock?.lowerCircuit ? `₹${currentStock.lowerCircuit.toLocaleString('en-IN', {maximumFractionDigits: 2})}` : '-'}
+                    {(() => {
+                      const lowerCircuit = currentStock?.lowerCircuit || (currentStock?.previousClose ? Number((currentStock.previousClose * 0.95).toFixed(2)) : null);
+                      return lowerCircuit ? `₹${lowerCircuit.toLocaleString('en-IN', {maximumFractionDigits: 2})}` : '-';
+                    })()}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Upper Circuit</span>
                   <span className="font-semibold text-green-600">
-                    {currentStock?.upperCircuit ? `₹${currentStock.upperCircuit.toLocaleString('en-IN', {maximumFractionDigits: 2})}` : '-'}
+                    {(() => {
+                      const upperCircuit = currentStock?.upperCircuit || (currentStock?.previousClose ? Number((currentStock.previousClose * 1.05).toFixed(2)) : null);
+                      return upperCircuit ? `₹${upperCircuit.toLocaleString('en-IN', {maximumFractionDigits: 2})}` : '-';
+                    })()}
                   </span>
                 </div>
                 <div className="flex justify-between">

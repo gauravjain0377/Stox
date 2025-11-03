@@ -105,7 +105,7 @@ const ModernSummary = () => {
   };
 
   return (
-    <div className="w-full px-2 sm:px-3 md:px-6 space-y-4 md:space-y-6 max-w-full overflow-x-hidden mx-auto" style={{ boxSizing: 'border-box', width: '100%' }}>
+    <div className="w-full px-2 sm:px-3 md:px-6 pt-4 sm:pt-5 md:pt-6 pb-6 space-y-4 md:space-y-6 overflow-x-hidden" style={{ boxSizing: 'border-box', width: '100%', maxWidth: '100%', margin: '0' }}>
       {/* Information Banner */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 w-full" style={{ boxSizing: 'border-box' }}>
         <div className="flex items-start justify-center md:justify-start">
@@ -125,7 +125,7 @@ const ModernSummary = () => {
       {/* Investment Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 lg:gap-6 w-full" style={{ boxSizing: 'border-box' }}>
         {/* Total Investment */}
-        <div className="card-hover p-4 md:p-5 rounded-xl border border-gray-100 shadow-sm bg-white hover:shadow-md transition-all duration-200 w-full" style={{ boxSizing: 'border-box' }}>
+        <div className="card-hover p-4 md:p-5 rounded-xl border-2 border-gray-200 shadow-sm bg-white hover:shadow-md hover:border-blue-400 transition-all duration-200 w-full" style={{ boxSizing: 'border-box' }}>
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-blue-50 rounded-lg">
               <i className="fa-solid fa-indian-rupee-sign text-blue-600 text-xl"></i>
@@ -141,7 +141,7 @@ const ModernSummary = () => {
         </div>
 
         {/* Current Value */}
-        <div className="card-hover p-4 md:p-5 rounded-xl border border-gray-100 shadow-sm bg-white hover:shadow-md transition-all duration-200 w-full" style={{ boxSizing: 'border-box' }}>
+        <div className="card-hover p-4 md:p-5 rounded-xl border-2 border-gray-200 shadow-sm bg-white hover:shadow-md hover:border-green-400 transition-all duration-200 w-full" style={{ boxSizing: 'border-box' }}>
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-green-50 rounded-lg">
               <BarChart3 size={20} className="text-green-600" />
@@ -157,7 +157,7 @@ const ModernSummary = () => {
         </div>
 
         {/* Returns */}
-        <div className="card-hover p-4 md:p-5 rounded-xl border border-gray-100 shadow-sm bg-white hover:shadow-md transition-all duration-200 w-full" style={{ boxSizing: 'border-box' }}>
+        <div className={`card-hover p-4 md:p-5 rounded-xl border-2 ${pnl >= 0 ? 'border-gray-200 hover:border-green-400' : 'border-gray-200 hover:border-red-400'} shadow-sm bg-white hover:shadow-md transition-all duration-200 w-full`} style={{ boxSizing: 'border-box' }}>
           <div className="flex items-center justify-between mb-4">
             <div className={`p-2 rounded-lg ${pnl >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
               {pnl >= 0 ? (
@@ -180,11 +180,11 @@ const ModernSummary = () => {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 w-full" style={{ width: '100%', maxWidth: '100%' }}>
         {/* Most Traded Stocks */}
-        <div className="lg:col-span-2 w-full order-1">
-          <div className="card w-full overflow-hidden" style={{ boxSizing: 'border-box' }}>
-            <div className="flex items-center justify-between mb-4 md:mb-6 flex-wrap gap-2">
+        <div className="lg:col-span-2 w-full order-1" style={{ width: '100%', maxWidth: '100%' }}>
+          <div className="card w-full lg:max-w-md border border-gray-200" style={{ boxSizing: 'border-box', width: '100%', maxWidth: '100%' }}>
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <h3 className="text-base md:text-lg font-semibold text-gray-900">Most Traded Stocks</h3>
               <button 
                 onClick={handleViewAll}
@@ -196,38 +196,36 @@ const ModernSummary = () => {
             </div>
             
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+              <div className="space-y-3">
                 {[...Array(4)].map((_, i) => (
-                  <div key={i} className="h-20 bg-gray-200 rounded animate-pulse"></div>
+                  <div key={i} className="h-16 bg-gray-200 rounded-lg animate-pulse"></div>
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 w-full">
+              <div className="space-y-3 pb-3">
                 {mostTraded.map((stock) => (
                   <div 
                     key={stock.symbol} 
-                    className="stock-card group cursor-pointer bg-white border border-gray-200 rounded-xl p-3 md:p-4 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-100 hover:bg-blue-50/30 transition-all duration-300 ease-in-out w-full overflow-hidden"
+                    className="most-traded-stock-card group cursor-pointer rounded-lg w-full"
                     onClick={() => handleStockClick(stock)}
                     style={{ boxSizing: 'border-box' }}
                   >
-                    <div className="flex items-center space-x-2 md:space-x-3 w-full min-w-0">
-                     
-                      <div className="flex-1 min-w-0 overflow-hidden">
-                        <p className="text-xs md:text-sm font-medium text-gray-900 truncate group-hover:text-blue-900 transition-colors duration-300">
-                          {stock.symbol}
-                        </p>
-                        <p className="text-xs text-gray-500 truncate group-hover:text-blue-600 transition-colors duration-300">
-                          {stock.name}
-                        </p>
+                    <div className="flex items-center justify-between px-4 py-3 w-full min-w-0" style={{ width: '100%', minWidth: 0 }}>
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 overflow-hidden" style={{ minWidth: 0, flex: '1 1 0%' }}>
+                          <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-blue-900 transition-colors duration-200 leading-tight" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {stock.name || stock.symbol}
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-right flex-shrink-0 ml-2">
-                        <p className="text-xs md:text-sm font-semibold text-gray-900 group-hover:text-blue-900 transition-colors duration-300 whitespace-nowrap">
+                      <div className="text-right flex-shrink-0 ml-3" style={{ flexShrink: 0 }}>
+                        <p className="text-sm font-semibold text-gray-900 group-hover:text-blue-900 transition-colors duration-200 whitespace-nowrap leading-tight">
                           ₹{(stock.price || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                         </p>
-                        <div className={`flex items-center justify-end space-x-0.5 md:space-x-1 text-xs ${
-                          (stock.percent || 0) >= 0 ? 'text-success-600' : 'text-danger-600'
-                        }`}>
-                          {(stock.percent || 0) >= 0 ? <TrendingUp size={10} className="md:w-3 md:h-3 flex-shrink-0" /> : <TrendingDown size={10} className="md:w-3 md:h-3 flex-shrink-0" />}
+                        <div className={`flex items-center justify-end gap-1 text-xs font-medium ${
+                          (stock.percent || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                        }`} style={{ justifyContent: 'flex-end', marginTop: '2px' }}>
+                          {(stock.percent || 0) >= 0 ? <TrendingUp size={12} className="flex-shrink-0" /> : <TrendingDown size={12} className="flex-shrink-0" />}
                           <span className="whitespace-nowrap">{(stock.percent || 0) >= 0 ? '+' : ''}{(stock.percent || 0).toFixed(2)}%</span>
                         </div>
                       </div>
@@ -332,7 +330,7 @@ const ModernSummary = () => {
           {/* Products & Tools */}
           <div className="card">
             <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-4">Products & Tools</h3>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 pb-3">
               {products.map((product) => (
                 <button
                   key={product.label}

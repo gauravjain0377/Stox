@@ -1231,6 +1231,25 @@ aside {
   background-color: rgba(219, 234, 254, 0.3);
 }
 
+/* Most Traded Stock Card Styling */
+.most-traded-stock-card {
+  background: #ffffff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  transition: all 0.3s ease-in-out;
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+}
+
+.most-traded-stock-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+  transform: translateY(-2px) scale(1.02);
+  z-index: 2;
+  background-color: rgba(219, 234, 254, 0.3);
+}
+
 /* Prevent horizontal overflow on small screens */
 @media (max-width: 640px) {
   .stock-card {

@@ -577,6 +577,51 @@ const PortfolioAnalytics = () => {
               beta = Math.max(-2, Math.min(2, beta)); // Cap between -2 and 2
             }
           }
+          
+          // Fallback beta calculation using holdings volatility vs market if portfolio data is insufficient
+          if (beta === 0 && userHoldings && userHoldings.length > 0) {
+            // Calculate weighted average beta based on sector allocation
+            // Simplified: assume IT stocks have beta ~1.2, Finance ~1.1, Energy ~1.0, etc.
+            const sectorBeta = {
+              'IT': 1.2, 'Finance': 1.1, 'Energy': 1.0, 'Pharma': 0.9, 'Auto': 1.3,
+              'FMCG': 0.8, 'Telecom': 1.0, 'Construction': 1.2, 'Consumer': 0.9,
+              'Metals': 1.4, 'Chemicals': 1.1, 'Logistics': 1.0, 'Cement': 1.1,
+              'Healthcare': 0.9, 'Media': 1.0, 'Retail': 1.0, 'Other': 1.0
+            };
+            
+            let totalValue = 0;
+            let weightedBeta = 0;
+            
+            userHoldings.forEach(holding => {
+              const currentPrice = (realTimePrices && realTimePrices[holding.name]) || holding.price || 0;
+              const value = currentPrice * (holding.qty || 0);
+              totalValue += value;
+              
+              // Infer sector from stock name (simplified mapping)
+              let sector = 'Other';
+              const nameUpper = (holding.name || '').toUpperCase();
+              if (nameUpper.includes('TCS') || nameUpper.includes('INFY') || nameUpper.includes('WIPRO') || nameUpper.includes('TECH')) sector = 'IT';
+              else if (nameUpper.includes('BANK') || nameUpper.includes('FINANCE')) sector = 'Finance';
+              else if (nameUpper.includes('RELIANCE') || nameUpper.includes('OIL') || nameUpper.includes('GAS')) sector = 'Energy';
+              else if (nameUpper.includes('PHARMA') || nameUpper.includes('CIPLA') || nameUpper.includes('SUN')) sector = 'Pharma';
+              else if (nameUpper.includes('AUTO') || nameUpper.includes('MOTOR')) sector = 'Auto';
+              else if (nameUpper.includes('ITC') || nameUpper.includes('HUL') || nameUpper.includes('NESTLE')) sector = 'FMCG';
+              else if (nameUpper.includes('STEEL') || nameUpper.includes('METAL')) sector = 'Metals';
+              
+              weightedBeta += value * (sectorBeta[sector] || 1.0);
+            });
+            
+            if (totalValue > 0) {
+              beta = weightedBeta / totalValue;
+              // Cap beta to reasonable range
+              beta = Math.max(0.5, Math.min(2.0, beta));
+            }
+          }
+          
+          // If still 0, default to 1.0 (market beta)
+          if (beta === 0) {
+            beta = 1.0;
+          }
 
           setPerformanceMetrics({
             totalReturn: totalReturn,

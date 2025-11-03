@@ -53,24 +53,31 @@ const Orders = () => {
   }
 
   return (
-    <div className="w-full" style={{ 
-      padding: 0,
+    <div className="w-full px-4 sm:px-6 py-4 sm:py-6" style={{ 
+      padding: '1rem',
       boxSizing: 'border-box',
       width: '100%'
     }}>
-      <div className="flex flex-wrap gap-3 md:gap-4 items-center mb-4 md:mb-6 w-full">
+      {/* Page Title */}
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Orders</h1>
+        <p className="text-sm sm:text-base text-gray-600">View and manage all your orders</p>
+      </div>
+      
+      {/* Search and Filter */}
+      <div className="flex flex-col sm:flex-row gap-3 md:gap-4 items-stretch sm:items-center mb-4 md:mb-6 w-full">
         <input
           type="text"
           placeholder="Search orders..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="flex-1 min-w-0 px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
-        <div className="relative">
+        <div className="relative w-full sm:w-auto">
           <select 
             value={typeFilter} 
             onChange={e => setTypeFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none pr-8 bg-white"
+            className="w-full sm:w-auto px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none pr-8 bg-white"
           >
             {uniqueTypes.map(type => <option key={type} value={type}>{type}</option>)}
           </select>
@@ -112,12 +119,7 @@ const Orders = () => {
                         </div>
                         <div className="flex flex-col items-end ml-2">
                           <span className="text-sm font-medium text-gray-900">₹{(order.price * order.qty).toFixed(2)}</span>
-                          <span className="flex items-center mt-1">
-                            <span className={`w-2 h-2 rounded-full mr-1 ${
-                              order.status === 'in-progress' ? 'bg-yellow-400' : 'bg-green-400'
-                            }`}></span>
-                            <span className="text-xs text-gray-500 capitalize">{order.status}</span>
-                          </span>
+                          <span className="text-xs text-gray-500 capitalize">{order.status}</span>
                         </div>
                       </div>
                       <div className="mt-3 flex justify-between items-center">
@@ -177,8 +179,6 @@ const Orders = () => {
                           {order.timestamp ? new Date(order.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
                         </span>
                         <div className="flex items-center gap-2">
-                          <span className={`w-3 h-3 rounded-full ${order.status === 'in-progress' ? 'bg-yellow-400' : 'bg-green-400'}`}></span>
-                          
                           <span 
                             className="text-gray-300 group-hover:text-gray-500 transition cursor-pointer"
                             onClick={() => navigate(`/orders/${order._id || idx}`)}

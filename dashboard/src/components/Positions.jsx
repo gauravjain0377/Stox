@@ -136,8 +136,8 @@ const Positions = () => {
   }
 
   return (
-    <div className="w-full" style={{ 
-      padding: 0,
+    <div className="w-full px-4 sm:px-6 py-4 sm:py-6" style={{ 
+      padding: '1rem',
       boxSizing: 'border-box',
       width: '100%'
     }}>
@@ -160,25 +160,37 @@ const Positions = () => {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-3 items-center mb-4 w-full">
-        <h3 className="text-base md:text-lg font-semibold text-gray-900">Positions ({filtered.length})</h3>
-        <div className="ml-auto flex gap-2 md:gap-3 flex-wrap">
-          <input
-            type="text"
-            placeholder="Search by symbol..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[150px]"
-          />
+      {/* Page Title */}
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Positions</h1>
+        <p className="text-sm sm:text-base text-gray-600">Your open positions ({filtered.length})</p>
+      </div>
+      
+      {/* Search and Filter */}
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center mb-4 md:mb-6 w-full">
+        <input
+          type="text"
+          placeholder="Search by symbol..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="flex-1 min-w-0 px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+        <div className="relative w-full sm:w-auto">
           <select
             value={productFilter}
             onChange={(e) => setProductFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full sm:w-auto px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white pr-8"
+            style={{ paddingRight: '2rem' }}
           >
             {['All', 'CNC', 'MIS'].map((p) => (
               <option key={p} value={p}>{p}</option>
             ))}
           </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 sm:pr-3">
+            <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
         </div>
       </div>
 
@@ -253,20 +265,20 @@ const Positions = () => {
           <table className="min-w-full bg-white border border-gray-200 rounded-lg">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instrument</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty.</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg.</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">LTP</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">P&L</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+              <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+              <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instrument</th>
+              <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty.</th>
+              <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg.</th>
+              <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">LTP</th>
+              <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
+              <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">P&L</th>
+              <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={8} className="px-5 py-8 text-center text-gray-500">
                   No open positions. Place a buy order to create one.
                 </td>
               </tr>
@@ -278,14 +290,14 @@ const Positions = () => {
                 const pnlClass = pnl >= 0 ? "text-green-600" : "text-red-600";
                 return (
                   <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-900">{p.product || "CNC"}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{p.name}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{p.qty}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">₹{currency(p.avg)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">₹{currency(ltp)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">₹{currency(value)}</td>
-                    <td className={`px-4 py-3 text-sm font-medium ${pnlClass}`}>₹{currency(pnl)}</td>
-                    <td className="px-4 py-3 text-sm space-x-2">
+                    <td className="px-5 py-3 text-sm text-gray-900">{p.product || "CNC"}</td>
+                    <td className="px-5 py-3 text-sm text-gray-900">{p.name}</td>
+                    <td className="px-5 py-3 text-sm text-gray-900">{p.qty}</td>
+                    <td className="px-5 py-3 text-sm text-gray-900">₹{currency(p.avg)}</td>
+                    <td className="px-5 py-3 text-sm text-gray-900">₹{currency(ltp)}</td>
+                    <td className="px-5 py-3 text-sm text-gray-900">₹{currency(value)}</td>
+                    <td className={`px-5 py-3 text-sm font-medium ${pnlClass}`}>₹{currency(pnl)}</td>
+                    <td className="px-5 py-3 text-sm space-x-2">
                       <button
                         onClick={() => handleSquareOff(p.name)}
                         className="px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50 text-gray-700"
@@ -307,13 +319,13 @@ const Positions = () => {
           {filtered.length > 0 && (
             <tfoot className="bg-gray-50">
               <tr>
-                <td className="px-4 py-3 text-xs text-gray-500" colSpan={2}>Totals</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{totals.totalQty}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">-</td>
-                <td className="px-4 py-3 text-sm text-gray-900">-</td>
-                <td className="px-4 py-3 text-sm text-gray-900">₹{currency(totals.totalValue)}</td>
-                <td className={`px-4 py-3 text-sm font-medium ${totals.totalPnl >= 0 ? "text-green-600" : "text-red-600"}`}>₹{currency(totals.totalPnl)}</td>
-                <td className="px-4 py-3 text-sm"></td>
+                <td className="px-5 py-3 text-xs text-gray-500" colSpan={2}>Totals</td>
+                <td className="px-5 py-3 text-sm text-gray-900">{totals.totalQty}</td>
+                <td className="px-5 py-3 text-sm text-gray-900">-</td>
+                <td className="px-5 py-3 text-sm text-gray-900">-</td>
+                <td className="px-5 py-3 text-sm text-gray-900">₹{currency(totals.totalValue)}</td>
+                <td className={`px-5 py-3 text-sm font-medium ${totals.totalPnl >= 0 ? "text-green-600" : "text-red-600"}`}>₹{currency(totals.totalPnl)}</td>
+                <td className="px-5 py-3 text-sm"></td>
               </tr>
             </tfoot>
           )}

@@ -108,42 +108,44 @@ const TopNavbar = () => {
   return (
     <header className="bg-[#fafafa] border-b border-gray-100 sticky top-0 z-40 shadow-sm">
       {/* Main nav row */}
-      <div className="flex items-center justify-between px-8 py-3">
+      <div className="flex items-center justify-between px-3 sm:px-6 lg:px-8 py-2 sm:py-3">
         {/* Left: Logo + Main Nav */}
-        <div className="flex items-center gap-8">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="Logo" className="w-10 h-10 object-contain bg-transparent" />
-            <span className="font-display font-bold text-2xl text-[#222] tracking-tight">StockSathi</span>
+        <div className="flex items-center gap-3 sm:gap-6 lg:gap-8 min-w-0 flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <img src={logo} alt="Logo" className="w-8 h-8 sm:w-10 sm:h-10 object-contain bg-transparent flex-shrink-0" />
+            <span className="font-display font-bold text-lg sm:text-xl lg:text-2xl text-[#222] tracking-tight truncate">StockSathi</span>
           </div>
           {/* Removed duplicate nav links here */}
         </div>
         {/* Right: Search, Bell, Profile */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0">
           {/* Search */}
           <div className="relative hidden md:block">
             <input
               type="text"
               placeholder="Search..."
-              className="pl-10 pr-4 py-2 w-64 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00796b] focus:border-[#00796b] transition-all duration-200 bg-[#f3f3f3] text-[#222]"
+              className="pl-10 pr-4 py-2 w-48 lg:w-64 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00796b] focus:border-[#00796b] transition-all duration-200 bg-[#f3f3f3] text-[#222]"
             />
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
               <Search size={16} />
             </span>
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-300 select-none">Ctrl+K</span>
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-300 select-none hidden lg:block">Ctrl+K</span>
           </div>
           {/* Notification Bell */}
-          <NotificationBell />
+          <div className="flex-shrink-0">
+            <NotificationBell />
+          </div>
           {/* Profile Avatar */}
-          <div className="relative" ref={avatarRef}>
+          <div className="relative flex-shrink-0" ref={avatarRef}>
             <button
-              className="flex items-center gap-2 p-1 rounded-full hover:bg-[#e0e7ef] transition-colors focus:outline-none"
+              className="flex items-center gap-1 sm:gap-2 p-1 rounded-full hover:bg-[#e0e7ef] transition-colors focus:outline-none"
               onClick={() => setSettingsOpen((o) => !o)}
               aria-label="Open profile settings"
             >
-              <div className="w-9 h-9 rounded-full bg-[#e0e7ef] flex items-center justify-center text-[#00796b] font-bold text-lg border border-gray-200">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#e0e7ef] flex items-center justify-center text-[#00796b] font-bold text-base sm:text-lg border border-gray-200 flex-shrink-0">
                 {getInitials()}
               </div>
-              <ChevronDown className="text-gray-400" size={18} />
+              <ChevronDown className="text-gray-400 hidden sm:block" size={18} />
             </button>
             {/* Settings Dropdown/Modal */}
             {settingsOpen && (

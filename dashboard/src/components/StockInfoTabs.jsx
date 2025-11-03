@@ -122,29 +122,41 @@ export default function StockInfoTabs({ symbol }) {
 
   return (
     <div style={{ maxWidth: 700, margin: '0 auto', background: '#fff', borderRadius: 16, boxShadow: '0 4px 24px rgba(0,0,0,0.08)', padding: 0, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #e5e7eb', background: 'linear-gradient(to bottom, #f9fafb, #f3f4f6)', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}>
+      <div style={{ 
+        display: 'flex', 
+        gap: 0, 
+        borderBottom: '1px solid #e5e7eb', 
+        background: 'linear-gradient(to bottom, #f9fafb, #f3f4f6)', 
+        borderTopLeftRadius: 16, 
+        borderTopRightRadius: 16,
+        overflowX: 'auto',
+        overflowY: 'hidden',
+        WebkitOverflowScrolling: 'touch',
+        scrollbarWidth: 'thin',
+        scrollbarColor: '#cbd5e1 #f1f5f9'
+      }}>
         {TABS.map(tab => (
           <button
             key={tab}
             style={{
-              flex: 1,
-              padding: '16px 0',
+              flex: '0 0 auto',
+              minWidth: '90px',
+              padding: '14px 12px',
               border: 'none',
               background: activeTab === tab ? '#fff' : 'transparent',
               color: activeTab === tab ? '#2563eb' : '#6b7280',
               fontWeight: activeTab === tab ? 700 : 500,
-              fontSize: 17,
+              fontSize: 15,
               borderBottom: activeTab === tab ? '3px solid #2563eb' : '3px solid transparent',
-              borderTopLeftRadius: tab === TABS[0] ? 16 : 0,
-              borderTopRightRadius: tab === TABS[TABS.length-1] ? 16 : 0,
               transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
               cursor: 'pointer',
               outline: 'none',
               boxShadow: activeTab === tab ? '0 2px 8px rgba(37,99,235,0.08)' : 'none',
               position: 'relative',
               overflow: 'hidden',
-              transform: 'translateZ(0)', // Enable hardware acceleration
-              zIndex: activeTab === tab ? 2 : 1
+              transform: 'translateZ(0)',
+              zIndex: activeTab === tab ? 2 : 1,
+              whiteSpace: 'nowrap'
             }}
             onClick={() => setActiveTab(tab)}
             onMouseOver={e => {

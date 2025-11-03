@@ -102,10 +102,10 @@ const Holdings = () => {
           onClose={() => setTradeNotification(null)}
         />
       )}
-      <div className="w-full" style={{ 
+      <div className="w-full px-4 sm:px-6 py-4 sm:py-6" style={{ 
         maxWidth: 1100, 
         margin: '0 auto', 
-        padding: 0,
+        padding: '1rem',
         boxSizing: 'border-box',
         width: '100%'
       }}>
@@ -131,12 +131,9 @@ const Holdings = () => {
             </div>
           </div>
         )}
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="title" style={{ marginBottom: 0 }}>Holdings ({allHoldings.length})</h3>
-          <div className="flex items-center space-x-2">
-           
-            
-          </div>
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Holdings</h1>
+          <p className="text-sm sm:text-base text-gray-600">Your current stock holdings ({allHoldings.length})</p>
         </div>
         <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 12px #0001', padding: '1rem', marginBottom: '1.5rem', boxSizing: 'border-box', width: '100%' }}>
           {/* Mobile-friendly card view for holdings */}
@@ -161,9 +158,6 @@ const Holdings = () => {
                   >
                     <div className="flex items-center space-x-3">
                       <span className="font-semibold text-blue-600">{stock.name}</span>
-                      {isSocketConnected && (
-                        <div className="w-2 h-2 rounded-full bg-green-400"></div>
-                      )}
                     </div>
                     <div className="text-right">
                       <div className="font-semibold">₹{currentPrice.toFixed(2)}</div>
@@ -256,11 +250,6 @@ const Holdings = () => {
                             <span className="stock-link-text font-semibold text-blue-600 hover:text-blue-800">
                               {stock.name}
                             </span>
-                            {isSocketConnected && (
-                              <div className="w-1.5 h-1.5 rounded-full bg-green-400" style={{
-                                animation: 'subtle-pulse 2s ease-in-out infinite'
-                              }}></div>
-                            )}
                           </div>
                         </td>
                         <td style={{ width: '10%', textAlign: 'right' }}>
