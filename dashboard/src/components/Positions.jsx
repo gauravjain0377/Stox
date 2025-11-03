@@ -136,7 +136,11 @@ const Positions = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className="w-full" style={{ 
+      padding: 0,
+      boxSizing: 'border-box',
+      width: '100%'
+    }}>
       {/* Toasts */}
       <div className="fixed top-4 right-4 space-y-2 z-50">
         {toasts.map((t) => (
@@ -156,15 +160,15 @@ const Positions = () => {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-3 items-center mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Positions ({filtered.length})</h3>
-        <div className="ml-auto flex gap-3">
+      <div className="flex flex-wrap gap-3 items-center mb-4 w-full">
+        <h3 className="text-base md:text-lg font-semibold text-gray-900">Positions ({filtered.length})</h3>
+        <div className="ml-auto flex gap-2 md:gap-3 flex-wrap">
           <input
             type="text"
             placeholder="Search by symbol..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[150px]"
           />
           <select
             value={productFilter}
@@ -244,8 +248,9 @@ const Positions = () => {
       </div>
 
       {/* Desktop table view */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+      <div className="hidden md:block overflow-x-auto w-full">
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white border border-gray-200 rounded-lg">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
@@ -312,7 +317,8 @@ const Positions = () => {
               </tr>
             </tfoot>
           )}
-        </table>
+          </table>
+        </div>
       </div>
 
       {/* Confirmation Modal */}

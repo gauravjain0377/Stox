@@ -509,6 +509,37 @@ app.get('/api/holdings', authenticateUser, async (req, res) => {
   }
 });
 
+// Get user profile by ID
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await UserModel.findById(id);
+    if (!user) return res.status(404).json({ success:false, message:'User not found' });
+
+    return res.json({
+      success: true,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        dateOfBirth: user.dateOfBirth,
+        gender: user.gender,
+        phone: user.phone,
+        clientCode: user.clientCode,
+        pan: user.pan,
+        maritalStatus: user.maritalStatus,
+        fatherName: user.fatherName,
+        demat: user.demat,
+        incomeRange: user.incomeRange,
+        avatar: user.avatar
+      }
+    });
+  } catch (err) {
+    console.error('❌ Error fetching user profile:', err);
+    res.status(500).json({ success:false, message:'Server error' });
+  }
+});
+
 // Update user profile
 app.put('/api/users/:id', async (req, res) => {
   try {

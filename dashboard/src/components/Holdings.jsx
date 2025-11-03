@@ -102,7 +102,13 @@ const Holdings = () => {
           onClose={() => setTradeNotification(null)}
         />
       )}
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: 24 }}>
+      <div className="w-full" style={{ 
+        maxWidth: 1100, 
+        margin: '0 auto', 
+        padding: 0,
+        boxSizing: 'border-box',
+        width: '100%'
+      }}>
         {usingFallbackData && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
             <div className="flex">
@@ -132,7 +138,7 @@ const Holdings = () => {
             
           </div>
         </div>
-        <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 12px #0001', padding: 24, marginBottom: 32 }}>
+        <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 12px #0001', padding: '1rem', marginBottom: '1.5rem', boxSizing: 'border-box', width: '100%' }}>
           {/* Mobile-friendly card view for holdings */}
           <div className="md:hidden space-y-4">
             {allHoldings.map((stock, index) => {
@@ -315,8 +321,8 @@ const Holdings = () => {
           </div>
         </div>
         {/* Real-time Portfolio Summary */}
-        <div className="row" style={{ marginTop: 32 }}>
-          <div className="col">
+        <div className="row" style={{ marginTop: '1.5rem', width: '100%', boxSizing: 'border-box' }}>
+          <div className="col" style={{ flexBasis: 'calc(33.333% - 0.5rem)', textAlign: 'center' }}>
             <h5>
               {(() => {
                 const totalInvestment = allHoldings.reduce((sum, stock) => sum + (stock.avg * stock.qty), 0);
@@ -330,7 +336,7 @@ const Holdings = () => {
             </h5>
             <p>Total investment</p>
           </div>
-          <div className="col">
+          <div className="col" style={{ flexBasis: 'calc(33.333% - 0.5rem)', textAlign: 'center' }}>
             <h5>
               {(() => {
                 const [whole, decimal] = totalPortfolioValue.toFixed(2).split('.');
@@ -343,7 +349,7 @@ const Holdings = () => {
             </h5>
             <p>Current value</p>
           </div>
-          <div className="col">
+          <div className="col" style={{ flexBasis: 'calc(33.333% - 0.5rem)', textAlign: 'center' }}>
             <h5 style={{ 
               color: (() => {
                 const totalInvestment = allHoldings.reduce((sum, stock) => sum + (stock.avg * stock.qty), 0);
@@ -361,24 +367,30 @@ const Holdings = () => {
             <p>P&L</p>
           </div>
         </div>
-        <VerticalGraph data={{
-          labels: allHoldings.map((stock) => stock.name),
-          datasets: [
-            {
-              label: "Stock Price (Live)",
-              data: allHoldings.map((stock) => stock.currentPrice || stock.price),
-              backgroundColor: allHoldings.map((stock) => {
-                const profit = stock.profit !== undefined ? stock.profit : ((stock.currentPrice || stock.price) - stock.avg) * stock.qty;
-                return profit >= 0 ? "rgba(34, 197, 94, 0.5)" : "rgba(239, 68, 68, 0.5)";
-              }),
-              borderColor: allHoldings.map((stock) => {
-                const profit = stock.profit !== undefined ? stock.profit : ((stock.currentPrice || stock.price) - stock.avg) * stock.qty;
-                return profit >= 0 ? "rgba(34, 197, 94, 1)" : "rgba(239, 68, 68, 1)";
-              }),
-              borderWidth: 2,
-            },
-          ],
-        }} />
+        <div className="w-full mt-8">
+          <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
+            <div className="holdings-chart-container" style={{ height: '450px', position: 'relative' }}>
+              <VerticalGraph data={{
+                labels: allHoldings.map((stock) => stock.name),
+                datasets: [
+                  {
+                    label: "Stock Price (Live)",
+                    data: allHoldings.map((stock) => stock.currentPrice || stock.price),
+                    backgroundColor: allHoldings.map((stock) => {
+                      const profit = stock.profit !== undefined ? stock.profit : ((stock.currentPrice || stock.price) - stock.avg) * stock.qty;
+                      return profit >= 0 ? "rgba(34, 197, 94, 0.5)" : "rgba(239, 68, 68, 0.5)";
+                    }),
+                    borderColor: allHoldings.map((stock) => {
+                      const profit = stock.profit !== undefined ? stock.profit : ((stock.currentPrice || stock.price) - stock.avg) * stock.qty;
+                      return profit >= 0 ? "rgba(34, 197, 94, 1)" : "rgba(239, 68, 68, 1)";
+                    }),
+                    borderWidth: 2,
+                  },
+                ],
+              }} />
+            </div>
+          </div>
+        </div>
       </div>
       
       {/* Trade Confirmation Modal */}

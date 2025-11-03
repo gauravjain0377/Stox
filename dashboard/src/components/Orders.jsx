@@ -53,8 +53,12 @@ const Orders = () => {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex flex-wrap gap-4 items-center mb-6">
+    <div className="w-full" style={{ 
+      padding: 0,
+      boxSizing: 'border-box',
+      width: '100%'
+    }}>
+      <div className="flex flex-wrap gap-3 md:gap-4 items-center mb-4 md:mb-6 w-full">
         <input
           type="text"
           placeholder="Search orders..."

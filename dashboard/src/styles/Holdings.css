@@ -77,3 +77,25 @@ table tbody tr {
 .sell-button:hover {
   transform: scale(1.05);
 }
+
+/* Holdings Chart Container - Responsive */
+.holdings-chart-container {
+  width: 100%;
+  min-height: 350px;
+  height: 450px;
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  .holdings-chart-container {
+    height: 400px !important;
+    min-height: 400px;
+  }
+}
+
+@media (max-width: 480px) {
+  .holdings-chart-container {
+    height: 350px !important;
+    min-height: 350px;
+  }
+}

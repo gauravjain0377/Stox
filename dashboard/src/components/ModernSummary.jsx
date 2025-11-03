@@ -105,9 +105,9 @@ const ModernSummary = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 md:p-6 space-y-4 md:space-y-6 max-w-full overflow-x-hidden mx-auto">
       {/* Information Banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-full">
         <div className="flex items-start">
           <div className="flex-shrink-0">
             <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -123,14 +123,14 @@ const ModernSummary = () => {
       </div>
 
       {/* Investment Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-full">
         {/* Total Investment */}
         <div className="card-hover p-5 rounded-xl border border-gray-100 shadow-sm bg-white hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-blue-50 rounded-lg">
               <i className="fa-solid fa-indian-rupee-sign text-blue-600 text-xl"></i>
             </div>
-            <span className="text-xs text-gray-500">Total Investment</span>
+            <span className="text-xs text-gray-500 text-right">Total Investment</span>
           </div>
           <div className="space-y-1">
             <p className="text-2xl font-bold text-gray-900">
@@ -146,7 +146,7 @@ const ModernSummary = () => {
             <div className="p-2 bg-green-50 rounded-lg">
               <BarChart3 size={20} className="text-green-600" />
             </div>
-            <span className="text-xs text-gray-500">Current Value</span>
+            <span className="text-xs text-gray-500 text-right">Current Value</span>
           </div>
           <div className="space-y-1">
             <p className="text-2xl font-bold text-gray-900">
@@ -166,7 +166,7 @@ const ModernSummary = () => {
                 <TrendingDown size={20} className="text-red-600" />
               )}
             </div>
-            <span className="text-xs text-gray-500">Total Returns</span>
+            <span className="text-xs text-gray-500 text-right">Total Returns</span>
           </div>
           <div className="space-y-1">
             <p className={`text-2xl font-bold ${pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>

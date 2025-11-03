@@ -263,8 +263,8 @@ const TopNavbar = () => {
           </div>
         </div>
       </div>
-      {/* Section nav row: Main app navigation */}
-      <nav className="flex gap-8 px-8 pb-2 border-b border-gray-100 overflow-x-auto scrollbar-hide">
+      {/* Section nav row: Main app navigation (hidden on small screens) */}
+      <nav className="hidden md:flex gap-8 px-8 pb-2 border-b border-gray-100 overflow-x-auto scrollbar-hide">
         {sectionNav.map((item) => (
           <NavLink
             key={item.label}

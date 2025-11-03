@@ -1,12 +1,21 @@
 .portfolio-analytics-container {
   max-width: 1200px;
-  margin: 32px auto;
-  padding: 32px 24px;
+  margin: 0 auto;
+  padding: 0.75rem;
   background: var(--bg-light);
   border-radius: 20px;
   box-shadow: var(--shadow-lg);
   font-family: var(--font-family);
   border: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .portfolio-analytics-container {
+    padding: 32px 24px;
+    margin: 32px auto;
+  }
 }
 
 .pa-title {
@@ -202,7 +211,7 @@
 
 @media (max-width: 900px) {
   .portfolio-analytics-container {
-    padding: 1.2rem 0.5rem;
+    padding: 0.75rem;
   }
   .pa-summary-grid, .pa-main-grid, .pa-metrics-grid {
     grid-template-columns: 1fr;
@@ -222,7 +231,7 @@
 
 @media (max-width: 600px) {
   .portfolio-analytics-container {
-    padding: 0.8rem 0.5rem;
+    padding: 0.75rem;
   }
   .pa-title {
     font-size: 1.5rem;
@@ -1371,6 +1380,13 @@
     width: 98vw;
     min-height: 120px;
     max-height: 220px;
+  }
+}
+
+/* Hide Market Movers widget on very small screens (below 400px) */
+@media (max-width: 400px) {
+  .pa-market-movers-widget {
+    display: none !important;
   }
 }
 

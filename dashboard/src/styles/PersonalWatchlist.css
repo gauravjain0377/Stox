@@ -762,21 +762,62 @@
 }
 
 @media (max-width: 480px) {
-  .watchlist-table {
-    font-size: 0.8rem;
+  .personal-watchlist {
+    padding: 0.75rem;
   }
 
-  .watchlist-table th,
-  .watchlist-table td {
-    padding: 0.5rem 0.25rem;
+  .watchlist-header {
+    margin-bottom: 1rem;
   }
 
-  .price {
+  .header-left h1 {
     font-size: 1.5rem;
   }
 
+  .watchlist-table {
+    font-size: 0.75rem;
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .watchlist-table-modern {
+    font-size: 0.75rem;
+  }
+
+  .watchlist-table th,
+  .watchlist-table td,
+  .watchlist-table-modern th,
+  .watchlist-table-modern td {
+    padding: 0.5rem 0.25rem;
+    white-space: nowrap;
+  }
+
+  .company-name {
+    font-size: 0.85rem;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .price {
+    font-size: 1.2rem;
+  }
+
   .stock-symbol {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
+  }
+
+  .watchlist-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    padding-bottom: 0.5rem;
+  }
+
+  .mini-chart {
+    width: 40px;
+    height: 20px;
   }
 }
 
@@ -788,6 +829,22 @@
   max-width: 900px;
   margin: 40px auto;
   font-family: 'Inter', 'Poppins', 'Montserrat', sans-serif;
+}
+
+@media (max-width: 768px) {
+  .modern-watchlist {
+    padding: 1.5rem 1rem;
+    margin: 20px auto;
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modern-watchlist {
+    padding: 1rem 0.75rem;
+    margin: 10px auto;
+    border-radius: 10px;
+  }
 }
 
 /* Watchlist Tabs */

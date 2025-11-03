@@ -539,10 +539,10 @@ const SidebarWatchlist = () => {
                         return (
                             <li
                                 key={stock.symbol}
-                                className={`stock-item flex items-center justify-between px-4 py-3 group hover:bg-gray-50 transition-all cursor-pointer border-l-2 border-transparent hover:border-blue-200 ${priceChanges[stock.symbol] === 'up' ? 'price-up' : priceChanges[stock.symbol] === 'down' ? 'price-down' : ''}`}
+                                className={`stock-item grid grid-cols-[1fr,auto,auto] items-center gap-3 px-4 py-3 group hover:bg-gray-50 transition-all cursor-pointer border-l-2 border-transparent hover:border-blue-200 ${priceChanges[stock.symbol] === 'up' ? 'price-up' : priceChanges[stock.symbol] === 'down' ? 'price-down' : ''}`}
                                 onClick={() => handleStockClick(stock)}
                             >
-                                <div className="flex-1 min-w-0">
+                                <div className="min-w-0">
                                     <Tooltip title={fullName} arrow>
                                         <span className="font-bold text-sm text-gray-900 tabular-nums block">{stock.symbol}</span>
                                     </Tooltip>
@@ -550,14 +550,14 @@ const SidebarWatchlist = () => {
                                         <span className="text-xs text-gray-500 block cursor-pointer">{stock.volume} </span>
                                     </Tooltip>
                                 </div>
-                                <div className="flex flex-col items-end min-w-[100px]">
+                                <div className="flex flex-col items-end min-w-[96px] text-right">
                                     <Tooltip title={`Price: ₹${stock.price.toLocaleString()}`} arrow>
                                         <span className={`font-bold text-lg text-black tabular-nums leading-tight ${priceChanges[stock.symbol] === 'up' ? 'price-up' : priceChanges[stock.symbol] === 'down' ? 'price-down' : ''}`}>
                                             ₹{typeof stock.price === 'number' ? stock.price.toLocaleString() : 'N/A'}
                                         </span>
                                     </Tooltip>
                                     <Tooltip title={tooltipText} arrow>
-                                        <span className={`flex items-center gap-1 text-sm font-semibold ${isDown ? 'text-red-500' : 'text-green-600'}`} style={{ marginTop: 2 }}>
+                                        <span className={`inline-flex items-center justify-end gap-1 text-sm font-semibold ${isDown ? 'text-red-500' : 'text-green-600'}`} style={{ marginTop: 2 }}>
                                             {isDown ? <ArrowDownRight size={14}/> : <ArrowUpRight size={14}/>}
                                             {absChange < 0 ? '' : '+'}{typeof absChange === 'number' ? absChange.toFixed(2) : 'N/A'}
                                             <span>({formattedPercent}%)</span>
