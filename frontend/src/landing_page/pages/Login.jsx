@@ -181,24 +181,15 @@ const Login = () => {
           font-weight: 500;
         }
       `}</style>
-      <div style={{ background: '#FAFAFA', minHeight: '100vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 0' }}>
-        <div style={{
-          display: 'flex',
-          width: '100%',
-          maxWidth: 900,
-          minHeight: 520,
-          background: 'white',
-          borderRadius: 24,
-          boxShadow: '0 8px 32px 0 rgba(31,38,135,0.10)',
-          overflow: 'hidden',
-        }}>
+      <div style={{ background: '#FAFAFA', minHeight: '100vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px' }}>
+        <div className="auth-split-container">
           {/* Left: Form Card */}
-          <div style={{ flex: 1.2, padding: '48px 36px', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'white' }}>
+          <div className="auth-form-section">
             <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: 10 }}>
               <img src="/media/images/logo.png" alt="Logo" style={{ height: 36, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', background: '#fff' }} />
               <span style={{ fontWeight: 700, fontSize: 20, color: '#222', letterSpacing: '-0.01em' }}>StockSathi</span>
             </div>
-            <h2 style={{ fontSize: '2.2rem', fontWeight: 800, color: ACCENT, marginBottom: 8, fontFamily: 'Inter, Poppins, Montserrat, sans-serif' }}>Sign in to StockSathi</h2>
+            <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.2rem)', fontWeight: 800, color: ACCENT, marginBottom: 8, fontFamily: 'Inter, Poppins, Montserrat, sans-serif' }}>Sign in to StockSathi</h2>
             <div style={{ margin: '18px 0 18px 0', display: 'flex', flexDirection: 'column', gap: 16 }}>
               <button
                 onClick={handleGoogleLogin}
@@ -263,10 +254,10 @@ const Login = () => {
             </form>
           </div>
           {/* Right: Accent Panel */}
-          <div style={{ flex: 1, background: ACCENT, color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 32px', position: 'relative' }}>
-            <h2 style={{ fontSize: '2.1rem', fontWeight: 800, marginBottom: 12, fontFamily: 'Inter, Poppins, Montserrat, sans-serif' }}>Hello, Friend!</h2>
-            <div style={{ fontSize: 18, fontWeight: 500, marginBottom: 32, textAlign: 'center', opacity: 0.95 }}>Enter your personal details<br/>and start journey with us</div>
-            <Link to="/signup" style={{ border: '2px solid #fff', color: '#fff', fontWeight: 700, fontSize: 18, borderRadius: 22, padding: '12px 44px', background: 'transparent', textDecoration: 'none', transition: 'all 0.18s', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', position: 'relative', overflow: 'hidden' }}
+          <div className="auth-accent-section">
+            <h2 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.1rem)', fontWeight: 800, marginBottom: 12, fontFamily: 'Inter, Poppins, Montserrat, sans-serif' }}>Hello, Friend!</h2>
+            <div style={{ fontSize: 'clamp(15px, 2vw, 18px)', fontWeight: 500, marginBottom: 32, textAlign: 'center', opacity: 0.95 }}>Enter your personal details<br/>and start journey with us</div>
+            <Link to="/signup" style={{ border: '2px solid #fff', color: '#fff', fontWeight: 700, fontSize: 'clamp(15px, 2vw, 18px)', borderRadius: 22, padding: 'clamp(10px, 2vw, 12px) clamp(36px, 4vw, 44px)', background: 'transparent', textDecoration: 'none', transition: 'all 0.18s', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', position: 'relative', overflow: 'hidden' }}
               onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
               onMouseOut={e => e.currentTarget.style.background = 'transparent'}
             >

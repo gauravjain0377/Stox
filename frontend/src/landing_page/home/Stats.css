@@ -206,19 +206,152 @@
 
 
 /* --- Responsive Design --- */
+@media (max-width: 1024px) {
+  .stats-grid {
+    gap: 2rem;
+  }
+  .stats-main-title {
+    font-size: 2.5rem;
+  }
+}
+
 @media (max-width: 992px) {
   .stats-grid {
     grid-template-columns: 1fr;
+    gap: 2rem;
   }
 }
+
 @media (max-width: 768px) {
+  .stats-section {
+    padding: 4rem 1rem;
+  }
   .stats-main-title {
     font-size: 2.2rem;
+    margin-bottom: 0.6rem;
   }
   .stats-main-desc {
     font-size: 1.05rem;
+    margin-bottom: 3rem;
   }
   .stat-card {
     padding: 1.8rem;
+  }
+  .card-title {
+    font-size: 1.25rem;
+  }
+  .card-subtitle {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .stats-section {
+    padding: 3rem 1rem;
+  }
+  .stats-main-title {
+    font-size: 1.9rem;
+  }
+  .stats-main-desc {
+    font-size: 1rem;
+    margin-bottom: 2.5rem;
+  }
+  .stat-card {
+    padding: 1.5rem;
+    border-radius: 20px;
+  }
+  .card-header {
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+  }
+  .card-icon {
+    width: 45px;
+    height: 45px;
+    font-size: 1.6rem;
+  }
+  .card-title {
+    font-size: 1.15rem;
+  }
+  .ticker-item {
+    padding: 0.9rem 1.2rem;
+  }
+  .ticker-price {
+    font-size: 1.15rem;
+  }
+  .fno-chart-container {
+    padding: 1.2rem 0.8rem 0 0.8rem;
+    min-height: 130px;
+  }
+  .fno-bar {
+    width: 40px;
+  }
+  .fno-bar.green-bar {
+    height: 75px;
+  }
+  .fno-bar.red-bar {
+    height: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-section {
+    padding: 2.5rem 0.75rem;
+  }
+  .stats-main-title {
+    font-size: 1.7rem;
+    line-height: 1.2;
+  }
+  .stats-main-desc {
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+  }
+  .stat-card {
+    padding: 1.2rem;
+    border-radius: 18px;
+  }
+  .card-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.4rem;
+  }
+  .card-title {
+    font-size: 1.1rem;
+  }
+  .card-subtitle {
+    font-size: 0.9rem;
+  }
+  .ticker-name {
+    font-size: 0.95rem;
+  }
+  .ticker-price {
+    font-size: 1.05rem;
+  }
+  .ticker-change {
+    font-size: 0.9rem;
+  }
+  .fno-chart-container {
+    gap: 1.5rem;
+    padding: 1rem 0.6rem 0 0.6rem;
+    min-height: 110px;
+  }
+  .fno-bar-wrapper {
+    font-size: 0.8rem;
+  }
+  .fno-bar {
+    width: 35px;
+  }
+  .fno-bar.green-bar {
+    height: 65px;
+  }
+  .fno-bar.red-bar {
+    height: 85px;
+  }
+  .indicator-tags {
+    gap: 0.6rem;
+    margin-top: 1.5rem;
+  }
+  .tag {
+    padding: 0.35rem 0.85rem;
+    font-size: 0.85rem;
   }
 }

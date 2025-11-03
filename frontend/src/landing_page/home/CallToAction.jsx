@@ -7,21 +7,21 @@ export default function CallToAction() {
       className="w-full flex items-center justify-center px-4 relative overflow-hidden"
       style={{
         background: "linear-gradient(150deg, #007f7f 30%, #ff6a1a 100%)",
-        paddingTop: "80px",
-        paddingBottom: "80px",
+        paddingTop: "clamp(40px, 8vw, 80px)",
+        paddingBottom: "clamp(40px, 8vw, 80px)",
       }}
     >
       <div className="w-full max-w-5xl flex flex-col items-center justify-center text-center mx-auto z-10">
         {/* Headline */}
         <h2
-          className="text-9xl md:text-[10rem] font-extrabold text-white mb-4 leading-none unified-heading"
-          style={{ fontFamily: 'Inter, Poppins, Montserrat, sans-serif', letterSpacing: '-0.03em' }}
+          className="font-extrabold text-white mb-4 leading-none unified-heading"
+          style={{ fontFamily: 'Inter, Poppins, Montserrat, sans-serif', letterSpacing: '-0.03em', fontSize: 'clamp(2.5rem, 8vw, 10rem)' }}
           data-aos="fade-up"
         >
           Ready to Start Investing?
         </h2>
         {/* Subheadline */}
-        <p className="text-xl md:text-2xl text-white mb-4 max-w-2xl mx-auto" style={{ fontWeight: 700 }}>
+        <p className="text-white mb-4 max-w-2xl mx-auto" style={{ fontWeight: 700, fontSize: 'clamp(1rem, 2.5vw, 2xl)' }}>
           Open your free Demat account in under 10 minutes. No paperwork,<br className="hidden md:inline" />
           instant verification for Indian citizens.
         </p>
@@ -34,19 +34,19 @@ export default function CallToAction() {
               <span className="inline-flex items-center justify-center w-7 h-7">
                 {/* Icon */}
               </span>
-              <span className="text-white text-lg md:text-xl font-medium">SEBI Regulated</span>
+              <span className="text-white font-medium" style={{ fontSize: 'clamp(0.95rem, 2vw, 1.25rem)' }}>SEBI Regulated</span>
             </div>
             <div className="flex items-center gap-3 min-w-[220px] justify-center">
               <span className="inline-flex items-center justify-center w-7 h-7">
                 {/* Icon */}
               </span>
-              <span className="text-white text-lg md:text-xl font-medium">Zero Account Opening Charges</span>
+              <span className="text-white font-medium" style={{ fontSize: 'clamp(0.95rem, 2vw, 1.25rem)' }}>Zero Account Opening Charges</span>
             </div>
             <div className="flex items-center gap-3 min-w-[220px] justify-center">
               <span className="inline-flex items-center justify-center w-7 h-7">
                 {/* Icon */}
               </span>
-             <span className="text-white text-lg md:text-xl font-medium mb-10">
+             <span className="text-white font-medium mb-10" style={{ fontSize: 'clamp(0.95rem, 2vw, 1.25rem)' }}>
            
               24/7 Customer Support</span>
             </div>
@@ -60,9 +60,9 @@ export default function CallToAction() {
                 background: '#fafafa',
                 color: '#00796b',
                 fontWeight: 900,
-                fontSize: '1.2rem',
+                fontSize: 'clamp(1rem, 2.5vw, 1.2rem)',
                 borderRadius: '32px',
-                padding: '20px 60px',
+                padding: 'clamp(16px, 3vw, 20px) clamp(48px, 6vw, 60px)',
                 boxShadow: '0 8px 32px 0 rgba(255,106,26,0.18)',
                 border: 'none',
                 outline: 'none',

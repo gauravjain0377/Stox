@@ -338,6 +338,15 @@
   }
   
   /* Responsive adjustments */
+  @media (max-width: 1024px) {
+    .pricing-cards {
+      gap: 1.25rem;
+    }
+    .pricing-card {
+      min-height: 260px;
+    }
+  }
+
   @media (max-width: 767px) {
     .pricing-hero {
       padding: 2rem 1rem;
@@ -355,8 +364,72 @@
       font-size: 3rem;
     }
     
+    .pricing-card {
+      padding: 1.25rem;
+      min-height: 240px;
+    }
+    
+    .pricing-card-title {
+      font-size: 1.05rem;
+      margin-bottom: 1rem;
+    }
+    
+    .pricing-card-description {
+      font-size: 0.85rem;
+    }
+    
     /* Reduce hover lift on mobile for better touch experience */
     .pricing-card:hover {
       transform: translateY(-4px);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .pricing-hero {
+      padding: 1.5rem 0.75rem;
+    }
+    
+    .pricing-title {
+      font-size: 2rem;
+    }
+    
+    .pricing-subtitle {
+      font-size: 1rem;
+    }
+    
+    .pricing-amount {
+      font-size: 2.5rem;
+    }
+    
+    .pricing-currency {
+      font-size: 1.25rem;
+    }
+    
+    .pricing-card {
+      padding: 1rem;
+      min-height: 220px;
+    }
+    
+    .pricing-bottom-title {
+      font-size: 1.5rem;
+    }
+    
+    .pricing-bottom-description {
+      font-size: 1rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .pricing-title {
+      font-size: 1.75rem;
+    }
+    
+    .pricing-amount {
+      font-size: 2.25rem;
+    }
+    
+    .pricing-card {
+      padding: 0.9rem;
+      min-height: 200px;
     }
   }

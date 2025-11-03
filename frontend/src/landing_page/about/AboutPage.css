@@ -1,0 +1,250 @@
+/* About Page Responsive Styles */
+
+/* MissionValues Section */
+.mission-values-section {
+  background: #184634;
+  color: #fff;
+  padding: clamp(3rem, 6vw, 5rem) 0 clamp(2.5rem, 5vw, 4rem) 0;
+  min-height: 60vh;
+}
+
+.mission-values-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 clamp(1rem, 4vw, 2rem);
+}
+
+.mission-values-title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  margin-bottom: 1.2rem;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.mission-values-subtitle {
+  font-size: clamp(1.1rem, 2.5vw, 1.35rem);
+  color: #e0e0e0;
+  font-weight: 400;
+  margin-bottom: clamp(2rem, 4vw, 3.5rem);
+  max-width: 600px;
+}
+
+.mission-values-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+  justify-content: space-between;
+}
+
+.mission-values-card {
+  flex: 1 1 300px;
+  min-width: 260px;
+  max-width: 370px;
+  background: transparent;
+  border-radius: 18px;
+  padding: 0;
+}
+
+.mission-values-icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.07);
+  border-radius: 12px;
+  width: clamp(40px, 4vw, 48px);
+  height: clamp(40px, 4vw, 48px);
+  margin-bottom: 18px;
+}
+
+.mission-values-card-title {
+  font-weight: 700;
+  font-size: clamp(1rem, 2vw, 1.18rem);
+  margin-bottom: 8px;
+  color: #fff;
+}
+
+.mission-values-card-desc {
+  color: #e0e0e0;
+  font-size: clamp(0.95rem, 2vw, 1.08rem);
+  margin-bottom: 18px;
+  font-weight: 400;
+}
+
+/* Journey Section */
+.journey-section {
+  background: #fff;
+  padding: clamp(4rem, 8vw, 8rem) 0 clamp(3rem, 6vw, 6rem) 0;
+  min-height: 60vh;
+}
+
+.journey-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: clamp(3rem, 6vw, 6rem);
+  padding: 0 clamp(1rem, 4vw, 2rem);
+}
+
+.journey-photo-section {
+  flex: 1 1 340px;
+  min-width: 280px;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  margin-top: 2.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.journey-photo-wrapper {
+  width: clamp(240px, 30vw, 320px);
+  height: clamp(240px, 30vw, 320px);
+  border-radius: 50%;
+  background: radial-gradient(circle at 60% 40%, #fffde4 70%, #fffbe6 100%);
+  box-shadow: 0 0 0 8px #e0f2ef, 0 8px 32px 0 rgba(0,127,127,0.10);
+  border: 4px solid #007f7f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.journey-photo-img {
+  width: clamp(160px, 20vw, 220px);
+  height: clamp(160px, 20vw, 220px);
+  border-radius: 50%;
+  object-fit: cover;
+  z-index: 3;
+  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.08);
+}
+
+.journey-text-section {
+  flex: 2 1 480px;
+  min-width: 280px;
+  max-width: 700px;
+  margin-left: auto;
+}
+
+.journey-title {
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-weight: 800;
+  color: #00796b;
+  margin-bottom: 1.2rem;
+  letter-spacing: -0.01em;
+}
+
+.journey-text {
+  color: #234b36;
+  font-size: clamp(1rem, 2vw, 1.13rem);
+  font-weight: 400;
+  margin-bottom: 1.5rem;
+  line-height: 1.7;
+}
+
+.journey-quote-box {
+  background: #fffbe6;
+  border-radius: 16px;
+  padding: clamp(1rem, 2vw, 1.3rem) clamp(1.2rem, 2.5vw, 1.5rem);
+  margin-bottom: 2.2rem;
+  border-left: 6px solid #184634;
+  box-shadow: 0 2px 12px 0 rgba(255, 206, 86, 0.07);
+}
+
+.journey-quote-text {
+  color: #184634;
+  font-size: clamp(1rem, 2vw, 1.13rem);
+  font-style: italic;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.journey-quote-author {
+  color: #bfae6a;
+  font-size: clamp(0.9rem, 1.8vw, 1rem);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* Pulse animation for decorative elements */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .journey-section {
+    padding: 4rem 0 4rem 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .journey-section {
+    padding: 3.5rem 1.5rem 3.5rem 1.5rem;
+  }
+  
+  .journey-photo-section {
+    left: 0;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .journey-text-section {
+    margin-left: 0;
+    margin-top: 2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .mission-values-cards {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .mission-values-card {
+    max-width: 100%;
+  }
+  
+  .journey-section {
+    padding: 3rem 1rem 3rem 1rem;
+  }
+  
+  .journey-container {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .journey-photo-section {
+    margin-bottom: 1.5rem;
+  }
+  
+  .journey-text-section {
+    margin-left: 0;
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .mission-values-section {
+    padding: 2.5rem 0 2rem 0;
+  }
+  
+  .journey-section {
+    padding: 2.5rem 1rem 2.5rem 1rem;
+  }
+  
+  .journey-photo-wrapper {
+    width: clamp(200px, 50vw, 280px);
+    height: clamp(200px, 50vw, 280px);
+  }
+}

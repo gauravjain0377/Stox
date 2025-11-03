@@ -190,8 +190,108 @@
 }
 
 /* --- Responsive Design --- */
+@media (max-width: 1024px) {
+  .sp-grid {
+    gap: 1.75rem;
+  }
+}
+
 @media (max-width: 992px) {
+  .sp-section {
+    padding: 3.5rem 1rem;
+  }
   .sp-grid {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .sp-section {
+    padding: 3rem 1rem;
+  }
+  .sp-card {
+    padding: 1.8rem;
+    border-radius: 20px;
+  }
+  .sp-card-title {
+    font-size: 1.2rem;
+  }
+  .pv-amount {
+    font-size: 1.75rem;
+  }
+  .holding-item {
+    padding: 0.8rem 0.9rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .sp-section {
+    padding: 2.5rem 0.75rem;
+  }
+  .sp-card {
+    padding: 1.5rem;
+    border-radius: 18px;
+  }
+  .sp-card-header {
+    gap: 0.9rem;
+    margin-bottom: 1.2rem;
+  }
+  .sp-icon {
+    width: 45px;
+    height: 45px;
+    font-size: 1.4rem;
+  }
+  .sp-card-title {
+    font-size: 1.15rem;
+  }
+  .sp-card-subtitle {
+    font-size: 0.95rem;
+  }
+  .portfolio-value-box {
+    padding: 1rem 1.2rem;
+  }
+  .pv-amount {
+    font-size: 1.6rem;
+  }
+  .pv-change {
+    font-size: 0.9rem;
+  }
+  .holding-name {
+    font-size: 1rem;
+  }
+  .holding-value {
+    font-size: 1.05rem;
+  }
+  .article-item {
+    padding: 0.9rem 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .sp-section {
+    padding: 2rem 0.75rem;
+  }
+  .sp-card {
+    padding: 1.2rem;
+    border-radius: 16px;
+  }
+  .sp-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.3rem;
+  }
+  .sp-card-title {
+    font-size: 1.1rem;
+  }
+  .pv-amount {
+    font-size: 1.5rem;
+  }
+  .holding-item {
+    padding: 0.75rem 0.8rem;
+  }
+  .ai-recommendation {
+    padding: 0.85rem;
+    font-size: 0.9rem;
   }
 }
