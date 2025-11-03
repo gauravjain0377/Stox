@@ -159,13 +159,23 @@ exports.getCompanyInfo = async (req, res) => {
     const symbol = req.params.symbol;
     
     if (!symbol) {
-      return res.status(400).json({ error: 'Stock symbol is required' });
+      return res.status(400).json({ 
+        success: false,
+        error: 'Stock symbol is required' 
+      });
     }
     
-    const info = await CompanyInfo.findOne({ symbol: symbol });
+    // Try exact match first, then uppercase, then case-insensitive
+    let info = await CompanyInfo.findOne({ symbol: symbol });
+    if (!info) {
+      info = await CompanyInfo.findOne({ symbol: symbol.toUpperCase() });
+    }
+    if (!info) {
+      info = await CompanyInfo.findOne({ symbol: { $regex: new RegExp(`^${symbol}$`, 'i') } });
+    }
     
     if (info) {
-      // Return consistent data structure
+      // Return consistent data structure with all fields
       res.json({
         success: true,
         data: info

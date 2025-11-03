@@ -15,11 +15,14 @@ import { io } from 'socket.io-client';
 import { WS_URL } from '../config/api';
 
 const ModernSummary = () => {
-  const { holdings = [], realTimePrices = {}, isSocketConnected, user } = useGeneralContext();
+  const { holdings = [], realTimePrices = {}, isSocketConnected, user, setSelectedStock } = useGeneralContext();
   const [mostTraded, setMostTraded] = useState([]);
   const [watchlistSummary, setWatchlistSummary] = useState({ count: 0, items: [], totalItems: 0 });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const socketRef = useRef(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const priceChangeTimeouts = useRef({});
 
   // Calculate summary values using the same logic as Holdings page
   // Total Investment: sum of (avg price * quantity) for all holdings
@@ -44,6 +47,14 @@ const ModernSummary = () => {
 
         const stocks = await stockService.getMostTradedStocks();
         
+        // Normalize stock data format
+        const normalizedStocks = stocks.map(stock => ({
+          ...stock,
+          name: stock.name || stock.fullName || stock.symbol,
+          symbol: stock.symbol || 'UNKNOWN',
+          previousClose: stock.previousClose || (stock.price ? stock.price / (1 + (stock.percent || 0) / 100) : 0)
+        }));
+        
         // Try to get watchlist summary, fallback if it fails
         let watchlist;
         try {
@@ -57,8 +68,9 @@ const ModernSummary = () => {
             watchlists: []
           };
         }
-        setMostTraded(stocks);
+        setMostTraded(normalizedStocks);
         setWatchlistSummary(watchlist);
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
         // Fallback to default stocks and empty watchlist
@@ -74,13 +86,122 @@ const ModernSummary = () => {
           totalItems: 0,
           watchlists: []
         });
-      } finally {
         setLoading(false);
       }
     };
 
     fetchData();
   }, [user]);
+
+  // WebSocket connection for real-time updates to most traded stocks
+  useEffect(() => {
+    if (mostTraded.length === 0) return;
+
+    console.log('ModernSummary: Setting up WebSocket connection for most traded stocks');
+    
+    socketRef.current = io(WS_URL, {
+      transports: ['websocket', 'polling'],
+      timeout: 20000,
+      forceNew: true,
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000
+    });
+
+    const socket = socketRef.current;
+
+    socket.on('connect', () => {
+      console.log('ModernSummary: WebSocket connected');
+      setIsConnected(true);
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('ModernSummary: WebSocket disconnected:', reason);
+      setIsConnected(false);
+      if (reason === 'io server disconnect') {
+        socket.connect();
+      }
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('ModernSummary: WebSocket connection error:', error);
+      setIsConnected(false);
+    });
+
+    // Listen for individual stock updates
+    socket.on('stockUpdate', (stock) => {
+      setMostTraded(prevStocks => {
+        return prevStocks.map(prevStock => {
+          if (prevStock.symbol === stock.symbol) {
+            // Calculate change and percent if previousClose is available
+            const prevPrice = prevStock.price;
+            const newPrice = stock.price;
+            const change = prevStock.previousClose ? newPrice - prevStock.previousClose : (prevStock.change || 0);
+            const percent = prevStock.previousClose ? ((change / prevStock.previousClose) * 100) : (stock.percentChange || prevStock.percent || 0);
+            
+            // Show price change animation briefly
+            if (prevPrice !== newPrice && priceChangeTimeouts.current[stock.symbol]) {
+              clearTimeout(priceChangeTimeouts.current[stock.symbol]);
+            }
+            
+            return {
+              ...prevStock,
+              price: newPrice,
+              change: change,
+              percent: percent,
+              volume: stock.volume ? stock.volume.toLocaleString() : prevStock.volume,
+              previousClose: stock.previousClose || prevStock.previousClose
+            };
+          }
+          return prevStock;
+        });
+      });
+    });
+
+    // Listen for bulk updates
+    socket.on('bulkStockUpdate', (stocks) => {
+      if (stocks && stocks.length > 0) {
+        const stockMap = {};
+        stocks.forEach(stock => {
+          stockMap[stock.symbol] = stock;
+        });
+        
+        setMostTraded(prevStocks => {
+          return prevStocks.map(prevStock => {
+            const updatedStock = stockMap[prevStock.symbol];
+            if (updatedStock) {
+              const change = prevStock.previousClose ? updatedStock.price - prevStock.previousClose : (prevStock.change || 0);
+              const percent = prevStock.previousClose ? ((change / prevStock.previousClose) * 100) : (updatedStock.percentChange || prevStock.percent || 0);
+              
+              return {
+                ...prevStock,
+                price: updatedStock.price,
+                change: change,
+                percent: percent,
+                volume: updatedStock.volume ? updatedStock.volume.toLocaleString() : prevStock.volume,
+                previousClose: updatedStock.previousClose || prevStock.previousClose
+              };
+            }
+            return prevStock;
+          });
+        });
+      }
+    });
+
+    // Cleanup on unmount
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+      // Clear all timeouts
+      Object.values(priceChangeTimeouts.current).forEach(timeout => {
+        if (timeout) clearTimeout(timeout);
+      });
+      priceChangeTimeouts.current = {};
+    };
+  }, [mostTraded.length]); // Only re-run when stocks are loaded
 
   // Mock data for products & tools
   const products = [
@@ -97,6 +218,8 @@ const ModernSummary = () => {
   };
 
   const handleStockClick = (stock) => {
+    // Set selectedStock in context before navigating for instant display
+    setSelectedStock(stock);
     navigate(`/stock/${encodeURIComponent(stock.symbol)}`);
   };
 

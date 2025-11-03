@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { NavLink, Link } from "react-router-dom";
 import { 
-  Bell, 
-  Search, 
   LogOut, 
   User,
   TrendingUp,
@@ -13,7 +11,6 @@ import {
   BookOpen
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import NotificationBell from "./NotificationBell";
 import Settings from "./Settings";
 import logo from '/public/images/logo.png'; // Use your logo path, or update if needed
 
@@ -117,24 +114,8 @@ const TopNavbar = () => {
           </div>
           {/* Removed duplicate nav links here */}
         </div>
-        {/* Right: Search, Bell, Profile */}
+        {/* Right: Profile */}
         <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0">
-          {/* Search */}
-          <div className="relative hidden md:block">
-            <input
-              type="text"
-              placeholder="Search..."
-              className="pl-10 pr-4 py-2 w-48 lg:w-64 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00796b] focus:border-[#00796b] transition-all duration-200 bg-[#f3f3f3] text-[#222]"
-            />
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-              <Search size={16} />
-            </span>
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-300 select-none hidden lg:block">Ctrl+K</span>
-          </div>
-          {/* Notification Bell */}
-          <div className="flex-shrink-0">
-            <NotificationBell />
-          </div>
           {/* Profile Avatar */}
           <div className="relative flex-shrink-0" ref={avatarRef}>
             <button

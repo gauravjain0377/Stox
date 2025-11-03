@@ -1,21 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { stockService } from '../services/stockService';
 import { useNavigate } from 'react-router-dom';
+import { io } from 'socket.io-client';
+import { WS_URL } from '../config/api';
+import { useGeneralContext } from './GeneralContext';
 
 const AllStocks = () => {
+  const { setSelectedStock } = useGeneralContext();
   const [stocks, setStocks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('symbol');
+  const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
   const navigate = useNavigate();
+  const socketRef = useRef(null);
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
     const fetchStocks = async () => {
       try {
         setLoading(true);
         const allStocks = await stockService.getAllStocksWithData();
-        setStocks(allStocks);
+        
+        // Normalize stock data format
+        const normalizedStocks = allStocks.map(stock => ({
+          ...stock,
+          name: stock.name || stock.fullName || stock.symbol,
+          symbol: stock.symbol || 'UNKNOWN',
+          previousClose: stock.previousClose || (stock.price ? stock.price / (1 + (stock.percent || 0) / 100) : 0),
+          change: stock.change || (stock.previousClose ? stock.price - stock.previousClose : 0)
+        }));
+        
+        setStocks(normalizedStocks);
       } catch (error) {
         console.error('Error fetching stocks:', error);
       } finally {
@@ -26,9 +42,107 @@ const AllStocks = () => {
     fetchStocks();
   }, []);
 
+  // WebSocket connection for real-time updates
+  useEffect(() => {
+    if (stocks.length === 0) return;
+
+    console.log('AllStocks: Setting up WebSocket connection');
+    
+    socketRef.current = io(WS_URL, {
+      transports: ['websocket', 'polling'],
+      timeout: 20000,
+      forceNew: true,
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000
+    });
+
+    const socket = socketRef.current;
+
+    socket.on('connect', () => {
+      console.log('AllStocks: WebSocket connected');
+      setIsConnected(true);
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('AllStocks: WebSocket disconnected:', reason);
+      setIsConnected(false);
+      if (reason === 'io server disconnect') {
+        socket.connect();
+      }
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('AllStocks: WebSocket connection error:', error);
+      setIsConnected(false);
+    });
+
+    // Listen for individual stock updates
+    socket.on('stockUpdate', (stock) => {
+      setStocks(prevStocks => {
+        return prevStocks.map(prevStock => {
+          if (prevStock.symbol === stock.symbol) {
+            const change = prevStock.previousClose ? stock.price - prevStock.previousClose : (prevStock.change || 0);
+            const percent = prevStock.previousClose ? ((change / prevStock.previousClose) * 100) : (stock.percentChange || prevStock.percent || 0);
+            
+            return {
+              ...prevStock,
+              price: stock.price,
+              change: change,
+              percent: percent,
+              volume: stock.volume ? stock.volume.toLocaleString() : prevStock.volume,
+              previousClose: stock.previousClose || prevStock.previousClose
+            };
+          }
+          return prevStock;
+        });
+      });
+    });
+
+    // Listen for bulk updates
+    socket.on('bulkStockUpdate', (updatedStocks) => {
+      if (updatedStocks && updatedStocks.length > 0) {
+        const stockMap = {};
+        updatedStocks.forEach(stock => {
+          stockMap[stock.symbol] = stock;
+        });
+        
+        setStocks(prevStocks => {
+          return prevStocks.map(prevStock => {
+            const updatedStock = stockMap[prevStock.symbol];
+            if (updatedStock) {
+              const change = prevStock.previousClose ? updatedStock.price - prevStock.previousClose : (prevStock.change || 0);
+              const percent = prevStock.previousClose ? ((change / prevStock.previousClose) * 100) : (updatedStock.percentChange || prevStock.percent || 0);
+              
+              return {
+                ...prevStock,
+                price: updatedStock.price,
+                change: change,
+                percent: percent,
+                volume: updatedStock.volume ? updatedStock.volume.toLocaleString() : prevStock.volume,
+                previousClose: updatedStock.previousClose || prevStock.previousClose
+              };
+            }
+            return prevStock;
+          });
+        });
+      }
+    });
+
+    // Cleanup on unmount
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, [stocks.length]); // Only re-run when stocks are loaded
+
   const filteredStocks = stocks.filter(stock =>
     stock.symbol?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    stock.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    stock.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (stock.fullName && stock.fullName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const sortedStocks = [...filteredStocks].sort((a, b) => {
@@ -121,7 +235,9 @@ const AllStocks = () => {
   };
 
   const handleStockClick = (stock) => {
-    navigate(`/stock/${stock.symbol}`);
+    // Set selectedStock in context before navigating for instant display
+    setSelectedStock(stock);
+    navigate(`/stock/${encodeURIComponent(stock.symbol)}`);
   };
 
   if (loading) {
@@ -159,9 +275,6 @@ const AllStocks = () => {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('symbol')}>
-                    Symbol {getSortIcon('symbol')}
-                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('name')}>
                     Company {getSortIcon('name')}
                   </th>
@@ -191,11 +304,8 @@ const AllStocks = () => {
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-semibold text-gray-900 group-hover:text-blue-600">
-                        {stock.symbol}
+                        {stock.name || stock.fullName || stock.symbol}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{stock.name}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-500">{getSectorFromSymbol(stock.symbol)}</div>
@@ -216,7 +326,7 @@ const AllStocks = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">{stock.volume}</div>
+                      <div className="text-sm text-gray-500">{stock.volume || '-'}</div>
                     </td>
                   </tr>
                 ))}

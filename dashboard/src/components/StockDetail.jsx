@@ -210,7 +210,12 @@ const StockDetail = () => {
   const [pendingTradeType, setPendingTradeType] = useState(null);
   const [isProcessingTrade, setIsProcessingTrade] = useState(false);
   const [tradeNotification, setTradeNotification] = useState(null);
-  const [stockData, setStockData] = useState(null);
+  // Initialize stockData from selectedStock if available to prevent initial null state
+  const [stockData, setStockData] = useState(() => {
+    // Use selectedStock immediately if it matches the symbol from params
+    // This will be null on first mount, but we'll handle it in the effect
+    return null;
+  });
   const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [lastUpdateTime, setLastUpdateTime] = useState(null);
@@ -219,9 +224,105 @@ const StockDetail = () => {
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
   const seriesRef = useRef(null);
+  const hasInitializedRef = useRef(false);
+  const lastSymbolRef = useRef(null);
+  const usedSelectedStockRef = useRef(false);
   
+  // Initialize from selectedStock immediately when symbol changes (for instant display)
+  useEffect(() => {
+    if (!symbolParam) return;
+    
+    // Reset initialization when symbol changes
+    const symbolChanged = lastSymbolRef.current !== symbolParam;
+    if (symbolChanged) {
+      hasInitializedRef.current = false;
+      usedSelectedStockRef.current = false;
+      lastSymbolRef.current = symbolParam;
+      
+      // Use selectedStock from context if it matches the symbol - instant display (only on symbol change)
+      if (selectedStock && selectedStock.symbol === symbolParam) {
+        console.log('StockDetail: Using selectedStock for instant display', selectedStock);
+        setStockData(selectedStock);
+        setLoading(false);
+        hasInitializedRef.current = true;
+        usedSelectedStockRef.current = true;
+        return; // Don't fetch if we're using selectedStock
+      }
+    }
+  }, [symbolParam, selectedStock]); // Check selectedStock when symbol changes for instant display
+  
+  // Fetch stock data when symbol changes - only if we don't have data yet
+  useEffect(() => {
+    const fetchStockData = async () => {
+      console.log('StockDetail: Checking data for symbol:', symbolParam);
+      if (!symbolParam) return;
+      
+      // If we already have data for this symbol and it's initialized, don't refetch
+      if (stockData && stockData.symbol === symbolParam && hasInitializedRef.current) {
+        console.log('StockDetail: Already have data for', symbolParam, 'skipping fetch');
+        return;
+      }
+      
+      // Don't fetch if we're using selectedStock (handled in previous effect)
+      if (usedSelectedStockRef.current && hasInitializedRef.current) {
+        return;
+      }
+      
+      // Otherwise fetch fresh data
+      setLoading(true);
+      
+      try {
+        // Fetch stock data from the service
+        const stocks = await stockService.getAllStocksWithData();
+        console.log('StockDetail: Fetched stocks', stocks.length);
+        const stock = stocks.find(s => s.symbol === symbolParam);
+        console.log('StockDetail: Found stock', stock);
+        if (stock) {
+          setStockData(stock);
+          setSelectedStock(stock);
+        } else {
+          // If not found in service, create a fallback stock object
+          const fallbackStock = {
+            symbol: symbolParam,
+            name: `${symbolParam} Ltd`,
+            price: 1000,
+            change: 0,
+            percent: 0,
+            volume: "1M",
+            marketCap: "1T"
+          };
+          console.log('StockDetail: Using fallback stock', fallbackStock);
+          setStockData(fallbackStock);
+          setSelectedStock(fallbackStock);
+        }
+        hasInitializedRef.current = true;
+      } catch (error) {
+        console.error('Error fetching stock data:', error);
+        // Create fallback stock object
+        const fallbackStock = {
+          symbol: symbolParam,
+          name: `${symbolParam} Ltd`,
+          price: 1000,
+          change: 0,
+          percent: 0,
+          volume: "1M",
+          marketCap: "1T"
+        };
+        setStockData(fallbackStock);
+        setSelectedStock(fallbackStock);
+        hasInitializedRef.current = true;
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchStockData();
+  }, [symbolParam, setSelectedStock]); // Only depends on symbolParam, not selectedStock
+
   // WebSocket connection setup for real-time updates
   useEffect(() => {
+    if (!symbolParam) return;
+    
     console.log('StockDetail: Setting up WebSocket connection for', symbolParam);
     
     // Initialize socket connection
@@ -260,18 +361,35 @@ const StockDetail = () => {
         console.log('StockDetail: Received update for', stock.symbol);
         
         // Show price change animation
-        const currentPrice = stockData?.price;
-        const newPrice = stock.price;
-        if (currentPrice && newPrice !== currentPrice) {
-          setPriceChange(newPrice > currentPrice ? 'up' : 'down');
+        setStockData(prevStockData => {
+          if (!prevStockData) return prevStockData;
           
-          // Clear animation after 2 seconds
-          setTimeout(() => {
-            setPriceChange(null);
-          }, 2000);
-        }
+          const currentPrice = prevStockData.price;
+          const newPrice = stock.price;
+          if (currentPrice && newPrice !== currentPrice) {
+            setPriceChange(newPrice > currentPrice ? 'up' : 'down');
+            
+            // Clear animation after 2 seconds
+            setTimeout(() => {
+              setPriceChange(null);
+            }, 2000);
+          }
+          
+          // Return updated stock data
+          return {
+            ...prevStockData,
+            symbol: stock.symbol,
+            name: stock.name,
+            price: stock.price,
+            percent: stock.percentChange,
+            volume: stock.volume ? stock.volume.toLocaleString() : prevStockData.volume,
+            previousClose: stock.previousClose || prevStockData.previousClose,
+            marketCap: stock.marketCap || prevStockData.marketCap,
+            lastUpdate: stock.lastUpdate
+          };
+        });
         
-        // Update stock data
+        // Update context stock without triggering refetch
         const updatedStock = {
           symbol: stock.symbol,
           name: stock.name,
@@ -283,75 +401,22 @@ const StockDetail = () => {
           lastUpdate: stock.lastUpdate
         };
         
-        setStockData(updatedStock);
         setSelectedStock(updatedStock);
         setLastUpdateTime(new Date());
       }
     });
 
-    // Cleanup on unmount
+    // Cleanup on unmount or symbol change
     return () => {
       if (socketRef.current) {
         socketRef.current.disconnect();
+        socketRef.current = null;
       }
     };
-  }, [symbolParam, stockData?.price, setSelectedStock]);
+  }, [symbolParam, setSelectedStock]); // Removed stockData?.price from dependencies to prevent re-subscriptions
 
-  // Fetch stock data when symbol changes
-  useEffect(() => {
-    const fetchStockData = async () => {
-      console.log('StockDetail: Fetching stock data for symbol:', symbolParam);
-      if (!symbolParam) return;
-      
-      setLoading(true);
-      try {
-        // Fetch stock data from the service
-        const stocks = await stockService.getAllStocksWithData();
-        console.log('StockDetail: Fetched stocks', stocks.length);
-        const stock = stocks.find(s => s.symbol === symbolParam);
-        console.log('StockDetail: Found stock', stock);
-        if (stock) {
-          setStockData(stock);
-          setSelectedStock(stock);
-        } else {
-          // If not found in service, create a fallback stock object
-          const fallbackStock = {
-            symbol: symbolParam,
-            name: `${symbolParam} Ltd`,
-            price: 1000,
-            change: 0,
-            percent: 0,
-            volume: "1M",
-            marketCap: "1T"
-          };
-          console.log('StockDetail: Using fallback stock', fallbackStock);
-          setStockData(fallbackStock);
-          setSelectedStock(fallbackStock);
-        }
-      } catch (error) {
-        console.error('Error fetching stock data:', error);
-        // Create fallback stock object
-        const fallbackStock = {
-          symbol: symbolParam,
-          name: `${symbolParam} Ltd`,
-          price: 1000,
-          change: 0,
-          percent: 0,
-          volume: "1M",
-          marketCap: "1T"
-        };
-        setStockData(fallbackStock);
-        setSelectedStock(fallbackStock);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStockData();
-  }, [symbolParam, setSelectedStock]);
-
-  // Use stockData instead of selectedStock for rendering
-  const currentStock = stockData || selectedStock;
+  // Use stockData only to prevent showing stale data
+  const currentStock = stockData;
 
   // Time range options
   const timeRanges = [

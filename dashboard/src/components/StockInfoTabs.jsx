@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import PropTypes from 'prop-types';
+import { getApiUrl } from '../config/api';
 
 const TABS = ['Overview', 'Financials', 'News', 'History'];
 
@@ -24,7 +25,7 @@ export default function StockInfoTabs({ symbol }) {
 
   // Remove .NS or .BSE for company info lookup
   const cleanSymbol = symbol.replace(/\.(NS|BSE)$/i, '');
-  const getEndpoint = (tab) => `/api/stocks/${cleanSymbol}/companyinfo`;
+  const getEndpoint = (tab) => getApiUrl(`/api/stocks/${cleanSymbol}/companyinfo`);
 
   useEffect(() => {
     let isMounted = true; // Flag to prevent state updates after component unmount
