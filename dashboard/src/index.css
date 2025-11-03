@@ -26,6 +26,8 @@
     @apply scroll-smooth;
     overflow-x: hidden;
     max-width: 100vw;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   body {
@@ -38,6 +40,8 @@
     min-height: 100vh;
     overflow-x: hidden;
     max-width: 100vw;
+    width: 100%;
+    box-sizing: border-box;
   }
 }
 
@@ -1150,9 +1154,10 @@ hr {
 /* Responsive */
 @media (max-width: 900px) {
   .card {
-    min-width: 80vw;
-    max-width: 98vw;
-    padding: 24px 8px 18px 8px;
+    width: 100%;
+    max-width: 100%;
+    padding: 20px 12px;
+    box-sizing: border-box;
   }
 }
 @media (max-width: 600px) {
@@ -1161,9 +1166,16 @@ hr {
     margin-bottom: 8px;
   }
   .card {
-    min-width: 98vw;
-    max-width: 100vw;
-    padding: 14px 2px 10px 2px;
+    width: 100%;
+    max-width: 100%;
+    padding: 16px 12px;
+    box-sizing: border-box;
+  }
+}
+@media (max-width: 480px) {
+  .card {
+    padding: 12px 8px;
+    border-radius: 12px;
   }
 }
 
@@ -1186,6 +1198,8 @@ aside {
   isolation: isolate;
   position: relative;
   z-index: 1;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .stock-card:hover {
@@ -1215,6 +1229,30 @@ aside {
   box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
   border-color: #3b82f6;
   background-color: rgba(219, 234, 254, 0.3);
+}
+
+/* Prevent horizontal overflow on small screens */
+@media (max-width: 640px) {
+  .stock-card {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .stock-card .flex {
+    min-width: 0;
+    width: 100%;
+  }
+  
+  .stock-card .flex > * {
+    min-width: 0;
+  }
+  
+  /* Ensure price column doesn't overflow */
+  .stock-card .text-right {
+    flex-shrink: 0;
+    max-width: 35%;
+  }
 }
 
 /* Sidebar collapse improvements */

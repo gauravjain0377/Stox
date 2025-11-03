@@ -1266,6 +1266,7 @@ const PortfolioAnalytics = () => {
 
       <div className="pa-section-title pa-rt-title">Recent Transactions</div>
       <div className="pa-rt-table-outer">
+        {/* Desktop Table */}
         <table className="pa-rt-table">
           <thead>
             <tr>
@@ -1298,6 +1299,44 @@ const PortfolioAnalytics = () => {
             )}
           </tbody>
         </table>
+        
+        {/* Mobile Cards */}
+        <div className="pa-rt-mobile-cards">
+          {recentTransactions.length > 0 ? (
+            recentTransactions.map((tx, idx) => (
+              <div key={idx} className="pa-rt-mobile-card">
+                <div className="pa-rt-mobile-card-header">
+                  <span className="pa-rt-mobile-stock">{tx.stock}</span>
+                  <span className="pa-rt-mobile-date">{new Date(tx.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</span>
+                </div>
+                <div className="pa-rt-mobile-body">
+                  <div className="pa-rt-mobile-item">
+                    <span className="pa-rt-mobile-label">Type</span>
+                    <span className={`pa-rt-mobile-value`}>
+                      <span className={`pa-rt-type-badge ${tx.type.toLowerCase()}`}>{tx.type}</span>
+                    </span>
+                  </div>
+                  <div className="pa-rt-mobile-item">
+                    <span className="pa-rt-mobile-label">Quantity</span>
+                    <span className="pa-rt-mobile-value">{tx.quantity}</span>
+                  </div>
+                  <div className="pa-rt-mobile-item">
+                    <span className="pa-rt-mobile-label">Price</span>
+                    <span className="pa-rt-mobile-value">₹{tx.price?.toFixed(2)}</span>
+                  </div>
+                  <div className="pa-rt-mobile-item">
+                    <span className="pa-rt-mobile-label">Total</span>
+                    <span className="pa-rt-mobile-value">₹{tx.total?.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="pa-rt-mobile-card text-center py-4">
+              <p className="text-gray-500">No recent transactions found</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Holdings Summary and News Feed */}
@@ -1306,18 +1345,47 @@ const PortfolioAnalytics = () => {
           <h4>Current Holdings</h4>
           <div className="holdings-summary">
             {userHoldings && userHoldings.length > 0 ? (
-              <table className="holdings-table">
-                <thead>
-                  <tr>
-                    <th>Symbol</th>
-                    <th>Qty</th>
-                    <th>Avg. Cost</th>
-                    <th>Current Price</th>
-                    <th>Value</th>
-                    <th>P&L</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <>
+                {/* Desktop Table */}
+                <table className="holdings-table">
+                  <thead>
+                    <tr>
+                      <th>Symbol</th>
+                      <th>Qty</th>
+                      <th>Avg. Cost</th>
+                      <th>Current Price</th>
+                      <th>Value</th>
+                      <th>P&L</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {userHoldings.map((holding, index) => {
+                      const currentPrice = (realTimePrices && realTimePrices[holding.name]) || holding.price || 0;
+                      const currentValue = currentPrice * (holding.qty || 0);
+                      const investedValue = (holding.avg || 0) * (holding.qty || 0);
+                      const pnl = currentValue - investedValue;
+                      const pnlPercent = investedValue > 0 ? (pnl / investedValue) * 100 : 0;
+                      
+                      return (
+                        <tr key={index}>
+                          <td className="holding-symbol">{holding.name}</td>
+                          <td className="holding-qty">{holding.qty}</td>
+                          <td className="holding-avg">₹{holding.avg?.toFixed(2)}</td>
+                          <td className="holding-price">₹{currentPrice.toFixed(2)}</td>
+                          <td className="holding-value">₹{currentValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                          <td className={`holding-pnl ${pnl >= 0 ? 'positive' : 'negative'}`}>
+                            {pnl >= 0 ? '+' : ''}₹{Math.abs(pnl).toFixed(2)}
+                            <br />
+                            <span>({pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(2)}%)</span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                
+                {/* Mobile Cards */}
+                <div className="holdings-mobile-cards">
                   {userHoldings.map((holding, index) => {
                     const currentPrice = (realTimePrices && realTimePrices[holding.name]) || holding.price || 0;
                     const currentValue = currentPrice * (holding.qty || 0);
@@ -1326,22 +1394,36 @@ const PortfolioAnalytics = () => {
                     const pnlPercent = investedValue > 0 ? (pnl / investedValue) * 100 : 0;
                     
                     return (
-                      <tr key={index}>
-                        <td className="holding-symbol">{holding.name}</td>
-                        <td className="holding-qty">{holding.qty}</td>
-                        <td className="holding-avg">₹{holding.avg?.toFixed(2)}</td>
-                        <td className="holding-price">₹{currentPrice.toFixed(2)}</td>
-                        <td className="holding-value">₹{currentValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
-                        <td className={`holding-pnl ${pnl >= 0 ? 'positive' : 'negative'}`}>
-                          {pnl >= 0 ? '+' : ''}₹{Math.abs(pnl).toFixed(2)}
-                          <br />
-                          <span>({pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(2)}%)</span>
-                        </td>
-                      </tr>
+                      <div key={index} className="holdings-mobile-card">
+                        <div className="holdings-mobile-header">
+                          <span className="holdings-mobile-symbol">{holding.name}</span>
+                          <span className="holdings-mobile-qty">Qty: {holding.qty}</span>
+                        </div>
+                        <div className="holdings-mobile-body">
+                          <div className="holdings-mobile-item">
+                            <span className="holdings-mobile-label">Avg Cost</span>
+                            <span className="holdings-mobile-value">₹{holding.avg?.toFixed(2)}</span>
+                          </div>
+                          <div className="holdings-mobile-item">
+                            <span className="holdings-mobile-label">Current Price</span>
+                            <span className="holdings-mobile-value">₹{currentPrice.toFixed(2)}</span>
+                          </div>
+                          <div className="holdings-mobile-item">
+                            <span className="holdings-mobile-label">Value</span>
+                            <span className="holdings-mobile-value">₹{currentValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className={`holdings-mobile-item holdings-mobile-pnl ${pnl >= 0 ? 'positive' : 'negative'}`}>
+                            <span className="holdings-mobile-label">P&L</span>
+                            <span className="holdings-mobile-value">
+                              {pnl >= 0 ? '+' : ''}₹{Math.abs(pnl).toFixed(2)} ({pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(2)}%)
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     );
                   })}
-                </tbody>
-              </table>
+                </div>
+              </>
             ) : (
               <div className="empty-state">
                 <p>No holdings found</p>

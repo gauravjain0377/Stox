@@ -819,6 +819,42 @@
     width: 40px;
     height: 20px;
   }
+
+  /* Compact search bar on mobile */
+  .watchlist-search-bar-modern {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .watchlist-search-input-modern,
+  .watchlist-add-input-modern {
+    font-size: 0.875rem;
+    padding: 0.625rem 0.875rem 0.625rem 2.5rem;
+  }
+
+  .input-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  /* Table responsive on mobile - hide some columns */
+  .watchlist-table-modern th:nth-child(4),
+  .watchlist-table-modern td:nth-child(4),
+  .watchlist-table-modern th:nth-child(5),
+  .watchlist-table-modern td:nth-child(5) {
+    display: none; /* Hide Volume and Chart columns on very small screens */
+  }
+
+  .watchlist-table-modern th,
+  .watchlist-table-modern td {
+    padding: 0.5rem 0.375rem;
+    font-size: 0.8rem;
+  }
+
+  .watchlist-table-modern th:first-child,
+  .watchlist-table-modern td:first-child {
+    min-width: 80px;
+  }
 }
 
 .modern-watchlist {
@@ -834,8 +870,33 @@
 @media (max-width: 768px) {
   .modern-watchlist {
     padding: 1.5rem 1rem;
-    margin: 20px auto;
+    margin: 20px 8px;
     border-radius: 12px;
+    max-width: calc(100% - 16px);
+  }
+
+  /* Improve table layout on tablets */
+  .watchlist-table-modern {
+    font-size: 0.85rem;
+  }
+
+  .watchlist-table-modern th,
+  .watchlist-table-modern td {
+    padding: 0.625rem 0.5rem;
+  }
+
+  .watchlist-search-bar-modern {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .watchlist-tabs {
+    gap: 0.5rem;
+  }
+
+  .watchlist-tab {
+    font-size: 0.95rem;
+    padding: 0.35rem 1rem;
   }
 }
 

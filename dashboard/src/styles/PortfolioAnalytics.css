@@ -907,6 +907,27 @@
   .transactions-table td {
     padding: 8px 6px;
   }
+
+  /* Compact table headers on medium screens */
+  .pa-rt-table th {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .pa-rt-table td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .holdings-table th {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .holdings-table td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.85rem;
+  }
   
   .metrics-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -1102,6 +1123,67 @@
 .pa-rt-table td:nth-child(5) { width: 20%; } /* Price */
 .pa-rt-table th:nth-child(6),
 .pa-rt-table td:nth-child(6) { width: 20%; } /* Total */
+
+/* Mobile Card Layout for Transactions */
+.pa-rt-mobile-cards {
+  display: none;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pa-rt-mobile-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.pa-rt-mobile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.pa-rt-mobile-stock {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #2563eb;
+}
+
+.pa-rt-mobile-date {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.pa-rt-mobile-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.pa-rt-mobile-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pa-rt-mobile-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pa-rt-mobile-value {
+  font-weight: 600;
+  color: #18181b;
+}
 
 .pa-rt-stock {
   font-weight: 600;
@@ -1380,6 +1462,118 @@
     width: 98vw;
     min-height: 120px;
     max-height: 220px;
+  }
+
+  /* Switch to mobile card layout for tables */
+  .pa-rt-table-outer {
+    overflow-x: visible;
+  }
+  
+  .pa-rt-table {
+    display: none;
+  }
+  
+  .pa-rt-mobile-cards {
+    display: flex;
+  }
+
+  /* Holdings table mobile layout */
+  .holdings-table {
+    display: none;
+  }
+
+  .holdings-mobile-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .holdings-mobile-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  .holdings-mobile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .holdings-mobile-symbol {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #18181b;
+  }
+
+  .holdings-mobile-qty {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 500;
+  }
+
+  .holdings-mobile-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .holdings-mobile-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .holdings-mobile-label {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .holdings-mobile-value {
+    font-weight: 600;
+    color: #18181b;
+  }
+
+  .holdings-mobile-pnl {
+    grid-column: 1 / -1;
+    padding-top: 0.5rem;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .holdings-mobile-pnl.positive {
+    color: #10b981;
+  }
+
+  .holdings-mobile-pnl.negative {
+    color: #ef4444;
+  }
+}
+
+/* Desktop: Show table, hide mobile cards */
+@media (min-width: 601px) {
+  .pa-rt-mobile-cards {
+    display: none;
+  }
+  
+  .pa-rt-table {
+    display: table;
+  }
+
+  .holdings-mobile-cards {
+    display: none;
+  }
+
+  .holdings-table {
+    display: table;
   }
 }
 
