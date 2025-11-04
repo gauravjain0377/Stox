@@ -282,6 +282,11 @@ const SidebarWatchlist = () => {
     try {
       setSelectedStock(stock);
       navigate(`/stock/${encodeURIComponent(stock.symbol)}`, { replace: true });
+      
+      // Close sidebar on mobile screens when stock is clicked
+      if (window.innerWidth < 768 && !collapsed) {
+        toggleSidebar();
+      }
     } catch (error) {
       console.error('Error navigating to stock:', error);
     }

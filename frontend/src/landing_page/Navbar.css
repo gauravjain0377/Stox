@@ -37,6 +37,13 @@
   list-style: none;
 }
 
+/* Hide icons on large screens (where hamburger menu is not shown) */
+@media (min-width: 901px) {
+  .modern-navbar-menu ul li a .navbar-icon {
+    display: none;
+  }
+}
+
 /* On mobile, hide desktop menu by default */
 @media (max-width: 900px) {
   .modern-navbar-menu ul {

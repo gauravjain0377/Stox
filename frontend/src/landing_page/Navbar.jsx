@@ -78,25 +78,25 @@ function Navbar() {
         <ul>
           <li>
             <Link to="/about" className={location.pathname === '/about' ? 'active' : ''} onClick={() => setMenuOpen(false)}>
-              <FaInfoCircle style={{ fontSize: '18px', opacity: 0.8 }} />
+              <FaInfoCircle className="navbar-icon" style={{ fontSize: '18px', opacity: 0.8 }} />
               <span>About</span>
             </Link>
           </li>
           <li>
             <Link to="/pricing" className={location.pathname === '/pricing' ? 'active' : ''} onClick={() => setMenuOpen(false)}>
-              <FaDollarSign style={{ fontSize: '18px', opacity: 0.8 }} />
+              <FaDollarSign className="navbar-icon" style={{ fontSize: '18px', opacity: 0.8 }} />
               <span>Pricing</span>
             </Link>
           </li>
           <li>
             <Link to="/support" className={location.pathname === '/support' ? 'active' : ''} onClick={() => setMenuOpen(false)}>
-              <FaHeadset style={{ fontSize: '18px', opacity: 0.8 }} />
+              <FaHeadset className="navbar-icon" style={{ fontSize: '18px', opacity: 0.8 }} />
               <span>Support</span>
             </Link>
           </li>
           <li>
             <Link to="/utilities" className={location.pathname === '/utilities' ? 'active' : ''} onClick={() => setMenuOpen(false)}>
-              <FaCalculator style={{ fontSize: '18px', opacity: 0.8 }} />
+              <FaCalculator className="navbar-icon" style={{ fontSize: '18px', opacity: 0.8 }} />
               <span>Utilities</span>
             </Link>
           </li>

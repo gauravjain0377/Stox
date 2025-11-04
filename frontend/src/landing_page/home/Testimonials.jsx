@@ -4,49 +4,49 @@ import { motion, AnimatePresence } from "framer-motion";
 const testimonials = [
   {
     name: "Gaurav Jain",
-    avatar: "https://randomuser.me/api/portraits/men/75.jpg",
-    text: "The platform’s web interface is clean and powerful. I could analyze stock trends and fund performance effortlessly. No clutter, just clarity.",
+    avatar: "/images/person1.jpeg",
+    text: "The platform's web interface is clean and powerful. I could analyze stock trends and fund performance effortlessly. No clutter, just clarity.",
     meta: "Equity Research Analyst, Mumbai",
   },
   {
     name: "Sneha Rathi",
-    avatar: "https://randomuser.me/api/portraits/women/65.jpg",
-    text: "As someone who manages her parents’ investments, the Hindi support guides made onboarding very smooth. Everything works well on desktop.",
+    avatar: "/images/person5.jpeg",
+    text: "As someone who manages her parents' investments, the Hindi support guides made onboarding very smooth. Everything works well on desktop.",
     meta: "Marketing Manager, Jaipur",
   },
   {
     name: "Amitabh Roy",
-    avatar: "https://randomuser.me/api/portraits/men/64.jpg",
+    avatar: "/images/person2.jpeg",
     text: "I moved my entire portfolio from my previous broker to this platform. The web dashboard makes tax reporting and tracking capital gains very easy.",
     meta: "Chartered Accountant, Kolkata",
   },
   {
     name: "Ritika Sharma",
-    avatar: "https://randomuser.me/api/portraits/women/52.jpg",
+    avatar: "/images/person6.jpeg",
     text: "The website makes it so easy to handle SIPs for my entire family. I especially liked how the reports visualize our growth over time.",
     meta: "Educator, Chandigarh",
   },
   {
     name: "Kunal Desai",
-    avatar: "https://randomuser.me/api/portraits/men/55.jpg",
+    avatar: "/images/person3.png",
     text: "The desktop fund screener is excellent. I could shortlist value stocks quickly and build a portfolio suited for long-term growth.",
     meta: "Investor, Surat",
   },
   {
     name: "Megha Pillai",
-    avatar: "https://randomuser.me/api/portraits/women/48.jpg",
-    text: "I was new to mutual funds but the platform’s web tutorials helped a lot. Now I invest with confidence — no need to install anything.",
+    avatar: "/images/person7.jpeg",
+    text: "I was new to mutual funds but the platform's web tutorials helped a lot. Now I invest with confidence — no need to install anything.",
     meta: "Software Engineer, Kochi",
   },
   {
     name: "Ravi Sekhar",
-    avatar: "https://randomuser.me/api/portraits/men/66.jpg",
+    avatar: "/images/person4.jpeg",
     text: "As someone who files taxes professionally, I find their capital gains summaries on the web platform extremely helpful and accurate.",
     meta: "Accountant, Hyderabad",
   },
   {
     name: "Anjali Mehta",
-    avatar: "https://randomuser.me/api/portraits/women/61.jpg",
+    avatar: "/images/person8.jpeg",
     text: "This platform helped me shift from spreadsheets to something modern and visual. Everything I need to track is now one click away.",
     meta: "Freelance Designer, Bengaluru",
   },
@@ -135,7 +135,7 @@ export default function Testimonials() {
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={focus + '-avatar'}
-                className="w-24 h-24 rounded-full overflow-hidden border-4 shadow-xl mb-5 bg-slate-100 flex items-center justify-center z-10"
+                className="w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-4 shadow-xl mb-5 bg-slate-100 flex items-center justify-center z-10"
                 layoutId={`avatar-${focus}`}
                 style={{
                   margin: '0 auto',
@@ -143,14 +143,32 @@ export default function Testimonials() {
                   justifyContent: 'center',
                   alignItems: 'center',
                   boxShadow: '#00796b',
-                  borderColor: '#00796b', // cyan-400
+                  borderColor: '#00796b',
+                  width: '112px',
+                  height: '112px',
+                  borderWidth: '4px',
                 }}
                 initial={{ scale: 0.8, opacity: 0, boxShadow: '0 0 0 0px #00796b' }}
-                animate={{ scale: 1, opacity: 1, boxShadow: '0 0 0 8px #00796b, 0 8px 32px 0 rgba(34,42,53,0.10)', transition: { type: "spring", stiffness: 180, damping: 18, delay: 0.1 } }}
+                animate={{ scale: 1, opacity: 1, boxShadow: '0 0 0 8px rgba(0,121,107,0.15), 0 8px 24px 0 rgba(34,42,53,0.12)', transition: { type: "spring", stiffness: 180, damping: 18, delay: 0.1 } }}
                 exit={{ scale: 0.8, opacity: 0, boxShadow: '0 0 0 0px #00796b', transition: { duration: 0.2 } }}
-                whileHover={{ scale: 1.05, boxShadow: '0 0 0 10px #00796b' }}
+                whileHover={{ scale: 1.05, boxShadow: '0 0 0 10px rgba(0,121,107,0.20)' }}
               >
-                <img src={testimonials[focus].avatar} alt={testimonials[focus].name} className="w-full h-full object-cover mx-auto" />
+                <img 
+                  src={testimonials[focus].avatar} 
+                  alt={testimonials[focus].name} 
+                  className="w-full h-full object-cover mx-auto" 
+                  style={{ 
+                    objectFit: 'cover', 
+                    objectPosition: 'center',
+                    width: '100%',
+                    height: '100%',
+                    maxWidth: '100%',
+                    maxHeight: '100%'
+                  }}
+                  onError={(e) => {
+                    e.target.src = 'https://via.placeholder.com/112';
+                  }}
+                />
               </motion.div>
             </AnimatePresence>
             <AnimatePresence mode="wait" initial={false}>
@@ -196,31 +214,66 @@ export default function Testimonials() {
       <div className="w-full text-center mt-32 md:mt-40 pb-4 pt-5">
         <div className="inline-block">
           <div className="flex flex-wrap justify-center gap-5 md:gap-8 lg:gap-10">
-            {testimonials.map((t, i) => (
-              <button
-                key={i}
-                className={`px-6 py-2 rounded-full font-semibold text-base tracking-wide transition-all duration-300 whitespace-nowrap shadow-md focus:outline-none border
-                  ${i === focus
-                    ? 'bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white shadow-lg scale-110 ring-2 ring-cyan-400 border-transparent'
-                    : 'bg-slate-200 text-slate-800 border border-slate-300 shadow-sm hover:bg-cyan-100 hover:text-cyan-700 hover:scale-105 hover:shadow-lg'}
-                `}
-                style={{
-                  fontFamily: 'Poppins, Inter, Montserrat, sans-serif',
-                  boxShadow: i === focus ? '0 4px 16px 0 rgba(34,211,238,0.15)' : undefined,
-                  transition: 'box-shadow 0.2s, background 0.2s, color 0.2s, transform 0.2s',
-                  fontWeight: 600,
-                  letterSpacing: '0.05em',
-                  margin: '0 0.5rem 0.75rem 0.5rem', // extra margin for vertical spacing on wrap
-                }}
-                onClick={() => {
-                  setFocus(i);
-                  pause();
-                }}
-                aria-label={`Show testimonial from ${t.name}`}
-              >
-                {t.name}
-              </button>
-            ))}
+             {testimonials.map((t, i) => (
+               <button
+                 key={i}
+                 className={`px-6 py-3 rounded-full font-semibold text-sm md:text-base tracking-wide transition-all duration-300 whitespace-nowrap focus:outline-none
+                   ${i === focus
+                     ? 'text-white shadow-lg scale-105'
+                     : 'bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 hover:text-slate-900 hover:scale-105 hover:shadow-md hover:border-slate-300'}
+                 `}
+                 style={{
+                   fontFamily: 'Poppins, Inter, Montserrat, sans-serif',
+                   borderRadius: '9999px',
+                   ...(i === focus ? {
+                     background: '#00796b',
+                     boxShadow: '0 4px 14px rgba(0, 121, 107, 0.25), 0 2px 4px rgba(0, 121, 107, 0.15)',
+                     fontWeight: 700,
+                     color: '#ffffff',
+                     border: '2px solid #00796b',
+                     transform: 'scale(1.05)',
+                   } : {
+                     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+                     fontWeight: 600,
+                     border: '1.5px solid #e2e8f0',
+                   }),
+                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                   letterSpacing: '0.03em',
+                   margin: '0 0.5rem 0.75rem 0.5rem',
+                   textRendering: 'optimizeLegibility',
+                   WebkitFontSmoothing: 'antialiased',
+                   MozOsxFontSmoothing: 'grayscale',
+                   filter: 'none',
+                   backdropFilter: 'none',
+                   willChange: 'transform',
+                   WebkitTextStroke: '0',
+                   position: 'relative',
+                   overflow: 'hidden',
+                 }}
+                 onClick={() => {
+                   setFocus(i);
+                   pause();
+                 }}
+                 aria-label={`Show testimonial from ${t.name}`}
+               >
+                 {i === focus && (
+                   <span
+                     style={{
+                       position: 'absolute',
+                       top: 0,
+                       left: 0,
+                       right: 0,
+                       bottom: 0,
+                       background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%)',
+                       pointerEvents: 'none',
+                     }}
+                   />
+                 )}
+                 <span style={{ position: 'relative', zIndex: 1 }}>
+                   {t.name}
+                 </span>
+               </button>
+             ))}
           </div>
         </div>
       </div>
