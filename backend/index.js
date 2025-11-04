@@ -1749,7 +1749,7 @@ app.post('/api/support/contact', async (req, res) => {
     const smtpUser = process.env.MAIL_USER || process.env.EMAIL_USER || process.env.SMTP_USER;
     const smtpPass = process.env.MAIL_PASS || process.env.EMAIL_PASS || process.env.SMTP_PASS;
     const smtpHost = process.env.MAIL_HOST || process.env.EMAIL_HOST || process.env.SMTP_HOST || 'smtp.gmail.com';
-    const smtpPort = parseInt(process.env.MAIL_PORT || process.env.EMAIL_PORT || process.env.SMTP_PORT || '587', 10);
+    let smtpPort = parseInt(process.env.MAIL_PORT || process.env.EMAIL_PORT || process.env.SMTP_PORT || '587', 10);
     const supportTo = process.env.SUPPORT_TO || 'gjain0229@gmail.com';
 
     if (!smtpUser || !smtpPass) {
@@ -1764,55 +1764,46 @@ app.post('/api/support/contact', async (req, res) => {
       });
     }
 
-    // Create transporter with production-ready configuration
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465, // true for 465, false for other ports
-      auth: { 
-        user: smtpUser, 
-        pass: smtpPass 
-      },
-      // Production-ready TLS configuration
-      tls: {
-        // For production, we may need to allow self-signed certs in some environments
-        rejectUnauthorized: process.env.NODE_ENV === 'production' ? false : true
-      },
-      // Connection timeout settings for production (important for serverless environments)
-      connectionTimeout: 15000, // 15 seconds
-      greetingTimeout: 10000, // 10 seconds
-      socketTimeout: 15000, // 15 seconds
-      // Retry configuration for serverless environments
-      pool: false,
-      maxConnections: 1,
-      maxMessages: 1,
-      // Additional options for better reliability
-      requireTLS: smtpPort === 587,
-      debug: process.env.NODE_ENV === 'development' // Enable debug in development
-    });
-
-    // Verify connection before sending (helps catch configuration issues early)
-    try {
-      await transporter.verify();
-      console.log('✅ SMTP connection verified successfully');
-    } catch (verifyError) {
-      console.error('❌ SMTP verification failed:', verifyError);
-      // Provide more specific error messages
-      let errorMessage = 'Failed to connect to email server. ';
-      if (verifyError.code === 'EAUTH' || verifyError.responseCode === 535) {
-        errorMessage += 'Invalid email credentials. Please check MAIL_USER and MAIL_PASS.';
-      } else if (verifyError.code === 'ECONNECTION' || verifyError.code === 'ETIMEDOUT') {
-        errorMessage += 'Connection timeout. Please check MAIL_HOST and MAIL_PORT.';
-      } else if (verifyError.message) {
-        errorMessage += verifyError.message;
-      } else {
-        errorMessage += 'Please check your email configuration.';
-      }
-      return res.status(500).json({ 
-        success: false, 
-        message: errorMessage 
+    // Helper function to create transporter with specific port
+    const createTransporter = (port) => {
+      const isSecure = port === 465;
+      return nodemailer.createTransport({
+        host: smtpHost,
+        port: port,
+        secure: isSecure, // true for 465, false for other ports
+        auth: { 
+          user: smtpUser, 
+          pass: smtpPass 
+        },
+        // Production-ready TLS configuration
+        tls: {
+          // Allow self-signed certificates in production (common in serverless environments)
+          rejectUnauthorized: false,
+          // Use modern TLS protocols
+          minVersion: 'TLSv1.2'
+        },
+        // Extended timeout settings for serverless environments (Vercel/Render have slower connections)
+        connectionTimeout: 30000, // 30 seconds - increased for serverless
+        greetingTimeout: 20000, // 20 seconds - increased for serverless
+        socketTimeout: 30000, // 30 seconds - increased for serverless
+        // Retry configuration for serverless environments
+        pool: false,
+        maxConnections: 1,
+        maxMessages: 1,
+        // Additional options for better reliability in production
+        requireTLS: port === 587 && !isSecure,
+        // Disable debug in production to reduce overhead
+        debug: false,
+        // Ignore TLS errors (some serverless environments have certificate issues)
+        ignoreTLS: false,
+        // Use direct connection without pooling for serverless
+        direct: false
       });
-    }
+    };
+
+    // Create transporter with configured port
+    let transporter = createTransporter(smtpPort);
+    const alternativePort = smtpPort === 587 ? 465 : 587; // Try alternative port if primary fails
 
     const mailSubjectBase = subject && subject.trim() ? subject : `Support: ${purpose || 'General inquiry'}`;
     const mailSubject = `[StockSathi] ${mailSubjectBase}`;
@@ -1874,43 +1865,97 @@ app.post('/api/support/contact', async (req, res) => {
       </div>
     `;
 
-    // Send email with error handling
-    try {
-      const info = await transporter.sendMail({
-        from: {
-          name: 'StockSathi Support',
-          address: smtpUser
-        },
-        to: supportTo,
-        replyTo: email,
-        subject: mailSubject,
-        html
-      });
+    // Send email with retry logic, fallback to alternative port, and better error handling
+    let retryCount = 0;
+    const maxRetries = 2;
+    let lastError = null;
+    let triedAlternativePort = false;
 
-      console.log('✅ Support email sent successfully:', info.messageId);
-      res.json({ success: true, message: 'Message sent. We will get back to you shortly.' });
-    } catch (sendError) {
-      console.error('❌ Error sending support email:', sendError);
-      let errorMessage = 'Failed to send message. ';
-      
-      // Provide specific error messages based on error type
-      if (sendError.code === 'EAUTH' || sendError.responseCode === 535) {
-        errorMessage += 'Authentication failed. Please check email credentials.';
-      } else if (sendError.code === 'EMESSAGE') {
-        errorMessage += 'Invalid message format.';
-      } else if (sendError.code === 'ECONNECTION' || sendError.code === 'ETIMEDOUT') {
-        errorMessage += 'Connection issue. Please try again later.';
-      } else if (sendError.response) {
-        errorMessage += sendError.response;
-      } else if (sendError.message) {
-        errorMessage += sendError.message;
+    while (retryCount <= maxRetries) {
+      try {
+        const info = await transporter.sendMail({
+          from: {
+            name: 'StockSathi Support',
+            address: smtpUser
+          },
+          to: supportTo,
+          replyTo: email,
+          subject: mailSubject,
+          html
+        }, {
+          // Retry options
+          retry: false // We handle retries manually
+        });
+
+        console.log(`✅ Support email sent successfully via port ${smtpPort}:`, info.messageId);
+        return res.json({ success: true, message: 'Message sent. We will get back to you shortly.' });
+      } catch (sendError) {
+        lastError = sendError;
+        retryCount++;
+        
+        console.error(`❌ Error sending support email (attempt ${retryCount}/${maxRetries + 1}, port ${smtpPort}):`, {
+          code: sendError.code,
+          command: sendError.command,
+          response: sendError.response,
+          responseCode: sendError.responseCode
+        });
+
+        // If it's a connection/timeout error and we haven't tried alternative port, try that first
+        if ((sendError.code === 'ECONNECTION' || sendError.code === 'ETIMEDOUT' || sendError.code === 'ESOCKET') && !triedAlternativePort) {
+          console.log(`🔄 Trying alternative port ${alternativePort} (SSL) instead of ${smtpPort}...`);
+          smtpPort = alternativePort;
+          transporter = createTransporter(smtpPort);
+          triedAlternativePort = true;
+          retryCount = 0; // Reset retry count for new port
+          continue;
+        }
+
+        // If it's a connection timeout and we have retries left, wait and retry
+        if ((sendError.code === 'ECONNECTION' || sendError.code === 'ETIMEDOUT' || sendError.code === 'ESOCKET') && retryCount <= maxRetries) {
+          console.log(`⏳ Retrying email send (attempt ${retryCount + 1}/${maxRetries + 1})...`);
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+          continue;
+        }
+
+        // If it's an auth error, don't retry
+        if (sendError.code === 'EAUTH' || sendError.responseCode === 535) {
+          return res.status(500).json({ 
+            success: false, 
+            message: 'Authentication failed. Please check your email credentials (MAIL_USER and MAIL_PASS). Make sure you\'re using a Gmail App Password, not your regular password.' 
+          });
+        }
+
+        // If we've exhausted retries, break and return error
+        if (retryCount > maxRetries) {
+          break;
+        }
       }
-      
-      return res.status(500).json({ 
-        success: false, 
-        message: errorMessage 
-      });
     }
+
+    // If we get here, all retries failed
+    console.error('❌ All email send attempts failed:', lastError);
+    let errorMessage = 'Failed to send message. ';
+    
+    // Provide specific error messages based on error type
+    if (lastError.code === 'ECONNECTION' || lastError.code === 'ETIMEDOUT' || lastError.code === 'ESOCKET') {
+      errorMessage += 'Unable to connect to email server. This may be due to network restrictions in your hosting environment. Please check: 1) MAIL_HOST and MAIL_PORT are correct, 2) Your hosting platform allows outbound SMTP connections, 3) Try using port 465 with secure:true instead of 587.';
+    } else if (lastError.code === 'EAUTH' || lastError.responseCode === 535) {
+      errorMessage += 'Authentication failed. Please verify MAIL_USER and MAIL_PASS are correct. Use a Gmail App Password, not your regular password.';
+    } else if (lastError.code === 'EMESSAGE') {
+      errorMessage += 'Invalid message format.';
+    } else if (lastError.response) {
+      errorMessage += lastError.response;
+    } else if (lastError.message) {
+      errorMessage += lastError.message;
+    } else {
+      errorMessage += 'Please check your email configuration and try again.';
+    }
+    
+    return res.status(500).json({ 
+      success: false, 
+      message: errorMessage 
+    });
   } catch (err) {
     console.error('❌ Support email error:', err);
     console.error('Error details:', {

@@ -59,6 +59,19 @@ const SidebarWatchlist = () => {
     console.log('Setting up WebSocket connection...');
     console.log('WebSocket URL:', WS_URL);
     
+    let loadingTimeoutRef = null;
+    
+    // Set a timeout to stop loading if no data arrives
+    loadingTimeoutRef = setTimeout(() => {
+      console.warn('Timeout waiting for initial stock data. Requesting update...');
+      setLoading(false);
+      setError('Taking longer than expected to load. Please refresh if problem persists.');
+      // Request stock update from server
+      if (socketRef.current && socketRef.current.connected) {
+        socketRef.current.emit('requestStockUpdate');
+      }
+    }, 15000); // 15 second timeout
+    
     // Initialize socket connection with better reconnection settings
     socketRef.current = io(WS_URL, {
       transports: ['websocket', 'polling'],
@@ -79,6 +92,13 @@ const SidebarWatchlist = () => {
       setIsConnected(true);
       setConnectionStatus('connected');
       setError(null);
+      // Request initial data if not received within 2 seconds
+      setTimeout(() => {
+        if (stocks.length === 0 && loading) {
+          console.log('Requesting stock update after connection...');
+          socket.emit('requestStockUpdate');
+        }
+      }, 2000);
     });
 
     socket.on('disconnect', (reason) => {
@@ -95,16 +115,21 @@ const SidebarWatchlist = () => {
       console.error('WebSocket connection error:', error);
       setConnectionStatus('error');
       setError('Connection failed. Using fallback data.');
+      setLoading(false);
     });
 
     // Stock data events
     socket.on('initialStockData', (data) => {
       console.log('Received initial stock data:', data.length, 'stocks');
+      if (loadingTimeoutRef) {
+        clearTimeout(loadingTimeoutRef);
+        loadingTimeoutRef = null;
+      }
       if (data && data.length > 0) {
         const processedData = data.map(stock => ({
           symbol: stock.symbol,
           price: stock.price,
-          percent: stock.percentChange,
+          percent: stock.percentChange || stock.percent || ((stock.price - (stock.previousClose || stock.price)) / (stock.previousClose || stock.price)) * 100,
           volume: stock.volume ? stock.volume.toLocaleString() : '-',
           previousClose: stock.previousClose,
           name: stock.name,
@@ -113,6 +138,35 @@ const SidebarWatchlist = () => {
         setStocks(processedData);
         setLastUpdateTime(new Date());
         setLoading(false);
+        setError(null);
+      } else {
+        // Empty data received, request update
+        console.log('Empty initial data received, requesting update...');
+        socket.emit('requestStockUpdate');
+      }
+    });
+
+    // Also listen for bulkStockUpdate as fallback
+    socket.on('bulkStockUpdate', (data) => {
+      console.log('Received bulk stock update:', data.length, 'stocks');
+      if (loadingTimeoutRef) {
+        clearTimeout(loadingTimeoutRef);
+        loadingTimeoutRef = null;
+      }
+      if (data && data.length > 0) {
+        const processedData = data.map(stock => ({
+          symbol: stock.symbol,
+          price: stock.price,
+          percent: stock.percentChange || stock.percent || ((stock.price - (stock.previousClose || stock.price)) / (stock.previousClose || stock.price)) * 100,
+          volume: stock.volume ? stock.volume.toLocaleString() : '-',
+          previousClose: stock.previousClose,
+          name: stock.name,
+          lastUpdate: stock.lastUpdate
+        }));
+        setStocks(processedData);
+        setLastUpdateTime(new Date());
+        setLoading(false);
+        setError(null);
       }
     });
 
@@ -181,28 +235,14 @@ const SidebarWatchlist = () => {
       setLastUpdateTime(new Date());
     });
 
-    socket.on('bulkStockUpdate', (data) => {
-      console.log('Received bulk stock update:', data.length, 'stocks');
-      if (data && data.length > 0) {
-        const processedData = data.map(stock => ({
-          symbol: stock.symbol,
-          price: stock.price,
-          percent: stock.percentChange,
-          volume: stock.volume ? stock.volume.toLocaleString() : '-',
-          previousClose: stock.previousClose,
-          name: stock.name,
-          lastUpdate: stock.lastUpdate
-        }));
-        setStocks(processedData);
-        setLastUpdateTime(new Date());
-        setLoading(false);
-      }
-    });
-
     // Cleanup on unmount
     return () => {
+      if (loadingTimeoutRef) {
+        clearTimeout(loadingTimeoutRef);
+      }
       if (socketRef.current) {
         socketRef.current.disconnect();
+        socketRef.current = null;
       }
     };
   }, []);
