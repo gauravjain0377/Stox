@@ -56,8 +56,10 @@ const SidebarWatchlist = () => {
 
   // WebSocket connection setup
   useEffect(() => {
-    console.log('Setting up WebSocket connection...');
-    console.log('WebSocket URL:', WS_URL);
+    console.log('🔌 [WEBSOCKET] Setting up WebSocket connection...');
+    console.log('🔌 [WEBSOCKET] WebSocket URL:', WS_URL);
+    console.log('🔌 [WEBSOCKET] API URL:', import.meta.env.VITE_API_URL || 'http://localhost:3000');
+    console.log('🔌 [WEBSOCKET] Environment:', import.meta.env.MODE || 'development');
     
     let loadingTimeoutRef = null;
     
@@ -88,31 +90,38 @@ const SidebarWatchlist = () => {
 
     // Connection events
     socket.on('connect', () => {
-      console.log('WebSocket connected');
+      console.log('🔌 [WEBSOCKET] ✅ Connected successfully');
+      console.log('🔌 [WEBSOCKET] Socket ID:', socket.id);
       setIsConnected(true);
       setConnectionStatus('connected');
       setError(null);
       // Request initial data if not received within 2 seconds
       setTimeout(() => {
         if (stocks.length === 0 && loading) {
-          console.log('Requesting stock update after connection...');
+          console.log('🔌 [WEBSOCKET] Requesting stock update after connection...');
           socket.emit('requestStockUpdate');
         }
       }, 2000);
     });
 
     socket.on('disconnect', (reason) => {
-      console.log('WebSocket disconnected:', reason);
+      console.log('🔌 [WEBSOCKET] ❌ Disconnected:', reason);
       setIsConnected(false);
       setConnectionStatus('disconnected');
       if (reason === 'io server disconnect') {
         // Server disconnected, try to reconnect
+        console.log('🔌 [WEBSOCKET] Attempting to reconnect...');
         socket.connect();
       }
     });
 
     socket.on('connect_error', (error) => {
-      console.error('WebSocket connection error:', error);
+      console.error('🔌 [WEBSOCKET] ❌ Connection error:', error);
+      console.error('🔌 [WEBSOCKET] Error details:', {
+        message: error.message,
+        type: error.type,
+        description: error.description
+      });
       setConnectionStatus('error');
       setError('Connection failed. Using fallback data.');
       setLoading(false);
@@ -374,7 +383,11 @@ const SidebarWatchlist = () => {
         <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 sidebar-toggle">
           {!collapsed && (
             <div className="flex items-center gap-2 animate-fade-in">
-              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+              <div className={`w-2 h-2 rounded-full animate-pulse ${
+                isConnected ? 'bg-green-500' : 
+                connectionStatus === 'connecting' ? 'bg-yellow-500' : 
+                'bg-red-500'
+              }`}></div>
               <span className="font-bold text-lg text-gray-900 tracking-tight">NIFTY 50</span>
             </div>
           )}
@@ -387,11 +400,28 @@ const SidebarWatchlist = () => {
             </svg>
           </button>
         </div>
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center">
-            <div className="text-red-500 mb-2">⚠️</div>
-            <p className="text-sm text-gray-600">No stocks loaded</p>
-            <p className="text-xs text-gray-500 mt-1">Check console for debug info</p>
+            <div className="text-red-500 mb-2 text-2xl">⚠️</div>
+            <p className="text-sm font-medium text-gray-700 mb-1">Data not available</p>
+            {error && (
+              <p className="text-xs text-gray-500 mb-3">{error}</p>
+            )}
+            <button
+              onClick={() => {
+                setLoading(true);
+                setError(null);
+                if (socketRef.current && socketRef.current.connected) {
+                  socketRef.current.emit('requestStockUpdate');
+                } else if (socketRef.current) {
+                  socketRef.current.connect();
+                }
+              }}
+              className="px-4 py-2 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Retry
+            </button>
+            <p className="text-xs text-gray-400 mt-2">Check browser console (F12) for details</p>
           </div>
         </div>
       </aside>

@@ -1761,7 +1761,10 @@ app.post('/api/support/contact', async (req, res) => {
     const smtpUser = process.env.MAIL_USER || process.env.EMAIL_USER || process.env.SMTP_USER;
     const smtpPass = process.env.MAIL_PASS || process.env.EMAIL_PASS || process.env.SMTP_PASS;
     const smtpHost = process.env.MAIL_HOST || process.env.EMAIL_HOST || process.env.SMTP_HOST || 'smtp.gmail.com';
-    let smtpPort = parseInt(process.env.MAIL_PORT || process.env.EMAIL_PORT || process.env.SMTP_PORT || '587', 10);
+    // In production, default to port 465 (SSL) as it's less likely to be blocked
+    // Port 587 (TLS) is often blocked by hosting providers
+    const defaultPort = process.env.NODE_ENV === 'production' ? 465 : 587;
+    let smtpPort = parseInt(process.env.MAIL_PORT || process.env.EMAIL_PORT || process.env.SMTP_PORT || defaultPort.toString(), 10);
     const supportTo = process.env.SUPPORT_TO || 'gjain0229@gmail.com';
 
     console.log('📧 [EMAIL] Configuration check:', {
@@ -1789,12 +1792,12 @@ app.post('/api/support/contact', async (req, res) => {
     // Helper function to create transporter with specific port
     const createTransporter = (port) => {
       const isSecure = port === 465;
-      console.log(`📧 [EMAIL] Creating transporter with port ${port}, secure: ${isSecure}`);
+      console.log(`📧 [EMAIL] Creating transporter with port ${port}, secure: ${isSecure}, mode: ${isSecure ? 'SSL' : 'TLS'}`);
       
       const transporterConfig = {
         host: smtpHost,
         port: port,
-        secure: isSecure, // true for 465, false for other ports
+        secure: isSecure, // true for 465 (SSL), false for 587 (TLS)
         auth: { 
           user: smtpUser, 
           pass: smtpPass // Use actual password for auth
@@ -1807,9 +1810,9 @@ app.post('/api/support/contact', async (req, res) => {
           minVersion: 'TLSv1.2'
         },
         // Extended timeout settings for serverless environments (Vercel/Render have slower connections)
-        connectionTimeout: 30000, // 30 seconds - increased for serverless
-        greetingTimeout: 20000, // 20 seconds - increased for serverless
-        socketTimeout: 30000, // 30 seconds - increased for serverless
+        connectionTimeout: 40000, // 40 seconds - increased for serverless
+        greetingTimeout: 30000, // 30 seconds - increased for serverless
+        socketTimeout: 40000, // 40 seconds - increased for serverless
         // Retry configuration for serverless environments
         pool: false,
         maxConnections: 1,
@@ -1817,29 +1820,36 @@ app.post('/api/support/contact', async (req, res) => {
         // Additional options for better reliability in production
         requireTLS: port === 587 && !isSecure,
         // Enable debug logging in production to help diagnose issues
-        debug: process.env.NODE_ENV === 'production',
+        debug: false, // Disable debug to reduce noise, but log important events
         // Ignore TLS errors (some serverless environments have certificate issues)
         ignoreTLS: false,
         // Use direct connection without pooling for serverless
-        direct: false
+        direct: false,
+        // For production, try to establish connection immediately
+        ...(process.env.NODE_ENV === 'production' && {
+          // Additional options for production
+          logger: false // Disable nodemailer's built-in logger
+        })
       };
       
       console.log(`📧 [EMAIL] Transporter config:`, {
         host: transporterConfig.host,
         port: transporterConfig.port,
         secure: transporterConfig.secure,
+        mode: isSecure ? 'SSL (port 465)' : 'TLS (port 587)',
         connectionTimeout: transporterConfig.connectionTimeout,
         requireTLS: transporterConfig.requireTLS,
-        debug: transporterConfig.debug
+        environment: process.env.NODE_ENV || 'development'
       });
       
       return nodemailer.createTransport(transporterConfig);
     };
 
     // Create transporter with configured port
-    console.log(`📧 [EMAIL] Initializing with port ${smtpPort}`);
+    console.log(`📧 [EMAIL] Initializing with port ${smtpPort} (production: ${process.env.NODE_ENV === 'production'})`);
     let transporter = createTransporter(smtpPort);
-    const alternativePort = smtpPort === 587 ? 465 : 587; // Try alternative port if primary fails
+    // Try alternative port if primary fails - in production, try 465 first, then 587
+    const alternativePort = smtpPort === 465 ? 587 : 465;
     console.log(`📧 [EMAIL] Alternative port ready: ${alternativePort} (will use if primary fails)`);
 
     const mailSubjectBase = subject && subject.trim() ? subject : `Support: ${purpose || 'General inquiry'}`;
@@ -1970,13 +1980,23 @@ app.post('/api/support/contact', async (req, res) => {
         if (sendError.address) console.error(`📧 [EMAIL] ❌ Address:`, sendError.address);
 
         // If it's a connection/timeout error and we haven't tried alternative port, try that first
-        if ((sendError.code === 'ECONNECTION' || sendError.code === 'ETIMEDOUT' || sendError.code === 'ESOCKET') && !triedAlternativePort) {
-          console.log(`📧 [EMAIL] 🔄 Connection issue detected. Trying alternative port ${alternativePort} (SSL) instead of ${smtpPort}...`);
+        if ((sendError.code === 'ECONNECTION' || sendError.code === 'ETIMEDOUT' || sendError.code === 'ESOCKET' || sendError.code === 'ENOTFOUND' || sendError.code === 'ECONNREFUSED') && !triedAlternativePort) {
+          console.log(`📧 [EMAIL] 🔄 Connection issue detected on port ${smtpPort}. Error: ${sendError.code}`);
+          console.log(`📧 [EMAIL] 🔄 Trying alternative port ${alternativePort} (${alternativePort === 465 ? 'SSL' : 'TLS'}) instead...`);
+          console.log(`📧 [EMAIL] 🔄 Error details:`, {
+            code: sendError.code,
+            message: sendError.message,
+            errno: sendError.errno,
+            syscall: sendError.syscall,
+            address: sendError.address
+          });
           smtpPort = alternativePort;
           transporter = createTransporter(smtpPort);
           triedAlternativePort = true;
           retryCount = 0; // Reset retry count for new port
-          console.log(`📧 [EMAIL] 🔄 Switched to port ${smtpPort}, retrying...`);
+          console.log(`📧 [EMAIL] 🔄 Switched to port ${smtpPort} (${smtpPort === 465 ? 'SSL' : 'TLS'}), retrying...`);
+          // Add a small delay before retrying with new port
+          await new Promise(resolve => setTimeout(resolve, 1000));
           continue;
         }
 
