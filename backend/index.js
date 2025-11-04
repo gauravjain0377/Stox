@@ -1904,35 +1904,31 @@ app.post('/api/support/contact', async (req, res) => {
       </div>
     `;
 
-    // Send email asynchronously without blocking the response
-    // This ensures the user gets an immediate response while email is sent in background
-    const sendEmailAsync = async (retryCount = 0) => {
+    const sendEmailWithRetry = async (retryCount = 0) => {
       const maxRetries = 3;
-      const baseDelay = 2000; // 2 seconds base delay
-      
+      const baseDelay = 2000;
+      if (!transporter) {
+        throw new Error('Transporter not initialized');
+      }
+
+      const mailOptions = {
+        from: {
+          name: 'StockSathi Support',
+          address: smtpUser
+        },
+        to: supportTo,
+        replyTo: email,
+        subject: mailSubject,
+        html
+      };
+
       try {
-        // Verify transporter is initialized
-        if (!transporter) {
-          throw new Error('Transporter not initialized');
-        }
-        
-        const mailOptions = {
-          from: {
-            name: 'StockSathi Support',
-            address: smtpUser
-          },
-          to: supportTo,
-          replyTo: email,
-          subject: mailSubject,
-          html
-        };
-        
         await transporter.sendMail(mailOptions);
         console.log('✅ Support email sent successfully from:', email);
       } catch (sendError) {
         const errorCode = sendError.code || '';
         const errorMessage = sendError.message || String(sendError);
-        
+
         console.error(`❌ Email send error (attempt ${retryCount + 1}/${maxRetries + 1}):`, errorMessage);
         console.error('Error details:', {
           code: errorCode,
@@ -1941,49 +1937,37 @@ app.post('/api/support/contact', async (req, res) => {
           response: sendError.response,
           responseCode: sendError.responseCode
         });
-        
-        // Retry logic for transient errors
+
         if (retryCount < maxRetries) {
           const retryableErrors = [
-            'ETIMEDOUT', 'ECONNECTION', 'ESOCKET', 'ETIMEOUT', 
+            'ETIMEDOUT', 'ECONNECTION', 'ESOCKET', 'ETIMEOUT',
             'ECONNRESET', 'ENOTFOUND', 'EAI_AGAIN', 'timeout',
             'Connection timeout', 'Network error'
           ];
-          
-          const isRetryable = retryableErrors.some(code => 
-            errorCode === code || 
-            errorMessage.includes(code) || 
+
+          const isRetryable = retryableErrors.some(code =>
+            errorCode === code ||
+            errorMessage.includes(code) ||
             errorMessage.toLowerCase().includes('timeout') ||
             errorMessage.toLowerCase().includes('network')
           );
-          
+
           if (isRetryable) {
-            // Exponential backoff with jitter
             const delay = baseDelay * Math.pow(2, retryCount) + Math.random() * 1000;
             console.log(`Retrying email send in ${Math.round(delay)}ms...`);
-            setTimeout(() => {
-              sendEmailAsync(retryCount + 1).catch(err => {
-                console.error('Retry failed:', err.message);
-              });
-            }, delay);
-            return;
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return sendEmailWithRetry(retryCount + 1);
           }
         }
-        
-        // Log final failure but don't fail the request - user already got success message
-        console.error('❌ Email failed after retries but user already received success message');
+
+        console.error('❌ Email failed after retries');
         console.error('Final error:', errorMessage);
-        // In production, consider logging to a service like Sentry or saving to a queue
+        throw sendError;
       }
     };
 
-    // Start sending email in background (don't await)
-    sendEmailAsync().catch(err => {
-      console.error('Unhandled email send error:', err.message || err);
-    });
+    await sendEmailWithRetry();
 
-    // Return success immediately - email is being sent in background
-    // This prevents timeout issues and provides better UX
     return res.json({ 
       success: true, 
       message: 'Message sent. We will get back to you shortly.' 
