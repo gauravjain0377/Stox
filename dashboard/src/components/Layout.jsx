@@ -86,8 +86,8 @@ const Layout = ({ children }) => {
         {/* Top Navbar */}
         <TopNavbar />
         {/* Main Content - with padding bottom for mobile navigation */}
-        <main className="flex-1 overflow-hidden pb-16 md:pb-0 w-full" style={{ marginLeft: 0, marginRight: 0, width: '100%' }}>
-          <div className="h-full overflow-y-auto overflow-x-hidden w-full" style={{ width: '100%', maxWidth: '100%' }}>
+        <main className="flex-1 overflow-hidden pb-16 md:pb-0 w-full" style={{ marginLeft: 0, marginRight: 0, width: '100%', minHeight: 0 }}>
+          <div className="h-full overflow-y-auto overflow-x-hidden w-full" style={{ width: '100%', maxWidth: '100%', minHeight: '100%' }}>
             <div className="w-full mx-auto" style={{ 
               boxSizing: 'border-box',
               paddingLeft: '0',
@@ -96,9 +96,10 @@ const Layout = ({ children }) => {
               width: '100%',
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'stretch'
+              alignItems: 'stretch',
+              minHeight: '100%'
             }}>
-              <div className="w-full max-w-full overflow-x-hidden" style={{ boxSizing: 'border-box', width: '100%' }}>
+              <div className="w-full max-w-full overflow-x-hidden" style={{ boxSizing: 'border-box', width: '100%', minHeight: '100%' }}>
                 {children}
               </div>
             </div>

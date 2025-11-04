@@ -228,7 +228,7 @@ const ModernSummary = () => {
   };
 
   return (
-    <div className="w-full px-2 sm:px-3 md:px-6 pt-4 sm:pt-5 md:pt-6 pb-6 space-y-4 md:space-y-6 overflow-x-hidden" style={{ boxSizing: 'border-box', width: '100%', maxWidth: '100%', margin: '0' }}>
+    <div className="w-full px-2 sm:px-3 md:px-6 pt-4 sm:pt-5 md:pt-6 pb-6 md:pb-8 space-y-4 md:space-y-6 overflow-x-hidden" style={{ boxSizing: 'border-box', width: '100%', maxWidth: '100%', margin: '0', minHeight: 'calc(100vh - 200px)' }}>
       {/* Information Banner */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 w-full" style={{ boxSizing: 'border-box' }}>
         <div className="flex items-start justify-center md:justify-start">

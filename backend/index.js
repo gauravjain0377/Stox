@@ -131,6 +131,15 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
+// Google OAuth Strategy Configuration
+// NOTE: The branding name shown during Google OAuth login (e.g., "StockSathi" vs "stocksathi.onrender.com")
+// is configured in Google Cloud Console under "APIs & Services" > "OAuth consent screen"
+// 
+// IMPORTANT FOR PRODUCTION:
+// - The "App name" in OAuth consent screen must be explicitly set to "StockSathi" (not auto-generated)
+// - Authorized domains must include your production domain (e.g., "render.com" and "stocksathi.onrender.com")
+// - Changes may take 5-15 minutes to propagate globally
+// - See README.md for detailed setup instructions
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -925,10 +934,11 @@ app.post("/api/users/register", async (req, res) => {
     await newUser.save();
     
     // Send verification email
-    const smtpUser = process.env.MAIL_USER;
-    const smtpPass = process.env.MAIL_PASS;
-    const smtpHost = process.env.MAIL_HOST || 'smtp.gmail.com';
-    const smtpPort = parseInt(process.env.MAIL_PORT || '587', 10);
+    // Support multiple environment variable naming conventions for production compatibility
+    const smtpUser = process.env.MAIL_USER || process.env.EMAIL_USER || process.env.SMTP_USER;
+    const smtpPass = process.env.MAIL_PASS || process.env.EMAIL_PASS || process.env.SMTP_PASS;
+    const smtpHost = process.env.MAIL_HOST || process.env.EMAIL_HOST || process.env.SMTP_HOST || 'smtp.gmail.com';
+    const smtpPort = parseInt(process.env.MAIL_PORT || process.env.EMAIL_PORT || process.env.SMTP_PORT || '587', 10);
     
     if (smtpUser && smtpPass) {
       try {
@@ -1114,10 +1124,11 @@ app.post('/api/users/send-verification-code', async (req, res) => {
     await user.save();
     
     // Send email with verification code
-    const smtpUser = process.env.MAIL_USER;
-    const smtpPass = process.env.MAIL_PASS;
-    const smtpHost = process.env.MAIL_HOST || 'smtp.gmail.com';
-    const smtpPort = parseInt(process.env.MAIL_PORT || '587', 10);
+    // Support multiple environment variable naming conventions for production compatibility
+    const smtpUser = process.env.MAIL_USER || process.env.EMAIL_USER || process.env.SMTP_USER;
+    const smtpPass = process.env.MAIL_PASS || process.env.EMAIL_PASS || process.env.SMTP_PASS;
+    const smtpHost = process.env.MAIL_HOST || process.env.EMAIL_HOST || process.env.SMTP_HOST || 'smtp.gmail.com';
+    const smtpPort = parseInt(process.env.MAIL_PORT || process.env.EMAIL_PORT || process.env.SMTP_PORT || '587', 10);
     
     if (!smtpUser || !smtpPass) {
       return res.status(500).json({ success: false, message: 'Mailer is not configured on server' });
@@ -1250,10 +1261,11 @@ app.post('/api/users/send-password-reset-code', async (req, res) => {
     await user.save();
     
     // Send email with reset code
-    const smtpUser = process.env.MAIL_USER;
-    const smtpPass = process.env.MAIL_PASS;
-    const smtpHost = process.env.MAIL_HOST || 'smtp.gmail.com';
-    const smtpPort = parseInt(process.env.MAIL_PORT || '587', 10);
+    // Support multiple environment variable naming conventions for production compatibility
+    const smtpUser = process.env.MAIL_USER || process.env.EMAIL_USER || process.env.SMTP_USER;
+    const smtpPass = process.env.MAIL_PASS || process.env.EMAIL_PASS || process.env.SMTP_PASS;
+    const smtpHost = process.env.MAIL_HOST || process.env.EMAIL_HOST || process.env.SMTP_HOST || 'smtp.gmail.com';
+    const smtpPort = parseInt(process.env.MAIL_PORT || process.env.EMAIL_PORT || process.env.SMTP_PORT || '587', 10);
     
     if (!smtpUser || !smtpPass) {
       return res.status(500).json({ success: false, message: 'Mailer is not configured on server' });
@@ -1742,14 +1754,23 @@ app.post('/api/support/contact', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Name, email and message are required' });
     }
 
-    const smtpUser = process.env.MAIL_USER;
-    const smtpPass = process.env.MAIL_PASS;
-    const smtpHost = process.env.MAIL_HOST || 'smtp.gmail.com';
-    const smtpPort = parseInt(process.env.MAIL_PORT || '587', 10);
+    // Support multiple environment variable naming conventions for production compatibility
+    const smtpUser = process.env.MAIL_USER || process.env.EMAIL_USER || process.env.SMTP_USER;
+    const smtpPass = process.env.MAIL_PASS || process.env.EMAIL_PASS || process.env.SMTP_PASS;
+    const smtpHost = process.env.MAIL_HOST || process.env.EMAIL_HOST || process.env.SMTP_HOST || 'smtp.gmail.com';
+    const smtpPort = parseInt(process.env.MAIL_PORT || process.env.EMAIL_PORT || process.env.SMTP_PORT || '587', 10);
     const supportTo = process.env.SUPPORT_TO || 'gjain0229@gmail.com';
 
     if (!smtpUser || !smtpPass) {
-      return res.status(500).json({ success: false, message: 'Mailer is not configured on server' });
+      console.error('❌ Email configuration missing:', {
+        hasUser: !!smtpUser,
+        hasPass: !!smtpPass,
+        envKeys: Object.keys(process.env).filter(k => k.includes('MAIL') || k.includes('EMAIL') || k.includes('SMTP'))
+      });
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Mailer is not configured on server. Please configure MAIL_USER and MAIL_PASS environment variables.' 
+      });
     }
 
     const transporter = nodemailer.createTransport({

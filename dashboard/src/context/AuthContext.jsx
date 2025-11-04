@@ -92,11 +92,10 @@ export const AuthProvider = ({ children }) => {
       }
     }
     
-    // Add a small delay before setting loading to false to ensure URL processing is complete
-    setTimeout(() => {
-      setLoading(false);
-      console.log('🏁 AuthContext loading complete, user state:', { user: !!user, token: !!token });
-    }, 200);
+    // Set loading to false immediately after processing auth data
+    // This prevents the black screen flash
+    setLoading(false);
+    console.log('🏁 AuthContext loading complete, user state:', { user: !!user, token: !!token });
   }, []);
 
   const login = (userData, userToken) => {
