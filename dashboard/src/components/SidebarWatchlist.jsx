@@ -56,23 +56,8 @@ const SidebarWatchlist = () => {
 
   // WebSocket connection setup
   useEffect(() => {
-    console.log('🔌 [WEBSOCKET] Setting up WebSocket connection...');
-    console.log('🔌 [WEBSOCKET] WebSocket URL:', WS_URL);
-    console.log('🔌 [WEBSOCKET] API URL:', import.meta.env.VITE_API_URL || 'http://localhost:3000');
-    console.log('🔌 [WEBSOCKET] Environment:', import.meta.env.MODE || 'development');
-    
-    let loadingTimeoutRef = null;
-    
-    // Set a timeout to stop loading if no data arrives
-    loadingTimeoutRef = setTimeout(() => {
-      console.warn('Timeout waiting for initial stock data. Requesting update...');
-      setLoading(false);
-      setError('Taking longer than expected to load. Please refresh if problem persists.');
-      // Request stock update from server
-      if (socketRef.current && socketRef.current.connected) {
-        socketRef.current.emit('requestStockUpdate');
-      }
-    }, 15000); // 15 second timeout
+    console.log('Setting up WebSocket connection...');
+    console.log('WebSocket URL:', WS_URL);
     
     // Initialize socket connection with better reconnection settings
     socketRef.current = io(WS_URL, {
@@ -90,55 +75,36 @@ const SidebarWatchlist = () => {
 
     // Connection events
     socket.on('connect', () => {
-      console.log('🔌 [WEBSOCKET] ✅ Connected successfully');
-      console.log('🔌 [WEBSOCKET] Socket ID:', socket.id);
+      console.log('WebSocket connected');
       setIsConnected(true);
       setConnectionStatus('connected');
       setError(null);
-      // Request initial data if not received within 2 seconds
-      setTimeout(() => {
-        if (stocks.length === 0 && loading) {
-          console.log('🔌 [WEBSOCKET] Requesting stock update after connection...');
-          socket.emit('requestStockUpdate');
-        }
-      }, 2000);
     });
 
     socket.on('disconnect', (reason) => {
-      console.log('🔌 [WEBSOCKET] ❌ Disconnected:', reason);
+      console.log('WebSocket disconnected:', reason);
       setIsConnected(false);
       setConnectionStatus('disconnected');
       if (reason === 'io server disconnect') {
         // Server disconnected, try to reconnect
-        console.log('🔌 [WEBSOCKET] Attempting to reconnect...');
         socket.connect();
       }
     });
 
     socket.on('connect_error', (error) => {
-      console.error('🔌 [WEBSOCKET] ❌ Connection error:', error);
-      console.error('🔌 [WEBSOCKET] Error details:', {
-        message: error.message,
-        type: error.type,
-        description: error.description
-      });
+      console.error('WebSocket connection error:', error);
       setConnectionStatus('error');
       setError('Connection failed. Using fallback data.');
-      setLoading(false);
     });
 
     // Stock data events
     socket.on('initialStockData', (data) => {
       console.log('Received initial stock data:', data.length, 'stocks');
-      if (loadingTimeoutRef) {
-        clearTimeout(loadingTimeoutRef);
-        loadingTimeoutRef = null;
-      }
       if (data && data.length > 0) {
         const processedData = data.map(stock => ({
           symbol: stock.symbol,
           price: stock.price,
-          percent: stock.percentChange || stock.percent || ((stock.price - (stock.previousClose || stock.price)) / (stock.previousClose || stock.price)) * 100,
+          percent: stock.percentChange,
           volume: stock.volume ? stock.volume.toLocaleString() : '-',
           previousClose: stock.previousClose,
           name: stock.name,
@@ -147,35 +113,6 @@ const SidebarWatchlist = () => {
         setStocks(processedData);
         setLastUpdateTime(new Date());
         setLoading(false);
-        setError(null);
-      } else {
-        // Empty data received, request update
-        console.log('Empty initial data received, requesting update...');
-        socket.emit('requestStockUpdate');
-      }
-    });
-
-    // Also listen for bulkStockUpdate as fallback
-    socket.on('bulkStockUpdate', (data) => {
-      console.log('Received bulk stock update:', data.length, 'stocks');
-      if (loadingTimeoutRef) {
-        clearTimeout(loadingTimeoutRef);
-        loadingTimeoutRef = null;
-      }
-      if (data && data.length > 0) {
-        const processedData = data.map(stock => ({
-          symbol: stock.symbol,
-          price: stock.price,
-          percent: stock.percentChange || stock.percent || ((stock.price - (stock.previousClose || stock.price)) / (stock.previousClose || stock.price)) * 100,
-          volume: stock.volume ? stock.volume.toLocaleString() : '-',
-          previousClose: stock.previousClose,
-          name: stock.name,
-          lastUpdate: stock.lastUpdate
-        }));
-        setStocks(processedData);
-        setLastUpdateTime(new Date());
-        setLoading(false);
-        setError(null);
       }
     });
 
@@ -244,14 +181,28 @@ const SidebarWatchlist = () => {
       setLastUpdateTime(new Date());
     });
 
+    socket.on('bulkStockUpdate', (data) => {
+      console.log('Received bulk stock update:', data.length, 'stocks');
+      if (data && data.length > 0) {
+        const processedData = data.map(stock => ({
+          symbol: stock.symbol,
+          price: stock.price,
+          percent: stock.percentChange,
+          volume: stock.volume ? stock.volume.toLocaleString() : '-',
+          previousClose: stock.previousClose,
+          name: stock.name,
+          lastUpdate: stock.lastUpdate
+        }));
+        setStocks(processedData);
+        setLastUpdateTime(new Date());
+        setLoading(false);
+      }
+    });
+
     // Cleanup on unmount
     return () => {
-      if (loadingTimeoutRef) {
-        clearTimeout(loadingTimeoutRef);
-      }
       if (socketRef.current) {
         socketRef.current.disconnect();
-        socketRef.current = null;
       }
     };
   }, []);
@@ -383,11 +334,7 @@ const SidebarWatchlist = () => {
         <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 sidebar-toggle">
           {!collapsed && (
             <div className="flex items-center gap-2 animate-fade-in">
-              <div className={`w-2 h-2 rounded-full animate-pulse ${
-                isConnected ? 'bg-green-500' : 
-                connectionStatus === 'connecting' ? 'bg-yellow-500' : 
-                'bg-red-500'
-              }`}></div>
+              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
               <span className="font-bold text-lg text-gray-900 tracking-tight">NIFTY 50</span>
             </div>
           )}
@@ -400,28 +347,11 @@ const SidebarWatchlist = () => {
             </svg>
           </button>
         </div>
-        <div className="flex-1 flex items-center justify-center p-4">
+        <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <div className="text-red-500 mb-2 text-2xl">⚠️</div>
-            <p className="text-sm font-medium text-gray-700 mb-1">Data not available</p>
-            {error && (
-              <p className="text-xs text-gray-500 mb-3">{error}</p>
-            )}
-            <button
-              onClick={() => {
-                setLoading(true);
-                setError(null);
-                if (socketRef.current && socketRef.current.connected) {
-                  socketRef.current.emit('requestStockUpdate');
-                } else if (socketRef.current) {
-                  socketRef.current.connect();
-                }
-              }}
-              className="px-4 py-2 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            >
-              Retry
-            </button>
-            <p className="text-xs text-gray-400 mt-2">Check browser console (F12) for details</p>
+            <div className="text-red-500 mb-2">⚠️</div>
+            <p className="text-sm text-gray-600">No stocks loaded</p>
+            <p className="text-xs text-gray-500 mt-1">Check console for debug info</p>
           </div>
         </div>
       </aside>

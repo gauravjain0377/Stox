@@ -131,6 +131,15 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
+// Google OAuth Strategy Configuration
+// NOTE: The branding name shown during Google OAuth login (e.g., "StockSathi" vs "stocksathi.onrender.com")
+// is configured in Google Cloud Console under "APIs & Services" > "OAuth consent screen"
+// 
+// IMPORTANT FOR PRODUCTION:
+// - The "App name" in OAuth consent screen must be explicitly set to "StockSathi" (not auto-generated)
+// - Authorized domains must include your production domain (e.g., "render.com" and "stocksathi.onrender.com")
+// - Changes may take 5-15 minutes to propagate globally
+// - See README.md for detailed setup instructions
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -1739,21 +1748,9 @@ app.post("/api/users/change-password", async (req, res) => {
 
 // Support contact endpoint - sends emails from contact form
 app.post('/api/support/contact', async (req, res) => {
-  console.log('📧 [EMAIL] Support contact request received');
-  console.log('📧 [EMAIL] Environment:', process.env.NODE_ENV || 'development');
-  
   try {
     const { name, email, subject, purpose, message } = req.body || {};
-    console.log('📧 [EMAIL] Request data:', { 
-      name: name?.substring(0, 20) + '...', 
-      email, 
-      subject: subject?.substring(0, 30),
-      purpose,
-      messageLength: message?.length 
-    });
-    
     if (!name || !email || !message) {
-      console.log('📧 [EMAIL] ❌ Missing required fields');
       return res.status(400).json({ success: false, message: 'Name, email and message are required' });
     }
 
@@ -1761,24 +1758,11 @@ app.post('/api/support/contact', async (req, res) => {
     const smtpUser = process.env.MAIL_USER || process.env.EMAIL_USER || process.env.SMTP_USER;
     const smtpPass = process.env.MAIL_PASS || process.env.EMAIL_PASS || process.env.SMTP_PASS;
     const smtpHost = process.env.MAIL_HOST || process.env.EMAIL_HOST || process.env.SMTP_HOST || 'smtp.gmail.com';
-    // In production, default to port 465 (SSL) as it's less likely to be blocked
-    // Port 587 (TLS) is often blocked by hosting providers
-    const defaultPort = process.env.NODE_ENV === 'production' ? 465 : 587;
-    let smtpPort = parseInt(process.env.MAIL_PORT || process.env.EMAIL_PORT || process.env.SMTP_PORT || defaultPort.toString(), 10);
+    const smtpPort = parseInt(process.env.MAIL_PORT || process.env.EMAIL_PORT || process.env.SMTP_PORT || '587', 10);
     const supportTo = process.env.SUPPORT_TO || 'gjain0229@gmail.com';
 
-    console.log('📧 [EMAIL] Configuration check:', {
-      hasUser: !!smtpUser,
-      hasPass: !!smtpPass,
-      userEmail: smtpUser ? smtpUser.substring(0, 5) + '...@...' : 'NOT SET',
-      host: smtpHost,
-      port: smtpPort,
-      supportTo,
-      envKeys: Object.keys(process.env).filter(k => k.includes('MAIL') || k.includes('EMAIL') || k.includes('SMTP'))
-    });
-
     if (!smtpUser || !smtpPass) {
-      console.error('📧 [EMAIL] ❌ Email configuration missing:', {
+      console.error('❌ Email configuration missing:', {
         hasUser: !!smtpUser,
         hasPass: !!smtpPass,
         envKeys: Object.keys(process.env).filter(k => k.includes('MAIL') || k.includes('EMAIL') || k.includes('SMTP'))
@@ -1789,68 +1773,12 @@ app.post('/api/support/contact', async (req, res) => {
       });
     }
 
-    // Helper function to create transporter with specific port
-    const createTransporter = (port) => {
-      const isSecure = port === 465;
-      console.log(`📧 [EMAIL] Creating transporter with port ${port}, secure: ${isSecure}, mode: ${isSecure ? 'SSL' : 'TLS'}`);
-      
-      const transporterConfig = {
-        host: smtpHost,
-        port: port,
-        secure: isSecure, // true for 465 (SSL), false for 587 (TLS)
-        auth: { 
-          user: smtpUser, 
-          pass: smtpPass // Use actual password for auth
-        },
-        // Production-ready TLS configuration
-        tls: {
-          // Allow self-signed certificates in production (common in serverless environments)
-          rejectUnauthorized: false,
-          // Use modern TLS protocols
-          minVersion: 'TLSv1.2'
-        },
-        // Extended timeout settings for serverless environments (Vercel/Render have slower connections)
-        connectionTimeout: 40000, // 40 seconds - increased for serverless
-        greetingTimeout: 30000, // 30 seconds - increased for serverless
-        socketTimeout: 40000, // 40 seconds - increased for serverless
-        // Retry configuration for serverless environments
-        pool: false,
-        maxConnections: 1,
-        maxMessages: 1,
-        // Additional options for better reliability in production
-        requireTLS: port === 587 && !isSecure,
-        // Enable debug logging in production to help diagnose issues
-        debug: false, // Disable debug to reduce noise, but log important events
-        // Ignore TLS errors (some serverless environments have certificate issues)
-        ignoreTLS: false,
-        // Use direct connection without pooling for serverless
-        direct: false,
-        // For production, try to establish connection immediately
-        ...(process.env.NODE_ENV === 'production' && {
-          // Additional options for production
-          logger: false // Disable nodemailer's built-in logger
-        })
-      };
-      
-      console.log(`📧 [EMAIL] Transporter config:`, {
-        host: transporterConfig.host,
-        port: transporterConfig.port,
-        secure: transporterConfig.secure,
-        mode: isSecure ? 'SSL (port 465)' : 'TLS (port 587)',
-        connectionTimeout: transporterConfig.connectionTimeout,
-        requireTLS: transporterConfig.requireTLS,
-        environment: process.env.NODE_ENV || 'development'
-      });
-      
-      return nodemailer.createTransport(transporterConfig);
-    };
-
-    // Create transporter with configured port
-    console.log(`📧 [EMAIL] Initializing with port ${smtpPort} (production: ${process.env.NODE_ENV === 'production'})`);
-    let transporter = createTransporter(smtpPort);
-    // Try alternative port if primary fails - in production, try 465 first, then 587
-    const alternativePort = smtpPort === 465 ? 587 : 465;
-    console.log(`📧 [EMAIL] Alternative port ready: ${alternativePort} (will use if primary fails)`);
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      auth: { user: smtpUser, pass: smtpPass }
+    });
 
     const mailSubjectBase = subject && subject.trim() ? subject : `Support: ${purpose || 'General inquiry'}`;
     const mailSubject = `[StockSathi] ${mailSubjectBase}`;
@@ -1912,175 +1840,21 @@ app.post('/api/support/contact', async (req, res) => {
       </div>
     `;
 
-    // Send email with retry logic, fallback to alternative port, and better error handling
-    let retryCount = 0;
-    const maxRetries = 2;
-    let lastError = null;
-    let triedAlternativePort = false;
-
-    console.log(`📧 [EMAIL] Starting email send process (max retries: ${maxRetries})`);
-
-    while (retryCount <= maxRetries) {
-      try {
-        console.log(`📧 [EMAIL] Attempt ${retryCount + 1}/${maxRetries + 1} - Sending email via port ${smtpPort}...`);
-        console.log(`📧 [EMAIL] Email details:`, {
-          from: `${'StockSathi Support'} <${smtpUser}>`,
-          to: supportTo,
-          replyTo: email,
-          subject: mailSubject,
-          htmlLength: html.length
-        });
-        
-        const startTime = Date.now();
-        const info = await transporter.sendMail({
-          from: {
-            name: 'StockSathi Support',
-            address: smtpUser
-          },
-          to: supportTo,
-          replyTo: email,
-          subject: mailSubject,
-          html
-        });
-        const duration = Date.now() - startTime;
-
-        console.log(`📧 [EMAIL] ✅ Email sent successfully in ${duration}ms via port ${smtpPort}`);
-        
-        // Log success with safe property access
-        if (info && info.messageId) {
-          console.log(`📧 [EMAIL] ✅ Message ID:`, info.messageId);
-          console.log(`📧 [EMAIL] ✅ Response:`, {
-            messageId: info.messageId,
-            response: info.response,
-            accepted: info.accepted,
-            rejected: info.rejected
-          });
-        } else {
-          console.log(`📧 [EMAIL] ✅ Email sent (no messageId in response)`, info ? JSON.stringify(info).substring(0, 200) : 'info is undefined');
-        }
-        
-        return res.json({ success: true, message: 'Message sent. We will get back to you shortly.' });
-      } catch (sendError) {
-        lastError = sendError;
-        retryCount++;
-        
-        console.error(`📧 [EMAIL] ❌ Error sending email (attempt ${retryCount}/${maxRetries + 1}, port ${smtpPort}):`);
-        console.error(`📧 [EMAIL] ❌ Error details:`, {
-          code: sendError.code,
-          command: sendError.command,
-          response: sendError.response,
-          responseCode: sendError.responseCode,
-          message: sendError.message,
-          stack: sendError.stack?.substring(0, 500) // First 500 chars of stack
-        });
-        
-        // Log full error object for debugging
-        if (sendError.errno) console.error(`📧 [EMAIL] ❌ Error number:`, sendError.errno);
-        if (sendError.syscall) console.error(`📧 [EMAIL] ❌ System call:`, sendError.syscall);
-        if (sendError.address) console.error(`📧 [EMAIL] ❌ Address:`, sendError.address);
-
-        // If it's a connection/timeout error and we haven't tried alternative port, try that first
-        if ((sendError.code === 'ECONNECTION' || sendError.code === 'ETIMEDOUT' || sendError.code === 'ESOCKET' || sendError.code === 'ENOTFOUND' || sendError.code === 'ECONNREFUSED') && !triedAlternativePort) {
-          console.log(`📧 [EMAIL] 🔄 Connection issue detected on port ${smtpPort}. Error: ${sendError.code}`);
-          console.log(`📧 [EMAIL] 🔄 Trying alternative port ${alternativePort} (${alternativePort === 465 ? 'SSL' : 'TLS'}) instead...`);
-          console.log(`📧 [EMAIL] 🔄 Error details:`, {
-            code: sendError.code,
-            message: sendError.message,
-            errno: sendError.errno,
-            syscall: sendError.syscall,
-            address: sendError.address
-          });
-          smtpPort = alternativePort;
-          transporter = createTransporter(smtpPort);
-          triedAlternativePort = true;
-          retryCount = 0; // Reset retry count for new port
-          console.log(`📧 [EMAIL] 🔄 Switched to port ${smtpPort} (${smtpPort === 465 ? 'SSL' : 'TLS'}), retrying...`);
-          // Add a small delay before retrying with new port
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          continue;
-        }
-
-        // If it's a connection timeout and we have retries left, wait and retry
-        if ((sendError.code === 'ECONNECTION' || sendError.code === 'ETIMEDOUT' || sendError.code === 'ESOCKET') && retryCount <= maxRetries) {
-          const waitTime = 1000 * retryCount;
-          console.log(`📧 [EMAIL] ⏳ Connection timeout. Waiting ${waitTime}ms before retry (attempt ${retryCount + 1}/${maxRetries + 1})...`);
-          // Wait before retrying (exponential backoff)
-          await new Promise(resolve => setTimeout(resolve, waitTime));
-          console.log(`📧 [EMAIL] ⏳ Retrying after wait...`);
-          continue;
-        }
-
-        // If it's an auth error, don't retry
-        if (sendError.code === 'EAUTH' || sendError.responseCode === 535) {
-          console.error(`📧 [EMAIL] ❌ Authentication failed - credentials are incorrect`);
-          console.error(`📧 [EMAIL] ❌ Make sure you're using a Gmail App Password, not your regular password`);
-          return res.status(500).json({ 
-            success: false, 
-            message: 'Authentication failed. Please check your email credentials (MAIL_USER and MAIL_PASS). Make sure you\'re using a Gmail App Password, not your regular password.' 
-          });
-        }
-
-        // If we've exhausted retries, break and return error
-        if (retryCount > maxRetries) {
-          break;
-        }
-      }
-    }
-
-    // If we get here, all retries failed
-    console.error(`📧 [EMAIL] ❌ All ${maxRetries + 1} email send attempts failed`);
-    console.error(`📧 [EMAIL] ❌ Final error:`, {
-      code: lastError?.code,
-      message: lastError?.message,
-      responseCode: lastError?.responseCode,
-      response: lastError?.response,
-      triedPorts: triedAlternativePort ? [smtpPort === 465 ? 587 : 465, smtpPort] : [smtpPort]
+    await transporter.sendMail({
+      from: {
+        name: 'StockSathi Support',
+        address: smtpUser
+      },
+      to: supportTo,
+      replyTo: email,
+      subject: mailSubject,
+      html
     });
-    
-    let errorMessage = 'Failed to send message. ';
-    
-    // Provide specific error messages based on error type
-    if (lastError?.code === 'ECONNECTION' || lastError?.code === 'ETIMEDOUT' || lastError?.code === 'ESOCKET') {
-      errorMessage += 'Unable to connect to email server. This may be due to network restrictions in your hosting environment. Please check: 1) MAIL_HOST and MAIL_PORT are correct, 2) Your hosting platform allows outbound SMTP connections, 3) Try using port 465 with secure:true instead of 587.';
-    } else if (lastError?.code === 'EAUTH' || lastError?.responseCode === 535) {
-      errorMessage += 'Authentication failed. Please verify MAIL_USER and MAIL_PASS are correct. Use a Gmail App Password, not your regular password.';
-    } else if (lastError?.code === 'EMESSAGE') {
-      errorMessage += 'Invalid message format.';
-    } else if (lastError?.response) {
-      errorMessage += lastError.response;
-    } else if (lastError?.message) {
-      errorMessage += lastError.message;
-    } else {
-      errorMessage += 'Please check your email configuration and try again.';
-    }
-    
-    console.error(`📧 [EMAIL] ❌ Returning error to client:`, errorMessage);
-    
-    return res.status(500).json({ 
-      success: false, 
-      message: errorMessage 
-    });
+
+    res.json({ success: true, message: 'Message sent. We will get back to you shortly.' });
   } catch (err) {
-    console.error('📧 [EMAIL] ❌ Unexpected error in support email handler:', err);
-    console.error('📧 [EMAIL] ❌ Error details:', {
-      name: err.name,
-      message: err.message,
-      code: err.code,
-      stack: err.stack?.substring(0, 1000)
-    });
-    
-    // Provide a more helpful error message
-    let errorMessage = 'Failed to send message. ';
-    if (err.message) {
-      errorMessage += err.message;
-    } else {
-      errorMessage += 'Please try again later or contact support directly.';
-    }
-    
-    res.status(500).json({ 
-      success: false, 
-      message: errorMessage 
-    });
+    console.error('❌ Support email error:', err);
+    res.status(500).json({ success: false, message: 'Failed to send message' });
   }
 });
 

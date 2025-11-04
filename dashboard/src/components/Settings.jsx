@@ -560,42 +560,17 @@ const Settings = ({ user }) => {
             message: form.message.value,
           };
           try {
-            const apiUrl = getApiUrl('/api/support/contact');
-            console.log('📧 [FRONTEND] Sending email request to:', apiUrl);
-            console.log('📧 [FRONTEND] Request payload:', { ...payload, message: payload.message.substring(0, 50) + '...' });
-            
-            const res = await fetch(apiUrl, {
+            const res = await fetch(getApiUrl('/api/support/contact'), {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload)
             });
-            
-            console.log('📧 [FRONTEND] Response status:', res.status, res.statusText);
-            
-            // Check if response is JSON
-            const contentType = res.headers.get("content-type");
-            if (!contentType || !contentType.includes("application/json")) {
-              const text = await res.text();
-              console.error('📧 [FRONTEND] Non-JSON response:', text);
-              throw new Error(`Server returned ${res.status}: ${text.substring(0, 100)}`);
-            }
-            
             const data = await res.json();
-            console.log('📧 [FRONTEND] Response data:', data);
-            
-            if (!res.ok || !data.success) {
-              throw new Error(data.message || 'Failed to send');
-            }
+            if (!res.ok || !data.success) throw new Error(data.message || 'Failed to send');
             setMessage({ type: 'success', text: data.message || 'Message sent successfully' });
             form.reset();
           } catch (err) {
-            console.error('📧 [FRONTEND] Error sending email:', err);
-            console.error('📧 [FRONTEND] Error details:', {
-              name: err.name,
-              message: err.message,
-              stack: err.stack
-            });
-            setMessage({ type: 'error', text: err.message || 'Failed to send message. Please check your connection and try again.' });
+            setMessage({ type: 'error', text: err.message || 'Failed to send message' });
           }
           setIsLoading(false);
         }}
