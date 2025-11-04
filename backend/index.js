@@ -1882,12 +1882,15 @@ app.post('/api/support/contact', async (req, res) => {
           replyTo: email,
           subject: mailSubject,
           html
-        }, {
-          // Retry options
-          retry: false // We handle retries manually
         });
 
-        console.log(`✅ Support email sent successfully via port ${smtpPort}:`, info.messageId);
+        // Log success with safe property access
+        if (info && info.messageId) {
+          console.log(`✅ Support email sent successfully via port ${smtpPort}:`, info.messageId);
+        } else {
+          console.log(`✅ Support email sent successfully via port ${smtpPort}`, info ? '(no messageId)' : '(response received)');
+        }
+        
         return res.json({ success: true, message: 'Message sent. We will get back to you shortly.' });
       } catch (sendError) {
         lastError = sendError;
