@@ -29,35 +29,65 @@ const ContactSupport = () => {
 
     try {
       setSubmitting(true);
-      const res = await fetch(getApiUrl("/api/support/contact"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, subject, purpose, message })
-      });
       
-      // Check if response is ok before parsing JSON
-      let data;
+      // Create abort controller for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      
       try {
-        data = await res.json();
-      } catch (parseError) {
-        console.error('Failed to parse response:', parseError);
-        throw new Error('Server returned an invalid response. Please try again later.');
+        const res = await fetch(getApiUrl("/api/support/contact"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, subject, purpose, message }),
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        // Check if response is ok before parsing JSON
+        let data;
+        try {
+          data = await res.json();
+        } catch (parseError) {
+          console.error('Failed to parse response:', parseError);
+          throw new Error('Server returned an invalid response. Please try again later.');
+        }
+        
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || "Failed to send message");
+        }
+        
+        setNotice({ type: "success", text: data.message || "Message sent successfully. We will get back to you shortly." });
+        setName("");
+        setEmail("");
+        setSubject("");
+        setMessage("");
+        setPurpose("General inquiry");
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        
+        // Handle abort (timeout)
+        if (fetchError.name === 'AbortError') {
+          throw new Error('Request timed out. Please check your connection and try again.');
+        }
+        throw fetchError;
       }
-      
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || "Failed to send message");
-      }
-      
-      setNotice({ type: "success", text: data.message || "Message sent successfully." });
-      setSubject("");
-      setMessage("");
     } catch (err) {
       console.error('Support email submission error:', err);
       // Provide more specific error messages
       let errorMessage = err.message || "Failed to send message.";
-      if (err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed to fetch')) {
-        errorMessage = "Network error. Please check your connection and try again.";
+      
+      if (err.name === 'AbortError' || err.message?.includes('timeout')) {
+        errorMessage = "Request timed out. Please check your connection and try again.";
+      } else if (err.message?.includes('fetch') || 
+                 err.message?.includes('network') || 
+                 err.message?.includes('Failed to fetch') ||
+                 err.message?.includes('NetworkError')) {
+        errorMessage = "Network error. Please check your connection and try again. If the problem persists, contact us directly at gjain0229@gmail.com";
+      } else if (err.message?.includes('CORS') || err.message?.includes('CORS policy')) {
+        errorMessage = "Connection error. Please try again or contact us directly at gjain0229@gmail.com";
       }
+      
       setNotice({ type: "error", text: errorMessage });
     } finally {
       setSubmitting(false);

@@ -1907,9 +1907,16 @@ app.post('/api/support/contact', async (req, res) => {
     // Send email asynchronously without blocking the response
     // This ensures the user gets an immediate response while email is sent in background
     const sendEmailAsync = async (retryCount = 0) => {
-      const maxRetries = 2;
+      const maxRetries = 3;
+      const baseDelay = 2000; // 2 seconds base delay
+      
       try {
-        await transporter.sendMail({
+        // Verify transporter is initialized
+        if (!transporter) {
+          throw new Error('Transporter not initialized');
+        }
+        
+        const mailOptions = {
           from: {
             name: 'StockSathi Support',
             address: smtpUser
@@ -1918,30 +1925,45 @@ app.post('/api/support/contact', async (req, res) => {
           replyTo: email,
           subject: mailSubject,
           html
-        });
+        };
+        
+        await transporter.sendMail(mailOptions);
         console.log('✅ Support email sent successfully from:', email);
       } catch (sendError) {
-        console.error(`❌ Email send error (attempt ${retryCount + 1}/${maxRetries + 1}):`, sendError);
+        const errorCode = sendError.code || '';
+        const errorMessage = sendError.message || String(sendError);
+        
+        console.error(`❌ Email send error (attempt ${retryCount + 1}/${maxRetries + 1}):`, errorMessage);
         console.error('Error details:', {
-          code: sendError.code,
-          message: sendError.message,
+          code: errorCode,
+          message: errorMessage,
           command: sendError.command,
-          response: sendError.response
+          response: sendError.response,
+          responseCode: sendError.responseCode
         });
         
         // Retry logic for transient errors
         if (retryCount < maxRetries) {
-          const retryableErrors = ['ETIMEDOUT', 'ECONNECTION', 'ESOCKET', 'ETIMEOUT'];
+          const retryableErrors = [
+            'ETIMEDOUT', 'ECONNECTION', 'ESOCKET', 'ETIMEOUT', 
+            'ECONNRESET', 'ENOTFOUND', 'EAI_AGAIN', 'timeout',
+            'Connection timeout', 'Network error'
+          ];
+          
           const isRetryable = retryableErrors.some(code => 
-            sendError.code === code || sendError.message.includes(code) || sendError.message.includes('timeout')
+            errorCode === code || 
+            errorMessage.includes(code) || 
+            errorMessage.toLowerCase().includes('timeout') ||
+            errorMessage.toLowerCase().includes('network')
           );
           
           if (isRetryable) {
-            const delay = (retryCount + 1) * 2000; // 2s, 4s delays
-            console.log(`Retrying email send in ${delay}ms...`);
+            // Exponential backoff with jitter
+            const delay = baseDelay * Math.pow(2, retryCount) + Math.random() * 1000;
+            console.log(`Retrying email send in ${Math.round(delay)}ms...`);
             setTimeout(() => {
               sendEmailAsync(retryCount + 1).catch(err => {
-                console.error('Retry failed:', err);
+                console.error('Retry failed:', err.message);
               });
             }, delay);
             return;
@@ -1949,14 +1971,15 @@ app.post('/api/support/contact', async (req, res) => {
         }
         
         // Log final failure but don't fail the request - user already got success message
-        console.error('Email failed after retries but user already received success message');
+        console.error('❌ Email failed after retries but user already received success message');
+        console.error('Final error:', errorMessage);
         // In production, consider logging to a service like Sentry or saving to a queue
       }
     };
 
     // Start sending email in background (don't await)
     sendEmailAsync().catch(err => {
-      console.error('Unhandled email send error:', err);
+      console.error('Unhandled email send error:', err.message || err);
     });
 
     // Return success immediately - email is being sent in background
@@ -2059,95 +2082,147 @@ const stockSymbols = [
 let currentStockData = new Map();
 let connectedClients = 0;
 
-// Fetch live stock data
+// Helper function to delay execution
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Helper function to fetch a single stock with retry logic
+async function fetchStockWithRetry(symbol, maxRetries = 3, baseDelay = 1000) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const data = await yahooFinance.quote(symbol);
+      
+      // Check if data is valid
+      if (!data) {
+        console.warn(`⚠️  Skipping ${symbol}: No data returned`);
+        return null;
+      }
+      
+      // Safely extract data with fallbacks
+      const previousClose = data?.regularMarketPreviousClose || null;
+      const regularMarketPrice = data?.regularMarketPrice || data?.currentPrice || null;
+      const regularMarketChange = data?.regularMarketChange || null;
+      const regularMarketChangePercent = data?.regularMarketChangePercent || null;
+      
+      // Skip stocks with missing critical data
+      if (!regularMarketPrice) {
+        console.warn(`⚠️  Skipping ${symbol}: Missing price data`);
+        return null;
+      }
+      
+      // Only calculate circuits if previousClose exists and is not zero
+      const lowerCircuit = previousClose ? Number((previousClose * 0.95).toFixed(2)) : null;
+      const upperCircuit = previousClose ? Number((previousClose * 1.05).toFixed(2)) : null;
+      
+      // Handle index symbols
+      let displaySymbol = symbol.replace('.NS', '');
+      if (symbol === '^NSEI') {
+        displaySymbol = 'NIFTY 50';
+      } else if (symbol === '^BSESN') {
+        displaySymbol = 'SENSEX';
+      }
+      
+      return {
+        symbol: displaySymbol,
+        name: data?.shortName || displaySymbol,
+        price: regularMarketPrice,
+        change: regularMarketChange,
+        percentChange: regularMarketChangePercent,
+        previousClose: previousClose,
+        lowerCircuit: lowerCircuit,
+        upperCircuit: upperCircuit,
+        volume: data?.regularMarketVolume || null,
+        marketCap: data?.marketCap || null,
+        lastUpdate: new Date().toISOString()
+      };
+    } catch (error) {
+      // Check if it's a rate limit error (429)
+      const isRateLimit = error.message?.includes('429') || 
+                         error.message?.includes('Too Many Requests') ||
+                         error.message?.includes('crumb') ||
+                         error.status === 429 ||
+                         error.code === 429;
+      
+      if (isRateLimit && attempt < maxRetries) {
+        // Exponential backoff with jitter for rate limit errors
+        const backoffDelay = baseDelay * Math.pow(2, attempt - 1) + Math.random() * 1000;
+        console.warn(`Rate limit hit for ${symbol}, retrying in ${Math.round(backoffDelay)}ms (attempt ${attempt}/${maxRetries})`);
+        await delay(backoffDelay);
+        continue;
+      }
+      
+      // For other errors or final retry, log and return null
+      if (attempt === maxRetries) {
+        console.error(`Error fetching data for ${symbol} after ${maxRetries} attempts:`, error.message);
+      }
+      return null;
+    }
+  }
+  return null;
+}
+
+// Fetch live stock data with rate limiting
 async function fetchLiveStockData() {
   try {
     console.log('Fetching live stock data for', stockSymbols.length, 'symbols');
     
-    const results = await Promise.allSettled(
-      stockSymbols.map(async (symbol) => {
-        try {
-          const data = await yahooFinance.quote(symbol);
-          
-          // Check if data is valid
-          if (!data) {
-            console.warn(`⚠️  Skipping ${symbol}: No data returned`);
-            return null;
-          }
-          
-          // Safely extract data with fallbacks
-          const previousClose = data?.regularMarketPreviousClose || null;
-          const regularMarketPrice = data?.regularMarketPrice || data?.currentPrice || null;
-          const regularMarketChange = data?.regularMarketChange || null;
-          const regularMarketChangePercent = data?.regularMarketChangePercent || null;
-          
-          // Skip stocks with missing critical data
-          if (!regularMarketPrice) {
-            console.warn(`⚠️  Skipping ${symbol}: Missing price data`);
-            return null;
-          }
-          
-          // Only calculate circuits if previousClose exists and is not zero
-          const lowerCircuit = previousClose ? Number((previousClose * 0.95).toFixed(2)) : null;
-          const upperCircuit = previousClose ? Number((previousClose * 1.05).toFixed(2)) : null;
-          
-          // Handle index symbols
-          let displaySymbol = symbol.replace('.NS', '');
-          if (symbol === '^NSEI') {
-            displaySymbol = 'NIFTY 50';
-          } else if (symbol === '^BSESN') {
-            displaySymbol = 'SENSEX';
-          }
-          
-          return {
-            symbol: displaySymbol,
-            name: data?.shortName || displaySymbol,
-            price: regularMarketPrice,
-            change: regularMarketChange,
-            percentChange: regularMarketChangePercent,
-            previousClose: previousClose,
-            lowerCircuit: lowerCircuit,
-            upperCircuit: upperCircuit,
-            volume: data?.regularMarketVolume || null,
-            marketCap: data?.marketCap || null,
-            lastUpdate: new Date().toISOString()
-          };
-        } catch (error) {
-          // Only log error message, not full stack trace to reduce noise
-          console.error(`Error fetching data for ${symbol}:`, error.message);
-          return null;
-        }
-      })
-    );
-
-    const validResults = results
-      .filter(result => result.status === 'fulfilled' && result.value !== null)
-      .map(result => result.value);
+    const BATCH_SIZE = 5; // Process 5 symbols at a time
+    const DELAY_BETWEEN_BATCHES = 2000; // 2 seconds delay between batches
+    const validResults = [];
+    
+    // Process symbols in batches to avoid rate limiting
+    for (let i = 0; i < stockSymbols.length; i += BATCH_SIZE) {
+      const batch = stockSymbols.slice(i, i + BATCH_SIZE);
+      console.log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(stockSymbols.length / BATCH_SIZE)}: ${batch.length} symbols`);
+      
+      // Process batch in parallel
+      const batchResults = await Promise.allSettled(
+        batch.map(symbol => fetchStockWithRetry(symbol))
+      );
+      
+      // Extract valid results
+      const batchValid = batchResults
+        .filter(result => result.status === 'fulfilled' && result.value !== null)
+        .map(result => result.value);
+      
+      validResults.push(...batchValid);
+      
+      // Add delay between batches (except for the last batch)
+      if (i + BATCH_SIZE < stockSymbols.length) {
+        await delay(DELAY_BETWEEN_BATCHES);
+      }
+    }
 
     // Update current data and emit changes
-    validResults.forEach(stock => {
-      const previousData = currentStockData.get(stock.symbol);
-      currentStockData.set(stock.symbol, stock);
-      
-      // Emit individual stock update
-      io.emit('stockUpdate', stock);
-    });
-
-    // Emit bulk update
     if (validResults.length > 0) {
+      validResults.forEach(stock => {
+        const previousData = currentStockData.get(stock.symbol);
+        currentStockData.set(stock.symbol, stock);
+        
+        // Emit individual stock update
+        io.emit('stockUpdate', stock);
+      });
+
+      // Emit bulk update
       io.emit('bulkStockUpdate', validResults);
-      console.log(`Updated ${validResults.length} stocks at ${new Date().toLocaleTimeString()}`);
+      console.log(`✅ Updated ${validResults.length}/${stockSymbols.length} stocks at ${new Date().toLocaleTimeString()}`);
     } else {
-      console.log('No valid stock data to emit');
+      console.warn('⚠️  No valid stock data fetched in this cycle');
+      
+      // If we have previous data, emit it as fallback
+      if (currentStockData.size > 0) {
+        const fallbackData = Array.from(currentStockData.values());
+        io.emit('bulkStockUpdate', fallbackData);
+        console.log(`📦 Emitted ${fallbackData.length} cached stocks as fallback`);
+      }
     }
 
   } catch (error) {
-    console.error('Error in fetchLiveStockData:', error);
+    console.error('❌ Error in fetchLiveStockData:', error.message);
     // Emit fallback data if available
     if (currentStockData.size > 0) {
       const fallbackData = Array.from(currentStockData.values());
       io.emit('bulkStockUpdate', fallbackData);
-      console.log('Emitted fallback data due to fetch error');
+      console.log(`📦 Emitted ${fallbackData.length} cached stocks as fallback due to error`);
     }
   }
 }
@@ -2198,8 +2273,9 @@ server.on('clientError', (error, socket) => {
   socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
 });
 
-// Start periodic updates every 10 seconds
-setInterval(fetchLiveStockData, 10000);
+// Start periodic updates - increased interval to account for batching (52 symbols / 5 per batch = ~11 batches * 2s = ~22s minimum)
+// Set to 30 seconds to give enough time for all batches and avoid rate limiting
+setInterval(fetchLiveStockData, 30000);
 
 // Initial data fetch
 fetchLiveStockData();

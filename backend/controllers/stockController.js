@@ -39,12 +39,16 @@ exports.getStocksData = async (req, res) => {
       return res.status(400).json({ data: [], error: 'No symbols provided' });
     }
     const symbolList = symbols.split(',').map(s => s.trim());
-    const results = await Promise.all(
-      symbolList.map(async (symbol) => {
+    
+    // Helper function to delay execution
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    
+    // Helper function to fetch a single stock with retry
+    const fetchStockWithRetry = async (symbol, maxRetries = 2) => {
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
           // Append .NS if not present for Indian stocks
           const yfSymbol = /\.(NS|BSE)$/i.test(symbol) ? symbol : symbol + '.NS';
-          console.log('Fetching Yahoo Finance data for:', yfSymbol);
           const data = await yahooFinance.quote(yfSymbol);
           
           // Check if data is valid
@@ -70,11 +74,50 @@ exports.getStocksData = async (req, res) => {
             marketCap: data.marketCap || null,
           };
         } catch (err) {
+          const isRateLimit = err.message?.includes('429') || 
+                             err.message?.includes('Too Many Requests') ||
+                             err.message?.includes('crumb') ||
+                             err.status === 429 ||
+                             err.code === 429;
+          
+          if (isRateLimit && attempt < maxRetries) {
+            const backoffDelay = 1000 * attempt + Math.random() * 500;
+            console.warn(`Rate limit hit for ${symbol}, retrying in ${Math.round(backoffDelay)}ms`);
+            await delay(backoffDelay);
+            continue;
+          }
+          
           console.error(`Error fetching data for ${symbol}:`, err.message);
           return { symbol, error: 'Not found or unavailable' };
         }
-      })
-    );
+      }
+      return { symbol, error: 'Failed after retries' };
+    };
+    
+    // Process symbols in batches to avoid rate limiting
+    const BATCH_SIZE = 3; // Smaller batches for API endpoint
+    const DELAY_BETWEEN_BATCHES = 1500; // 1.5 seconds
+    const results = [];
+    
+    for (let i = 0; i < symbolList.length; i += BATCH_SIZE) {
+      const batch = symbolList.slice(i, i + BATCH_SIZE);
+      
+      const batchResults = await Promise.allSettled(
+        batch.map(symbol => fetchStockWithRetry(symbol))
+      );
+      
+      const batchValid = batchResults
+        .filter(result => result.status === 'fulfilled')
+        .map(result => result.value);
+      
+      results.push(...batchValid);
+      
+      // Add delay between batches (except for the last batch)
+      if (i + BATCH_SIZE < symbolList.length) {
+        await delay(DELAY_BETWEEN_BATCHES);
+      }
+    }
+    
     res.json({ data: results });
   } catch (error) {
     console.error('Error in getStocksData:', error);
