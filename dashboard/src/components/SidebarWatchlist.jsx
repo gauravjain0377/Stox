@@ -94,7 +94,8 @@ const SidebarWatchlist = () => {
     socket.on('connect_error', (error) => {
       console.error('WebSocket connection error:', error);
       setConnectionStatus('error');
-      setError('Connection failed. Using fallback data.');
+      // Don't set error immediately - let fallback handle it
+      // This prevents showing error before fallback data loads
     });
 
     // Stock data events
@@ -211,6 +212,7 @@ const SidebarWatchlist = () => {
   useEffect(() => {
     let isMounted = true;
     let fallbackTimeout;
+    let immediateFallbackTimeout;
     
     // Only load fallback data if WebSocket fails to connect
     const loadFallbackData = async () => {
@@ -235,27 +237,43 @@ const SidebarWatchlist = () => {
           
           setStocks(processedStocks);
           setLoading(false);
+          setError(null);
           console.log('Fallback data loaded:', processedStocks.length, 'stocks');
         } else {
           console.warn('Fallback data is empty or invalid');
-          setStocks([]);
-          setLoading(false);
+          // Don't set empty array - keep trying or use previous data
+          if (stocks.length === 0) {
+            setLoading(false);
+          }
         }
         
       } catch (error) {
         if (isMounted) {
           console.error('Error loading fallback data:', error);
-          setError('Failed to load stock data');
-          setStocks([]); // Set empty array instead of keeping previous state
-          setLoading(false);
+          // Only set error if we don't have any stocks loaded
+          if (stocks.length === 0) {
+            setError('Failed to load stock data. Please refresh the page.');
+            setLoading(false);
+          } else {
+            // If we have some stocks, just log the error but don't show it
+            console.warn('Fallback data failed but we have existing stocks, continuing...');
+          }
         }
       }
     };
     
-    // Set timeout to load fallback data if WebSocket doesn't connect
+    // Try to load fallback data immediately in case WebSocket fails quickly
+    immediateFallbackTimeout = setTimeout(() => {
+      if (!isConnected && stocks.length === 0 && loading) {
+        console.log('WebSocket not connected after 2 seconds, starting fallback load...');
+        loadFallbackData();
+      }
+    }, 2000); // 2 second initial timeout
+    
+    // Set longer timeout to load fallback data if WebSocket doesn't connect
     fallbackTimeout = setTimeout(() => {
       if (!isConnected && stocks.length === 0) {
-        console.log('WebSocket connection timeout, loading fallback data');
+        console.log('WebSocket connection timeout (5s), loading fallback data');
         loadFallbackData();
       }
     }, 5000); // 5 second timeout
@@ -266,8 +284,11 @@ const SidebarWatchlist = () => {
       if (fallbackTimeout) {
         clearTimeout(fallbackTimeout);
       }
+      if (immediateFallbackTimeout) {
+        clearTimeout(immediateFallbackTimeout);
+      }
     };
-  }, [isConnected, stocks.length]);
+  }, [isConnected, stocks.length, loading]);
 
   // Show all stocks, not just those with company info
   const filteredStocks = stocks;

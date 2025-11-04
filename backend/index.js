@@ -1781,18 +1781,22 @@ app.post('/api/support/contact', async (req, res) => {
       });
     }
 
-    // Create transporter with better error handling
+    // Create transporter with better error handling - simplified for production
     let transporter;
     try {
-      // For Gmail, use service option (simpler and more reliable)
+      // For Gmail, use service option (simpler and more reliable in production)
       if (smtpHost.includes('gmail.com')) {
         transporter = nodemailer.createTransport({
           service: 'gmail',
           auth: { user: smtpUser, pass: smtpPass },
-          // Add timeout and connection options for production
-          connectionTimeout: 10000, // 10 seconds
-          greetingTimeout: 10000,
-          socketTimeout: 10000
+          // Increased timeouts for production environments
+          connectionTimeout: 20000, // 20 seconds
+          greetingTimeout: 20000,
+          socketTimeout: 30000, // 30 seconds
+          // Disable verification for faster connection in production
+          pool: true,
+          maxConnections: 1,
+          maxMessages: 1
         });
       } else {
         // For other SMTP providers, use host/port configuration
@@ -1801,26 +1805,19 @@ app.post('/api/support/contact', async (req, res) => {
           port: smtpPort,
           secure: smtpPort === 465,
           auth: { user: smtpUser, pass: smtpPass },
-          // Add timeout and connection options for production
-          connectionTimeout: 10000, // 10 seconds
-          greetingTimeout: 10000,
-          socketTimeout: 10000
+          // Increased timeouts for production environments
+          connectionTimeout: 20000, // 20 seconds
+          greetingTimeout: 20000,
+          socketTimeout: 30000, // 30 seconds
+          pool: true,
+          maxConnections: 1,
+          maxMessages: 1
         });
       }
 
-      // Verify connection (but don't fail if verification times out in production)
-      try {
-        await Promise.race([
-          transporter.verify(),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Verification timeout')), 5000)
-          )
-        ]);
-        console.log('✅ SMTP connection verified');
-      } catch (verifyError) {
-        console.warn('⚠️ SMTP verification warning (continuing anyway):', verifyError.message);
-        // Continue anyway - verification sometimes fails in production but sending still works
-      }
+      // Skip verification in production - it can cause timeouts and isn't necessary
+      // Verification will happen when we actually send the email
+      console.log('✅ SMTP transporter created');
     } catch (transportError) {
       console.error('❌ SMTP transport error:', transportError);
       return res.status(500).json({ 
@@ -1902,7 +1899,7 @@ app.post('/api/support/contact', async (req, res) => {
       </div>
     `;
 
-    // Send email with timeout
+    // Send email with increased timeout for production
     try {
       await Promise.race([
         transporter.sendMail({
@@ -1916,7 +1913,7 @@ app.post('/api/support/contact', async (req, res) => {
           html
         }),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Email send timeout')), 30000)
+          setTimeout(() => reject(new Error('Email send timeout')), 60000) // Increased to 60 seconds
         )
       ]);
 

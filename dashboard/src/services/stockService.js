@@ -89,19 +89,24 @@ const fetchWithErrorHandling = async (url, options = {}) => {
 export const stockService = {
   async getAllStocks() {
     try {
-      const data = await fetchWithErrorHandling(getApiUrl('/api/stocks'));
+      const url = getApiUrl('/api/stocks');
+      console.log('StockService: Fetching stocks from:', url);
+      
+      const data = await fetchWithErrorHandling(url);
       // Handle new response structure
       const stocks = (data.success === true ? data.stocks || data.data : []) || [];
       
       // If backend returns empty or insufficient data, use fallback
       if (stocks.length === 0 || stocks.length < 50) {
-        console.warn('StockService: Insufficient stock data, using fallback');
+        console.warn('StockService: Insufficient stock data (' + stocks.length + ' stocks), using fallback');
         return fallbackStocks;
       }
       
+      console.log('StockService: Successfully fetched', stocks.length, 'stocks');
       return stocks;
     } catch (error) {
       console.error('StockService: Error fetching stocks, using fallback:', error);
+      console.error('StockService: Error details:', error.message);
       return fallbackStocks;
     }
   },
@@ -119,15 +124,22 @@ export const stockService = {
 
   async getCompanyInfo() {
     try {
-      const data = await fetchWithErrorHandling(getApiUrl('/api/stocks/company-info'));
+      const url = getApiUrl('/api/stocks/company-info');
+      console.log('StockService: Fetching company info from:', url);
+      
+      const data = await fetchWithErrorHandling(url);
       // Handle new response structure
       if (data.success === false) {
         console.warn('StockService: Company info request failed:', data.error);
         return [];
       }
-      return data.companies || data.data || [];
+      const companies = data.companies || data.data || [];
+      console.log('StockService: Successfully fetched', companies.length, 'company info entries');
+      return companies;
     } catch (error) {
       console.error('StockService: Error fetching company info:', error);
+      console.error('StockService: Error details:', error.message);
+      // Return empty array - not critical for watchlist to work
       return [];
     }
   },
