@@ -131,15 +131,6 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
-// Google OAuth Strategy Configuration
-// NOTE: The branding name shown during Google OAuth login (e.g., "StockSathi" vs "stocksathi.onrender.com")
-// is configured in Google Cloud Console under "APIs & Services" > "OAuth consent screen"
-// 
-// IMPORTANT FOR PRODUCTION:
-// - The "App name" in OAuth consent screen must be explicitly set to "StockSathi" (not auto-generated)
-// - Authorized domains must include your production domain (e.g., "render.com" and "stocksathi.onrender.com")
-// - Changes may take 5-15 minutes to propagate globally
-// - See README.md for detailed setup instructions
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -1773,12 +1764,55 @@ app.post('/api/support/contact', async (req, res) => {
       });
     }
 
+    // Create transporter with production-ready configuration
     const transporter = nodemailer.createTransport({
       host: smtpHost,
       port: smtpPort,
-      secure: smtpPort === 465,
-      auth: { user: smtpUser, pass: smtpPass }
+      secure: smtpPort === 465, // true for 465, false for other ports
+      auth: { 
+        user: smtpUser, 
+        pass: smtpPass 
+      },
+      // Production-ready TLS configuration
+      tls: {
+        // For production, we may need to allow self-signed certs in some environments
+        rejectUnauthorized: process.env.NODE_ENV === 'production' ? false : true
+      },
+      // Connection timeout settings for production (important for serverless environments)
+      connectionTimeout: 15000, // 15 seconds
+      greetingTimeout: 10000, // 10 seconds
+      socketTimeout: 15000, // 15 seconds
+      // Retry configuration for serverless environments
+      pool: false,
+      maxConnections: 1,
+      maxMessages: 1,
+      // Additional options for better reliability
+      requireTLS: smtpPort === 587,
+      debug: process.env.NODE_ENV === 'development' // Enable debug in development
     });
+
+    // Verify connection before sending (helps catch configuration issues early)
+    try {
+      await transporter.verify();
+      console.log('✅ SMTP connection verified successfully');
+    } catch (verifyError) {
+      console.error('❌ SMTP verification failed:', verifyError);
+      // Provide more specific error messages
+      let errorMessage = 'Failed to connect to email server. ';
+      if (verifyError.code === 'EAUTH' || verifyError.responseCode === 535) {
+        errorMessage += 'Invalid email credentials. Please check MAIL_USER and MAIL_PASS.';
+      } else if (verifyError.code === 'ECONNECTION' || verifyError.code === 'ETIMEDOUT') {
+        errorMessage += 'Connection timeout. Please check MAIL_HOST and MAIL_PORT.';
+      } else if (verifyError.message) {
+        errorMessage += verifyError.message;
+      } else {
+        errorMessage += 'Please check your email configuration.';
+      }
+      return res.status(500).json({ 
+        success: false, 
+        message: errorMessage 
+      });
+    }
 
     const mailSubjectBase = subject && subject.trim() ? subject : `Support: ${purpose || 'General inquiry'}`;
     const mailSubject = `[StockSathi] ${mailSubjectBase}`;
@@ -1840,21 +1874,64 @@ app.post('/api/support/contact', async (req, res) => {
       </div>
     `;
 
-    await transporter.sendMail({
-      from: {
-        name: 'StockSathi Support',
-        address: smtpUser
-      },
-      to: supportTo,
-      replyTo: email,
-      subject: mailSubject,
-      html
-    });
+    // Send email with error handling
+    try {
+      const info = await transporter.sendMail({
+        from: {
+          name: 'StockSathi Support',
+          address: smtpUser
+        },
+        to: supportTo,
+        replyTo: email,
+        subject: mailSubject,
+        html
+      });
 
-    res.json({ success: true, message: 'Message sent. We will get back to you shortly.' });
+      console.log('✅ Support email sent successfully:', info.messageId);
+      res.json({ success: true, message: 'Message sent. We will get back to you shortly.' });
+    } catch (sendError) {
+      console.error('❌ Error sending support email:', sendError);
+      let errorMessage = 'Failed to send message. ';
+      
+      // Provide specific error messages based on error type
+      if (sendError.code === 'EAUTH' || sendError.responseCode === 535) {
+        errorMessage += 'Authentication failed. Please check email credentials.';
+      } else if (sendError.code === 'EMESSAGE') {
+        errorMessage += 'Invalid message format.';
+      } else if (sendError.code === 'ECONNECTION' || sendError.code === 'ETIMEDOUT') {
+        errorMessage += 'Connection issue. Please try again later.';
+      } else if (sendError.response) {
+        errorMessage += sendError.response;
+      } else if (sendError.message) {
+        errorMessage += sendError.message;
+      }
+      
+      return res.status(500).json({ 
+        success: false, 
+        message: errorMessage 
+      });
+    }
   } catch (err) {
     console.error('❌ Support email error:', err);
-    res.status(500).json({ success: false, message: 'Failed to send message' });
+    console.error('Error details:', {
+      name: err.name,
+      message: err.message,
+      code: err.code,
+      stack: err.stack
+    });
+    
+    // Provide a more helpful error message
+    let errorMessage = 'Failed to send message. ';
+    if (err.message) {
+      errorMessage += err.message;
+    } else {
+      errorMessage += 'Please try again later or contact support directly.';
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      message: errorMessage 
+    });
   }
 });
 

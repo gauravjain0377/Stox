@@ -16,7 +16,7 @@ Developed as part of a **Software Engineering Project**, this platform merges re
 - [Installation](#installation)
 - [Version History](#version-history)
 - [Project Requirements](#project-requirements)
-- [First Principls](#first-principles)
+- [First Principles](#first-principles)
 - [Contributing](#contributing)
 - [License](#license)
 - [Contact](#contact)
@@ -199,9 +199,6 @@ The platform uses CSS custom properties for theme management:
    DASHBOARD_URL=http://localhost:5174
    GOOGLE_CLIENT_ID=your_google_client_id
    GOOGLE_CLIENT_SECRET=your_google_client_secret
-   EMAIL_USER=your_email@gmail.com
-   EMAIL_PASS=your_email_app_password
-   ```
 
 6. **Start the Backend Server**
    ```bash
@@ -344,9 +341,9 @@ This project is licensed under the **MIT License** — feel free to use and modi
 
 **Developed by:** Gaurav Jain  
 **Email:** [jaingaurav906@gmail.com](mailto:jaingaurav906@gmail.com)  
-**LinkedIn:** [LinkedIn](https://www.linkedin.com/in/this-is-gaurav-jain/)  
-**GitHub:** [GitHub](https://github.com/gauravjain0377)  
-**𝕏:** [X](https://x.com/gauravjain0377)
+**LinkedIn:** [linkedin.com/in/this-is-gaurav-jain/](https://www.linkedin.com/in/this-is-gaurav-jain/)  
+**GitHub:** [github.com/gauravjain0377](https://github.com/gauravjain0377)  
+**𝕏:** [x.com/gauravjain0377](https://x.com/gauravjain0377)
 
 ---
 
