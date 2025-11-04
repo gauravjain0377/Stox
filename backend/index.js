@@ -1781,47 +1781,35 @@ app.post('/api/support/contact', async (req, res) => {
       });
     }
 
-    // Create transporter with better error handling - simplified for production
     let transporter;
     try {
-      // For Gmail, use service option (simpler and more reliable in production)
-      if (smtpHost.includes('gmail.com')) {
+      const mailService = process.env.MAIL_SERVICE;
+      const rejectUnauthorized = process.env.SMTP_REJECT_UNAUTHORIZED === 'false' ? false : true;
+
+      if (mailService) {
         transporter = nodemailer.createTransport({
-          service: 'gmail',
+          service: mailService,
           auth: { user: smtpUser, pass: smtpPass },
-          // Increased timeouts for production environments (now non-blocking, so we can be more generous)
-          connectionTimeout: 30000, // 30 seconds
+          connectionTimeout: 30000,
           greetingTimeout: 30000,
-          socketTimeout: 60000, // 60 seconds - longer since it's async
-          // Connection pooling for better reliability
-          pool: true,
-          maxConnections: 1,
-          maxMessages: 1,
-          // Rate limiting protection
-          rateDelta: 1000,
-          rateLimit: 5
+          socketTimeout: 60000,
+          pool: false
         });
       } else {
-        // For other SMTP providers, use host/port configuration
         transporter = nodemailer.createTransport({
           host: smtpHost,
           port: smtpPort,
           secure: smtpPort === 465,
+          requireTLS: smtpPort === 587,
           auth: { user: smtpUser, pass: smtpPass },
-          // Increased timeouts for production environments
-          connectionTimeout: 30000, // 30 seconds
+          connectionTimeout: 30000,
           greetingTimeout: 30000,
-          socketTimeout: 60000, // 60 seconds
-          pool: true,
-          maxConnections: 1,
-          maxMessages: 1,
-          rateDelta: 1000,
-          rateLimit: 5
+          socketTimeout: 60000,
+          pool: false,
+          tls: { rejectUnauthorized }
         });
       }
 
-      // Skip verification in production - it can cause timeouts and isn't necessary
-      // Verification will happen when we actually send the email
       console.log('✅ SMTP transporter created');
     } catch (transportError) {
       console.error('❌ SMTP transport error:', transportError);
@@ -1904,11 +1892,12 @@ app.post('/api/support/contact', async (req, res) => {
       </div>
     `;
 
-    const sendEmailWithRetry = async (retryCount = 0) => {
+    const sendEmailWithRetry = (retryCount = 0) => {
       const maxRetries = 3;
       const baseDelay = 2000;
       if (!transporter) {
-        throw new Error('Transporter not initialized');
+        console.error('Transporter not initialized');
+        return;
       }
 
       const mailOptions = {
@@ -1922,51 +1911,53 @@ app.post('/api/support/contact', async (req, res) => {
         html
       };
 
-      try {
-        await transporter.sendMail(mailOptions);
-        console.log('✅ Support email sent successfully from:', email);
-      } catch (sendError) {
-        const errorCode = sendError.code || '';
-        const errorMessage = sendError.message || String(sendError);
+      transporter.sendMail(mailOptions)
+        .then(() => {
+          console.log('✅ Support email sent successfully from:', email);
+        })
+        .catch(sendError => {
+          const errorCode = sendError.code || '';
+          const errorMessage = sendError.message || String(sendError);
 
-        console.error(`❌ Email send error (attempt ${retryCount + 1}/${maxRetries + 1}):`, errorMessage);
-        console.error('Error details:', {
-          code: errorCode,
-          message: errorMessage,
-          command: sendError.command,
-          response: sendError.response,
-          responseCode: sendError.responseCode
-        });
+          console.error(`❌ Email send error (attempt ${retryCount + 1}/${maxRetries + 1}):`, errorMessage);
+          console.error('Error details:', {
+            code: errorCode,
+            message: errorMessage,
+            command: sendError.command,
+            response: sendError.response,
+            responseCode: sendError.responseCode
+          });
 
-        if (retryCount < maxRetries) {
-          const retryableErrors = [
-            'ETIMEDOUT', 'ECONNECTION', 'ESOCKET', 'ETIMEOUT',
-            'ECONNRESET', 'ENOTFOUND', 'EAI_AGAIN', 'timeout',
-            'Connection timeout', 'Network error'
-          ];
+          if (retryCount < maxRetries) {
+            const retryableErrors = [
+              'ETIMEDOUT', 'ECONNECTION', 'ESOCKET', 'ETIMEOUT',
+              'ECONNRESET', 'ENOTFOUND', 'EAI_AGAIN', 'timeout',
+              'Connection timeout', 'Network error'
+            ];
 
-          const isRetryable = retryableErrors.some(code =>
-            errorCode === code ||
-            errorMessage.includes(code) ||
-            errorMessage.toLowerCase().includes('timeout') ||
-            errorMessage.toLowerCase().includes('network')
-          );
+            const isRetryable = retryableErrors.some(code =>
+              errorCode === code ||
+              errorMessage.includes(code) ||
+              errorMessage.toLowerCase().includes('timeout') ||
+              errorMessage.toLowerCase().includes('network')
+            );
 
-          if (isRetryable) {
-            const delay = baseDelay * Math.pow(2, retryCount) + Math.random() * 1000;
-            console.log(`Retrying email send in ${Math.round(delay)}ms...`);
-            await new Promise(resolve => setTimeout(resolve, delay));
-            return sendEmailWithRetry(retryCount + 1);
+            if (isRetryable) {
+              const delay = baseDelay * Math.pow(2, retryCount) + Math.random() * 1000;
+              console.log(`Retrying email send in ${Math.round(delay)}ms...`);
+              setTimeout(() => {
+                sendEmailWithRetry(retryCount + 1);
+              }, delay);
+              return;
+            }
           }
-        }
 
-        console.error('❌ Email failed after retries');
-        console.error('Final error:', errorMessage);
-        throw sendError;
-      }
+          console.error('❌ Email failed after retries');
+          console.error('Final error:', errorMessage);
+        });
     };
 
-    await sendEmailWithRetry();
+    sendEmailWithRetry();
 
     return res.json({ 
       success: true, 
