@@ -34,13 +34,31 @@ const ContactSupport = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, subject, purpose, message })
       });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message || "Failed to send message");
+      
+      // Check if response is ok before parsing JSON
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError);
+        throw new Error('Server returned an invalid response. Please try again later.');
+      }
+      
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to send message");
+      }
+      
       setNotice({ type: "success", text: data.message || "Message sent successfully." });
       setSubject("");
       setMessage("");
     } catch (err) {
-      setNotice({ type: "error", text: err.message || "Failed to send message." });
+      console.error('Support email submission error:', err);
+      // Provide more specific error messages
+      let errorMessage = err.message || "Failed to send message.";
+      if (err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed to fetch')) {
+        errorMessage = "Network error. Please check your connection and try again.";
+      }
+      setNotice({ type: "error", text: errorMessage });
     } finally {
       setSubmitting(false);
     }

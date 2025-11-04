@@ -1750,8 +1750,16 @@ app.post("/api/users/change-password", async (req, res) => {
 app.post('/api/support/contact', async (req, res) => {
   try {
     const { name, email, subject, purpose, message } = req.body || {};
+    
+    // Validate input
     if (!name || !email || !message) {
       return res.status(400).json({ success: false, message: 'Name, email and message are required' });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ success: false, message: 'Please provide a valid email address' });
     }
 
     // Support multiple environment variable naming conventions for production compatibility
@@ -1773,15 +1781,69 @@ app.post('/api/support/contact', async (req, res) => {
       });
     }
 
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: { user: smtpUser, pass: smtpPass }
-    });
+    // Create transporter with better error handling
+    let transporter;
+    try {
+      // For Gmail, use service option (simpler and more reliable)
+      if (smtpHost.includes('gmail.com')) {
+        transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: { user: smtpUser, pass: smtpPass },
+          // Add timeout and connection options for production
+          connectionTimeout: 10000, // 10 seconds
+          greetingTimeout: 10000,
+          socketTimeout: 10000
+        });
+      } else {
+        // For other SMTP providers, use host/port configuration
+        transporter = nodemailer.createTransport({
+          host: smtpHost,
+          port: smtpPort,
+          secure: smtpPort === 465,
+          auth: { user: smtpUser, pass: smtpPass },
+          // Add timeout and connection options for production
+          connectionTimeout: 10000, // 10 seconds
+          greetingTimeout: 10000,
+          socketTimeout: 10000
+        });
+      }
+
+      // Verify connection (but don't fail if verification times out in production)
+      try {
+        await Promise.race([
+          transporter.verify(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Verification timeout')), 5000)
+          )
+        ]);
+        console.log('✅ SMTP connection verified');
+      } catch (verifyError) {
+        console.warn('⚠️ SMTP verification warning (continuing anyway):', verifyError.message);
+        // Continue anyway - verification sometimes fails in production but sending still works
+      }
+    } catch (transportError) {
+      console.error('❌ SMTP transport error:', transportError);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Email service configuration error. Please contact support directly at gjain0229@gmail.com' 
+      });
+    }
 
     const mailSubjectBase = subject && subject.trim() ? subject : `Support: ${purpose || 'General inquiry'}`;
     const mailSubject = `[StockSathi] ${mailSubjectBase}`;
+    
+    // Escape HTML in user input to prevent XSS
+    const escapeHtml = (text) => {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return String(text).replace(/[&<>"']/g, m => map[m]);
+    };
+    
     const html = `
       <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0f172a;background:#f8fafc;padding:20px;">
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
@@ -1804,20 +1866,20 @@ app.post('/api/support/contact', async (req, res) => {
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width:100%;font-size:14px;color:#0f172a;">
                   <tr>
                     <td style="width:160px;color:#64748b;padding:6px 0;">Name</td>
-                    <td style="padding:6px 0;">${name}</td>
+                    <td style="padding:6px 0;">${escapeHtml(name)}</td>
                   </tr>
                   <tr>
                     <td style="width:160px;color:#64748b;padding:6px 0;">Email</td>
-                    <td style="padding:6px 0;">${email}</td>
+                    <td style="padding:6px 0;">${escapeHtml(email)}</td>
                   </tr>
                   <tr>
                     <td style="width:160px;color:#64748b;padding:6px 0;">Purpose</td>
-                    <td style="padding:6px 0;">${purpose || 'General inquiry'}</td>
+                    <td style="padding:6px 0;">${escapeHtml(purpose || 'General inquiry')}</td>
                   </tr>
                   ${subject && subject.trim() ? `
                   <tr>
                     <td style="width:160px;color:#64748b;padding:6px 0;">Subject</td>
-                    <td style="padding:6px 0;">${subject}</td>
+                    <td style="padding:6px 0;">${escapeHtml(subject)}</td>
                   </tr>` : ''}
                 </table>
               </td>
@@ -1825,7 +1887,7 @@ app.post('/api/support/contact', async (req, res) => {
             <tr>
               <td style="padding:12px 20px;">
                 <div style="color:#64748b;margin-bottom:6px;">Message</div>
-                <div style="white-space:pre-wrap;line-height:1.6;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:12px;">${message}</div>
+                <div style="white-space:pre-wrap;line-height:1.6;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:12px;">${escapeHtml(message)}</div>
               </td>
             </tr>
           </tbody>
@@ -1840,21 +1902,57 @@ app.post('/api/support/contact', async (req, res) => {
       </div>
     `;
 
-    await transporter.sendMail({
-      from: {
-        name: 'StockSathi Support',
-        address: smtpUser
-      },
-      to: supportTo,
-      replyTo: email,
-      subject: mailSubject,
-      html
-    });
+    // Send email with timeout
+    try {
+      await Promise.race([
+        transporter.sendMail({
+          from: {
+            name: 'StockSathi Support',
+            address: smtpUser
+          },
+          to: supportTo,
+          replyTo: email,
+          subject: mailSubject,
+          html
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Email send timeout')), 30000)
+        )
+      ]);
 
-    res.json({ success: true, message: 'Message sent. We will get back to you shortly.' });
+      console.log('✅ Support email sent successfully from:', email);
+      return res.json({ success: true, message: 'Message sent. We will get back to you shortly.' });
+    } catch (sendError) {
+      console.error('❌ Email send error:', sendError);
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to send message';
+      if (sendError.code === 'EAUTH') {
+        errorMessage = 'Email authentication failed. Please contact support directly at gjain0229@gmail.com';
+      } else if (sendError.code === 'ETIMEDOUT' || sendError.message.includes('timeout')) {
+        errorMessage = 'Email service timeout. Please try again later or contact support directly at gjain0229@gmail.com';
+      } else if (sendError.code === 'ECONNECTION') {
+        errorMessage = 'Could not connect to email service. Please try again later or contact support directly at gjain0229@gmail.com';
+      }
+      
+      return res.status(500).json({ 
+        success: false, 
+        message: errorMessage 
+      });
+    }
   } catch (err) {
-    console.error('❌ Support email error:', err);
-    res.status(500).json({ success: false, message: 'Failed to send message' });
+    console.error('❌ Support email endpoint error:', err);
+    console.error('Error details:', {
+      message: err.message,
+      stack: err.stack,
+      code: err.code
+    });
+    
+    // Always return JSON response
+    return res.status(500).json({ 
+      success: false, 
+      message: 'An unexpected error occurred. Please try again later or contact support directly at gjain0229@gmail.com' 
+    });
   }
 });
 
