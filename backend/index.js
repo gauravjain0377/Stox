@@ -1785,18 +1785,18 @@ app.post('/api/support/contact', async (req, res) => {
     let transporter;
     try {
       // For Gmail, use service option (simpler and more reliable in production)
-      if (smtpHost.includes('gmail.com') || smtpUser.includes('gmail.com')) {
+      if (smtpHost.includes('gmail.com')) {
         transporter = nodemailer.createTransport({
           service: 'gmail',
           auth: { user: smtpUser, pass: smtpPass },
-          // Increased timeouts for production environments
+          // Increased timeouts for production environments (now non-blocking, so we can be more generous)
           connectionTimeout: 30000, // 30 seconds
           greetingTimeout: 30000,
-          socketTimeout: 60000, // 60 seconds
+          socketTimeout: 60000, // 60 seconds - longer since it's async
           // Connection pooling for better reliability
           pool: true,
           maxConnections: 1,
-          maxMessages: Infinity,
+          maxMessages: 1,
           // Rate limiting protection
           rateDelta: 1000,
           rateLimit: 5
@@ -1814,12 +1814,14 @@ app.post('/api/support/contact', async (req, res) => {
           socketTimeout: 60000, // 60 seconds
           pool: true,
           maxConnections: 1,
-          maxMessages: Infinity,
+          maxMessages: 1,
           rateDelta: 1000,
           rateLimit: 5
         });
       }
 
+      // Skip verification in production - it can cause timeouts and isn't necessary
+      // Verification will happen when we actually send the email
       console.log('✅ SMTP transporter created');
     } catch (transportError) {
       console.error('❌ SMTP transport error:', transportError);
@@ -1902,51 +1904,90 @@ app.post('/api/support/contact', async (req, res) => {
       </div>
     `;
 
-    try {
-      // Verify transporter is initialized
-      if (!transporter) {
-        throw new Error('Transporter not initialized');
+    // Send email asynchronously without blocking the response
+    // This ensures the user gets an immediate response while email is sent in background
+    const sendEmailAsync = async (retryCount = 0) => {
+      const maxRetries = 3;
+      const baseDelay = 2000; // 2 seconds base delay
+      
+      try {
+        // Verify transporter is initialized
+        if (!transporter) {
+          throw new Error('Transporter not initialized');
+        }
+        
+        const mailOptions = {
+          from: {
+            name: 'StockSathi Support',
+            address: smtpUser
+          },
+          to: supportTo,
+          replyTo: email,
+          subject: mailSubject,
+          html
+        };
+        
+        await transporter.sendMail(mailOptions);
+        console.log('✅ Support email sent successfully from:', email);
+      } catch (sendError) {
+        const errorCode = sendError.code || '';
+        const errorMessage = sendError.message || String(sendError);
+        
+        console.error(`❌ Email send error (attempt ${retryCount + 1}/${maxRetries + 1}):`, errorMessage);
+        console.error('Error details:', {
+          code: errorCode,
+          message: errorMessage,
+          command: sendError.command,
+          response: sendError.response,
+          responseCode: sendError.responseCode
+        });
+        
+        // Retry logic for transient errors
+        if (retryCount < maxRetries) {
+          const retryableErrors = [
+            'ETIMEDOUT', 'ECONNECTION', 'ESOCKET', 'ETIMEOUT', 
+            'ECONNRESET', 'ENOTFOUND', 'EAI_AGAIN', 'timeout',
+            'Connection timeout', 'Network error'
+          ];
+          
+          const isRetryable = retryableErrors.some(code => 
+            errorCode === code || 
+            errorMessage.includes(code) || 
+            errorMessage.toLowerCase().includes('timeout') ||
+            errorMessage.toLowerCase().includes('network')
+          );
+          
+          if (isRetryable) {
+            // Exponential backoff with jitter
+            const delay = baseDelay * Math.pow(2, retryCount) + Math.random() * 1000;
+            console.log(`Retrying email send in ${Math.round(delay)}ms...`);
+            setTimeout(() => {
+              sendEmailAsync(retryCount + 1).catch(err => {
+                console.error('Retry failed:', err.message);
+              });
+            }, delay);
+            return;
+          }
+        }
+        
+        // Log final failure but don't fail the request - user already got success message
+        console.error('❌ Email failed after retries but user already received success message');
+        console.error('Final error:', errorMessage);
+        // In production, consider logging to a service like Sentry or saving to a queue
       }
-      
-      const mailOptions = {
-        from: {
-          name: 'StockSathi Support',
-          address: smtpUser
-        },
-        to: supportTo,
-        replyTo: email,
-        subject: mailSubject,
-        html
-      };
-      
-      // Send email synchronously and wait for result
-      await transporter.sendMail(mailOptions);
-      console.log('✅ Support email sent successfully from:', email);
-      
-      // Return success response
-      return res.json({ 
-        success: true, 
-        message: 'Message sent. We will get back to you shortly.' 
-      });
-    } catch (sendError) {
-      const errorCode = sendError.code || '';
-      const errorMessage = sendError.message || String(sendError);
-      
-      console.error('❌ Email send error:', errorMessage);
-      console.error('Error details:', {
-        code: errorCode,
-        message: errorMessage,
-        command: sendError.command,
-        response: sendError.response,
-        responseCode: sendError.responseCode
-      });
-      
-      // Return error response to user
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Failed to send message. Please try again later or contact support directly at gjain0229@gmail.com' 
-      });
-    }
+    };
+
+    // Start sending email in background (don't await)
+    sendEmailAsync().catch(err => {
+      console.error('Unhandled email send error:', err.message || err);
+    });
+
+    // Return success immediately - email is being sent in background
+    // This prevents timeout issues and provides better UX
+    return res.json({ 
+      success: true, 
+      message: 'Message sent. We will get back to you shortly.' 
+    });
   } catch (err) {
     console.error('❌ Support email endpoint error:', err);
     console.error('Error details:', {
