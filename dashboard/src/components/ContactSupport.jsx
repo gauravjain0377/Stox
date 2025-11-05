@@ -31,8 +31,9 @@ const ContactSupport = () => {
       setSubmitting(true);
       
       // Create abort controller for timeout
+      // Increased timeout for production (email sending can take time on Render)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 second timeout (to account for email sending)
       
       try {
         const res = await fetch(getApiUrl("/api/support/contact"), {

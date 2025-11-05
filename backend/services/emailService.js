@@ -136,17 +136,22 @@ class EmailService {
     });
 
     try {
-      // Try to verify connection (optional - don't fail if it fails)
-      try {
-        await this.verifyConnection();
-      } catch (verifyError) {
-        console.warn('⚠️ Connection verification failed, but continuing with send:', verifyError.message);
+      // Skip connection verification in production to speed up email sending
+      // Verification is optional and can add delay
+      if (process.env.NODE_ENV === 'development') {
+        try {
+          await this.verifyConnection();
+        } catch (verifyError) {
+          console.warn('⚠️ Connection verification failed, but continuing with send:', verifyError.message);
+        }
       }
 
       // Send email with timeout protection
+      // Reduced timeout for production to fail faster if there's an issue
+      const timeoutDuration = process.env.NODE_ENV === 'production' ? 20000 : 30000;
       const sendPromise = this.transporter.sendMail(mailOptions);
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Email send timeout after 30 seconds')), 30000)
+        setTimeout(() => reject(new Error(`Email send timeout after ${timeoutDuration/1000} seconds`)), timeoutDuration)
       );
 
       const info = await Promise.race([sendPromise, timeoutPromise]);
