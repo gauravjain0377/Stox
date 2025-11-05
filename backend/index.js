@@ -11,7 +11,7 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const YahooFinance = require('yahoo-finance2').default;
 const yahooFinance = new YahooFinance();
 yahooFinance._notices.suppress(['yahooSurvey']);
-const nodemailer = require('nodemailer');
+const emailService = require('./services/emailService');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 
@@ -57,35 +57,58 @@ const io = new Server(server, {
 
 app.use(cors({
   origin: function(origin, callback) {
-
-    if (!origin) return callback(null, true);
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) {
+      return callback(null, true);
+    }
     
-   
+    // In production, allow Vercel preview deployments
     if (process.env.NODE_ENV === 'production') {
- 
-      if (origin && origin.includes('vercel.app')) {
+      // Allow Vercel preview deployments
+      if (origin && typeof origin === 'string' && origin.includes('vercel.app')) {
+        console.log('✅ CORS allowed (Vercel):', origin);
         return callback(null, true);
       }
       
-    
-      if (allowedOrigins.indexOf(origin) !== -1) {
+      // Check against explicit allowed origins
+      const isAllowed = allowedOrigins.some(allowed => {
+        if (typeof allowed === 'string') {
+          return allowed === origin;
+        } else if (allowed instanceof RegExp) {
+          return allowed.test(origin);
+        }
+        return false;
+      });
+      
+      if (isAllowed) {
+        console.log('✅ CORS allowed:', origin);
         return callback(null, true);
       }
       
-      console.log('CORS blocked origin:', origin);
+      // Log blocked origins for monitoring
+      console.warn('⚠️ CORS blocked origin:', origin);
+      console.warn('Allowed origins:', allowedOrigins);
       // Still allow in production to prevent issues, but log for monitoring
       return callback(null, true);
     } else {
-      // In development, be more strict but still allow localhost
+      // In development, allow localhost and explicit origins
       if (allowedOrigins.indexOf(origin) !== -1) {
         return callback(null, true);
       }
       
-      console.log('CORS blocked origin:', origin);
+      // Allow localhost in development
+      if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+        return callback(null, true);
+      }
+      
+      console.warn('⚠️ CORS blocked origin in development:', origin);
       return callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-user-data', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
 app.use(bodyParser.json());
 app.use(session({
@@ -933,72 +956,20 @@ app.post("/api/users/register", async (req, res) => {
     newUser.emailVerificationExpires = expiresAt;
     await newUser.save();
     
-    // Send verification email
-    // Support multiple environment variable naming conventions for production compatibility
-    const smtpUser = process.env.MAIL_USER || process.env.EMAIL_USER || process.env.SMTP_USER;
-    const smtpPass = process.env.MAIL_PASS || process.env.EMAIL_PASS || process.env.SMTP_PASS;
-    const smtpHost = process.env.MAIL_HOST || process.env.EMAIL_HOST || process.env.SMTP_HOST || 'smtp.gmail.com';
-    const smtpPort = parseInt(process.env.MAIL_PORT || process.env.EMAIL_PORT || process.env.SMTP_PORT || '587', 10);
-    
-    if (smtpUser && smtpPass) {
+    // Send verification email using Resend
+    if (emailService.isInitialized && emailService.transporter) {
       try {
-        const transporter = nodemailer.createTransport({
-          host: smtpHost,
-          port: smtpPort,
-          secure: smtpPort === 465,
-          auth: { user: smtpUser, pass: smtpPass }
+        await emailService.sendVerificationEmail({
+          email: newUser.email,
+          verificationCode: verificationCode,
+          isWelcome: true
         });
-        
-        const mailSubject = `[StockSathi] Email Verification Code`;
-        const html = `
-          <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0f172a;background:#f8fafc;padding:20px;">
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
-              <thead>
-                <tr>
-                  <th style="text-align:left;background:#0ea5e9;padding:16px 20px;color:#ffffff;font-size:18px;">
-                    StockSathi
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td style="padding:16px 20px;border-bottom:1px solid #f1f5f9;">
-                    <div style="color:#0f172a;font-weight:600;font-size:16px;margin-bottom:8px;">Welcome to StockSathi!</div>
-                    <div style="color:#475569">Please use the following code to verify your email address and complete your registration.</div>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:20px;">
-                    <div style="text-align:center;margin:20px 0;">
-                      <div style="font-size:32px;font-weight:bold;color:#0ea5e9;letter-spacing:8px;padding:15px 0;">${verificationCode}</div>
-                      <div style="color:#64748b;margin-top:10px;">This code will expire in 15 minutes.</div>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:16px 20px;background:#f1f5f9;text-align:center;">
-                    <div style="color:#64748b;font-size:12px;">
-                      If you didn't register for StockSathi, please ignore this email.
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        `;
-        
-        await transporter.sendMail({
-          from: {
-            name: 'StockSathi',
-            address: smtpUser
-          },
-          to: newUser.email,
-          subject: mailSubject,
-          html
-        });
+        console.log('✅ Verification email sent to:', newUser.email);
       } catch (emailError) {
         console.error('❌ Failed to send verification email:', emailError);
       }
+    } else {
+      console.warn('⚠️ Email service not configured. Verification email not sent.');
     }
     
     res.json({ 
@@ -1123,71 +1094,22 @@ app.post('/api/users/send-verification-code', async (req, res) => {
     user.emailVerificationExpires = expiresAt;
     await user.save();
     
-    // Send email with verification code
-    // Support multiple environment variable naming conventions for production compatibility
-    const smtpUser = process.env.MAIL_USER || process.env.EMAIL_USER || process.env.SMTP_USER;
-    const smtpPass = process.env.MAIL_PASS || process.env.EMAIL_PASS || process.env.SMTP_PASS;
-    const smtpHost = process.env.MAIL_HOST || process.env.EMAIL_HOST || process.env.SMTP_HOST || 'smtp.gmail.com';
-    const smtpPort = parseInt(process.env.MAIL_PORT || process.env.EMAIL_PORT || process.env.SMTP_PORT || '587', 10);
-    
-    if (!smtpUser || !smtpPass) {
-      return res.status(500).json({ success: false, message: 'Mailer is not configured on server' });
+    // Send email with verification code using Resend
+    if (!emailService.isInitialized || !emailService.transporter) {
+      return res.status(500).json({ success: false, message: 'Email service is not configured on server' });
     }
     
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: { user: smtpUser, pass: smtpPass }
-    });
-    
-    const mailSubject = `[StockSathi] Email Verification Code`;
-    const html = `
-      <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0f172a;background:#f8fafc;padding:20px;">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
-          <thead>
-            <tr>
-              <th style="text-align:left;background:#0ea5e9;padding:16px 20px;color:#ffffff;font-size:18px;">
-                StockSathi
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="padding:16px 20px;border-bottom:1px solid #f1f5f9;">
-                <div style="color:#0f172a;font-weight:600;font-size:16px;margin-bottom:8px;">Email Verification</div>
-                <div style="color:#475569">Please use the following code to verify your email address.</div>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:20px;">
-                <div style="text-align:center;margin:20px 0;">
-                  <div style="font-size:32px;font-weight:bold;color:#0ea5e9;letter-spacing:8px;padding:15px 0;">${verificationCode}</div>
-                  <div style="color:#64748b;margin-top:10px;">This code will expire in 15 minutes.</div>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:16px 20px;background:#f1f5f9;text-align:center;">
-                <div style="color:#64748b;font-size:12px;">
-                  If you didn't request this code, please ignore this email.
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    `;
-    
-    await transporter.sendMail({
-      from: {
-        name: 'StockSathi',
-        address: smtpUser
-      },
-      to: email,
-      subject: mailSubject,
-      html
-    });
+    try {
+      await emailService.sendVerificationEmail({
+        email: email,
+        verificationCode: verificationCode,
+        isWelcome: false
+      });
+      console.log('✅ Verification code sent to:', email);
+    } catch (emailError) {
+      console.error('❌ Failed to send verification email:', emailError);
+      return res.status(500).json({ success: false, message: 'Failed to send verification email' });
+    }
     
     res.json({ success: true, message: 'Verification code sent to your email' });
   } catch (err) {
@@ -1260,71 +1182,21 @@ app.post('/api/users/send-password-reset-code', async (req, res) => {
     user.passwordResetExpires = expiresAt;
     await user.save();
     
-    // Send email with reset code
-    // Support multiple environment variable naming conventions for production compatibility
-    const smtpUser = process.env.MAIL_USER || process.env.EMAIL_USER || process.env.SMTP_USER;
-    const smtpPass = process.env.MAIL_PASS || process.env.EMAIL_PASS || process.env.SMTP_PASS;
-    const smtpHost = process.env.MAIL_HOST || process.env.EMAIL_HOST || process.env.SMTP_HOST || 'smtp.gmail.com';
-    const smtpPort = parseInt(process.env.MAIL_PORT || process.env.EMAIL_PORT || process.env.SMTP_PORT || '587', 10);
-    
-    if (!smtpUser || !smtpPass) {
-      return res.status(500).json({ success: false, message: 'Mailer is not configured on server' });
+    // Send email with reset code using Resend
+    if (!emailService.isInitialized || !emailService.transporter) {
+      return res.status(500).json({ success: false, message: 'Email service is not configured on server' });
     }
     
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: { user: smtpUser, pass: smtpPass }
-    });
-    
-    const mailSubject = `[StockSathi] Password Reset Code`;
-    const html = `
-      <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0f172a;background:#f8fafc;padding:20px;">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
-          <thead>
-            <tr>
-              <th style="text-align:left;background:#0ea5e9;padding:16px 20px;color:#ffffff;font-size:18px;">
-                StockSathi
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="padding:16px 20px;border-bottom:1px solid #f1f5f9;">
-                <div style="color:#0f172a;font-weight:600;font-size:16px;margin-bottom:8px;">Password Reset</div>
-                <div style="color:#475569">Please use the following code to reset your password.</div>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:20px;">
-                <div style="text-align:center;margin:20px 0;">
-                  <div style="font-size:32px;font-weight:bold;color:#0ea5e9;letter-spacing:8px;padding:15px 0;">${resetCode}</div>
-                  <div style="color:#64748b;margin-top:10px;">This code will expire in 15 minutes.</div>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:16px 20px;background:#f1f5f9;text-align:center;">
-                <div style="color:#64748b;font-size:12px;">
-                  If you didn't request this code, please ignore this email.
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    `;
-    
-    await transporter.sendMail({
-      from: {
-        name: 'StockSathi',
-        address: smtpUser
-      },
-      to: email,
-      subject: mailSubject,
-      html
-    });
+    try {
+      await emailService.sendPasswordResetEmail({
+        email: email,
+        resetCode: resetCode
+      });
+      console.log('✅ Password reset code sent to:', email);
+    } catch (emailError) {
+      console.error('❌ Failed to send password reset email:', emailError);
+      return res.status(500).json({ success: false, message: 'Failed to send password reset email' });
+    }
     
     res.json({ success: true, message: 'Password reset code sent to your email' });
   } catch (err) {
@@ -1748,233 +1620,113 @@ app.post("/api/users/change-password", async (req, res) => {
 
 // Support contact endpoint - sends emails from contact form
 app.post('/api/support/contact', async (req, res) => {
+  const startTime = Date.now();
+  
   try {
+    console.log('📧 Support contact request received:', {
+      timestamp: new Date().toISOString(),
+      body: { 
+        name: req.body?.name, 
+        email: req.body?.email, 
+        subject: req.body?.subject,
+        purpose: req.body?.purpose,
+        hasMessage: !!req.body?.message
+      }
+    });
+
     const { name, email, subject, purpose, message } = req.body || {};
     
     // Validate input
     if (!name || !email || !message) {
-      return res.status(400).json({ success: false, message: 'Name, email and message are required' });
+      console.warn('⚠️ Validation failed: Missing required fields', {
+        hasName: !!name,
+        hasEmail: !!email,
+        hasMessage: !!message
+      });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Name, email and message are required' 
+      });
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return res.status(400).json({ success: false, message: 'Please provide a valid email address' });
+      console.warn('⚠️ Validation failed: Invalid email format', { email });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Please provide a valid email address' 
+      });
     }
 
-    // Support multiple environment variable naming conventions for production compatibility
-    const smtpUser = process.env.MAIL_USER || process.env.EMAIL_USER || process.env.SMTP_USER;
-    const smtpPass = process.env.MAIL_PASS || process.env.EMAIL_PASS || process.env.SMTP_PASS;
-    const smtpHost = process.env.MAIL_HOST || process.env.EMAIL_HOST || process.env.SMTP_HOST || 'smtp.gmail.com';
-    const smtpPort = parseInt(process.env.MAIL_PORT || process.env.EMAIL_PORT || process.env.SMTP_PORT || '587', 10);
-    const supportTo = process.env.SUPPORT_TO || 'gjain0229@gmail.com';
-
-    if (!smtpUser || !smtpPass) {
-      console.error('❌ Email configuration missing:', {
-        hasUser: !!smtpUser,
-        hasPass: !!smtpPass,
-        envKeys: Object.keys(process.env).filter(k => k.includes('MAIL') || k.includes('EMAIL') || k.includes('SMTP'))
-      });
+    // Check if email service is configured
+    if (!emailService.isInitialized || !emailService.transporter) {
+      console.error('❌ Email service not configured. Please check RESEND_API_KEY environment variable.');
       return res.status(500).json({ 
         success: false, 
-        message: 'Mailer is not configured on server. Please configure MAIL_USER and MAIL_PASS environment variables.' 
+        message: 'Email service is not configured on the server. Please contact support directly at gjain0229@gmail.com' 
       });
     }
 
-    let transporter;
-    try {
-      const mailService = process.env.MAIL_SERVICE;
-      const rejectUnauthorized = process.env.SMTP_REJECT_UNAUTHORIZED === 'false' ? false : true;
+    // Send email using the email service
+    console.log('📤 Sending support email...');
+    const emailResult = await emailService.sendSupportEmail({
+      name: name.trim(),
+      email: email.trim(),
+      subject: subject?.trim(),
+      purpose: purpose?.trim() || 'General inquiry',
+      message: message.trim()
+    });
 
-      if (mailService) {
-        transporter = nodemailer.createTransport({
-          service: mailService,
-          auth: { user: smtpUser, pass: smtpPass },
-          connectionTimeout: 30000,
-          greetingTimeout: 30000,
-          socketTimeout: 60000,
-          pool: false
-        });
-      } else {
-        transporter = nodemailer.createTransport({
-          host: smtpHost,
-          port: smtpPort,
-          secure: smtpPort === 465,
-          requireTLS: smtpPort === 587,
-          auth: { user: smtpUser, pass: smtpPass },
-          connectionTimeout: 30000,
-          greetingTimeout: 30000,
-          socketTimeout: 60000,
-          pool: false,
-          tls: { rejectUnauthorized }
-        });
-      }
-
-      console.log('✅ SMTP transporter created');
-    } catch (transportError) {
-      console.error('❌ SMTP transport error:', transportError);
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Email service configuration error. Please contact support directly at gjain0229@gmail.com' 
-      });
+    const duration = Date.now() - startTime;
+    
+    // Verify email was actually accepted
+    if (!emailResult.accepted || emailResult.accepted.length === 0) {
+      console.error('❌ Email was not accepted:', emailResult);
+      throw new Error('Email was rejected by the email service. Please check the recipient address.');
     }
-
-    const mailSubjectBase = subject && subject.trim() ? subject : `Support: ${purpose || 'General inquiry'}`;
-    const mailSubject = `[StockSathi] ${mailSubjectBase}`;
     
-    // Escape HTML in user input to prevent XSS
-    const escapeHtml = (text) => {
-      const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-      };
-      return String(text).replace(/[&<>"']/g, m => map[m]);
-    };
-    
-    const html = `
-      <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0f172a;background:#f8fafc;padding:20px;">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
-          <thead>
-            <tr>
-              <th style="text-align:left;background:#0ea5e9;padding:16px 20px;color:#ffffff;font-size:18px;">
-                StockSathi
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="padding:16px 20px;border-bottom:1px solid #f1f5f9;">
-                <div style="color:#0f172a;font-weight:600;font-size:16px;margin-bottom:8px;">New Support Request</div>
-                <div style="color:#475569">You received a new message from the Help & Support form.</div>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:12px 20px;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width:100%;font-size:14px;color:#0f172a;">
-                  <tr>
-                    <td style="width:160px;color:#64748b;padding:6px 0;">Name</td>
-                    <td style="padding:6px 0;">${escapeHtml(name)}</td>
-                  </tr>
-                  <tr>
-                    <td style="width:160px;color:#64748b;padding:6px 0;">Email</td>
-                    <td style="padding:6px 0;">${escapeHtml(email)}</td>
-                  </tr>
-                  <tr>
-                    <td style="width:160px;color:#64748b;padding:6px 0;">Purpose</td>
-                    <td style="padding:6px 0;">${escapeHtml(purpose || 'General inquiry')}</td>
-                  </tr>
-                  ${subject && subject.trim() ? `
-                  <tr>
-                    <td style="width:160px;color:#64748b;padding:6px 0;">Subject</td>
-                    <td style="padding:6px 0;">${escapeHtml(subject)}</td>
-                  </tr>` : ''}
-                </table>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:12px 20px;">
-                <div style="color:#64748b;margin-bottom:6px;">Message</div>
-                <div style="white-space:pre-wrap;line-height:1.6;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:12px;">${escapeHtml(message)}</div>
-              </td>
-            </tr>
-          </tbody>
-          <tfoot>
-            <tr>
-              <td style="padding:12px 20px;color:#94a3b8;font-size:12px;background:#f8fafc;border-top:1px solid #e2e8f0;">
-                This email was sent by the StockSathi Support system.
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    `;
-
-    const sendEmailWithRetry = (retryCount = 0) => {
-      const maxRetries = 3;
-      const baseDelay = 2000;
-      if (!transporter) {
-        console.error('Transporter not initialized');
-        return;
-      }
-
-      const mailOptions = {
-        from: {
-          name: 'StockSathi Support',
-          address: smtpUser
-        },
-        to: supportTo,
-        replyTo: email,
-        subject: mailSubject,
-        html
-      };
-
-      transporter.sendMail(mailOptions)
-        .then(() => {
-          console.log('✅ Support email sent successfully from:', email);
-        })
-        .catch(sendError => {
-          const errorCode = sendError.code || '';
-          const errorMessage = sendError.message || String(sendError);
-
-          console.error(`❌ Email send error (attempt ${retryCount + 1}/${maxRetries + 1}):`, errorMessage);
-          console.error('Error details:', {
-            code: errorCode,
-            message: errorMessage,
-            command: sendError.command,
-            response: sendError.response,
-            responseCode: sendError.responseCode
-          });
-
-          if (retryCount < maxRetries) {
-            const retryableErrors = [
-              'ETIMEDOUT', 'ECONNECTION', 'ESOCKET', 'ETIMEOUT',
-              'ECONNRESET', 'ENOTFOUND', 'EAI_AGAIN', 'timeout',
-              'Connection timeout', 'Network error'
-            ];
-
-            const isRetryable = retryableErrors.some(code =>
-              errorCode === code ||
-              errorMessage.includes(code) ||
-              errorMessage.toLowerCase().includes('timeout') ||
-              errorMessage.toLowerCase().includes('network')
-            );
-
-            if (isRetryable) {
-              const delay = baseDelay * Math.pow(2, retryCount) + Math.random() * 1000;
-              console.log(`Retrying email send in ${Math.round(delay)}ms...`);
-              setTimeout(() => {
-                sendEmailWithRetry(retryCount + 1);
-              }, delay);
-              return;
-            }
-          }
-
-          console.error('❌ Email failed after retries');
-          console.error('Final error:', errorMessage);
-        });
-    };
-
-    sendEmailWithRetry();
+    console.log(`✅ Support email sent successfully in ${duration}ms:`, {
+      messageId: emailResult.messageId,
+      accepted: emailResult.accepted,
+      from: email,
+      to: process.env.SUPPORT_TO || 'gjain0229@gmail.com'
+    });
 
     return res.json({ 
       success: true, 
-      message: 'Message sent. We will get back to you shortly.' 
+      message: 'Message sent successfully. We will get back to you shortly.',
+      messageId: emailResult.messageId
     });
+
   } catch (err) {
-    console.error('❌ Support email endpoint error:', err);
-    console.error('Error details:', {
-      message: err.message,
+    const duration = Date.now() - startTime;
+    console.error(`❌ Support email endpoint error (${duration}ms):`, {
+      message: err.message || err.userMessage,
+      code: err.code,
+      responseCode: err.responseCode,
+      responseMessage: err.responseMessage,
       stack: err.stack,
-      code: err.code
+      originalError: err.originalError
     });
     
-    // Always return JSON response
+    // Return user-friendly error message
+    let errorMessage = err.userMessage || err.message || 'An unexpected error occurred. Please try again later.';
+    
+    // Don't append the contact email if it's already in the message
+    if (!errorMessage.includes('gjain0229@gmail.com')) {
+      errorMessage += ' If the problem persists, please contact support directly at gjain0229@gmail.com';
+    }
+    
     return res.status(500).json({ 
       success: false, 
-      message: 'An unexpected error occurred. Please try again later or contact support directly at gjain0229@gmail.com' 
+      message: errorMessage,
+      error: process.env.NODE_ENV === 'development' ? {
+        message: err.message,
+        code: err.code,
+        responseCode: err.responseCode,
+        responseMessage: err.responseMessage
+      } : undefined
     });
   }
 });
@@ -2259,4 +2011,19 @@ server.listen(PORT, () => {
   console.log(`Server started on port ${PORT}!`);
   console.log("DB started!");
   console.log("WebSocket server ready for real-time stock updates!");
+  
+  // Log email service status
+  console.log('\n📧 Email Service Status:');
+  if (emailService.isInitialized && emailService.transporter) {
+    console.log('✅ Email service is initialized and ready');
+    console.log(`   Provider: Resend`);
+    console.log(`   API Key: ${process.env.RESEND_API_KEY ? process.env.RESEND_API_KEY.substring(0, 10) + '...' : 'MISSING'}`);
+    console.log(`   From: ${process.env.EMAIL_FROM_NAME || 'StockSathi Support'} <${process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM || 'onboarding@resend.dev'}>`);
+    console.log(`   Support To: ${process.env.SUPPORT_TO || 'gjain0229@gmail.com'}`);
+  } else {
+    console.log('❌ Email service is NOT initialized');
+    console.log('   ⚠️  RESEND_API_KEY environment variable is missing or invalid');
+    console.log('   📝 Emails will not be sent until this is configured');
+  }
+  console.log('');
 });
