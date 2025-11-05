@@ -629,7 +629,41 @@ app.get("/api/health", (req, res) => {
     timestamp: new Date().toISOString(),
     clientsConnected: connectedClients,
     stocksTracked: currentStockData.size,
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    emailService: {
+      initialized: emailService.isInitialized,
+      hasApiKey: !!emailService.apiKey,
+      apiKeyPrefix: emailService.apiKey ? emailService.apiKey.substring(0, 10) + '...' : 'missing',
+      method: 'REST API',
+      fromEmail: 'onboarding@resend.dev',
+      supportTo: process.env.SUPPORT_TO || 'gjain0229@gmail.com'
+    }
+  });
+});
+
+// Email service diagnostic endpoint
+app.get("/api/email/status", (req, res) => {
+  res.json({
+    emailService: {
+      initialized: emailService.isInitialized,
+      hasApiKey: !!emailService.apiKey,
+      provider: 'Resend',
+      method: 'REST API',
+      configuration: {
+        hasApiKey: !!emailService.apiKey,
+        apiKeyLength: emailService.apiKey?.length || 0,
+        apiKeyPrefix: emailService.apiKey ? emailService.apiKey.substring(0, 10) + '...' : 'missing',
+        apiKeyValid: emailService.apiKey?.startsWith('re_') || false,
+        fromEmail: 'onboarding@resend.dev',
+        fromName: process.env.EMAIL_FROM_NAME || 'StockSathi Support',
+        supportTo: process.env.SUPPORT_TO || 'gjain0229@gmail.com',
+        nodeEnv: process.env.NODE_ENV || 'development'
+      },
+      status: emailService.isInitialized && emailService.apiKey ? 'ready' : 'not_configured',
+      message: emailService.isInitialized && emailService.apiKey 
+        ? 'Email service is ready to send emails via REST API'
+        : 'Email service not configured. Please check RESEND_API_KEY environment variable.'
+    }
   });
 });
 
@@ -957,7 +991,7 @@ app.post("/api/users/register", async (req, res) => {
     await newUser.save();
     
     // Send verification email using Resend
-    if (emailService.isInitialized && emailService.transporter) {
+    if (emailService.isInitialized && emailService.apiKey) {
       try {
         await emailService.sendVerificationEmail({
           email: newUser.email,
@@ -1095,7 +1129,7 @@ app.post('/api/users/send-verification-code', async (req, res) => {
     await user.save();
     
     // Send email with verification code using Resend
-    if (!emailService.isInitialized || !emailService.transporter) {
+    if (!emailService.isInitialized || !emailService.apiKey) {
       return res.status(500).json({ success: false, message: 'Email service is not configured on server' });
     }
     
@@ -1183,7 +1217,7 @@ app.post('/api/users/send-password-reset-code', async (req, res) => {
     await user.save();
     
     // Send email with reset code using Resend
-    if (!emailService.isInitialized || !emailService.transporter) {
+    if (!emailService.isInitialized || !emailService.apiKey) {
       return res.status(500).json({ success: false, message: 'Email service is not configured on server' });
     }
     
@@ -1660,7 +1694,7 @@ app.post('/api/support/contact', async (req, res) => {
     }
 
     // Check if email service is configured
-    if (!emailService.isInitialized || !emailService.transporter) {
+    if (!emailService.isInitialized || !emailService.apiKey) {
       console.error('❌ Email service not configured. Please check RESEND_API_KEY environment variable.');
       return res.status(500).json({ 
         success: false, 
@@ -1707,7 +1741,13 @@ app.post('/api/support/contact', async (req, res) => {
       responseCode: err.responseCode,
       responseMessage: err.responseMessage,
       stack: err.stack,
-      originalError: err.originalError
+      originalError: err.originalError,
+      // Additional debugging info
+      emailServiceStatus: {
+        isInitialized: emailService.isInitialized,
+        hasApiKey: !!emailService.apiKey,
+        apiKeyPrefix: emailService.apiKey ? emailService.apiKey.substring(0, 10) + '...' : 'missing'
+      }
     });
     
     // Return user-friendly error message
@@ -2014,12 +2054,13 @@ server.listen(PORT, () => {
   
   // Log email service status
   console.log('\n📧 Email Service Status:');
-  if (emailService.isInitialized && emailService.transporter) {
+  if (emailService.isInitialized && emailService.apiKey) {
     console.log('✅ Email service is initialized and ready');
-    console.log(`   Provider: Resend`);
-    console.log(`   API Key: ${process.env.RESEND_API_KEY ? process.env.RESEND_API_KEY.substring(0, 10) + '...' : 'MISSING'}`);
-    console.log(`   From: ${process.env.EMAIL_FROM_NAME || 'StockSathi Support'} <${process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM || 'onboarding@resend.dev'}>`);
+    console.log(`   Provider: Resend (REST API)`);
+    console.log(`   API Key: ${emailService.apiKey.substring(0, 10)}...`);
+    console.log(`   From: ${process.env.EMAIL_FROM_NAME || 'StockSathi Support'} <onboarding@resend.dev>`);
     console.log(`   Support To: ${process.env.SUPPORT_TO || 'gjain0229@gmail.com'}`);
+    console.log(`   Method: REST API (fast and reliable on Render)`);
   } else {
     console.log('❌ Email service is NOT initialized');
     console.log('   ⚠️  RESEND_API_KEY environment variable is missing or invalid');

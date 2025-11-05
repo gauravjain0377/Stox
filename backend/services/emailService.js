@@ -1,26 +1,30 @@
-const nodemailer = require('nodemailer');
-
 /**
- * Email Service - Resend Integration
- * Clean, production-ready email service using Resend API
+ * Email Service - Resend REST API Integration
+ * Fast, reliable email service using Resend REST API (not SMTP)
+ * Works perfectly on Render production
  */
+
+// Use built-in fetch (Node.js 18+) or require node-fetch for older versions
+let fetch;
+if (typeof globalThis.fetch === 'function') {
+  fetch = globalThis.fetch;
+} else {
+  fetch = require('node-fetch');
+}
 
 class EmailService {
   constructor() {
-    this.transporter = null;
+    this.apiKey = null;
     this.isInitialized = false;
-    this.initializeTransporter();
+    this.initializeService();
   }
 
-  initializeTransporter() {
+  initializeService() {
     try {
       const apiKey = process.env.RESEND_API_KEY;
-      const fromEmail = process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM || 'onboarding@resend.dev';
-      const fromName = process.env.EMAIL_FROM_NAME || 'StockSathi Support';
 
       if (!apiKey) {
         console.error('❌ Resend API key missing. Please set RESEND_API_KEY environment variable.');
-        this.transporter = null;
         this.isInitialized = false;
         return;
       }
@@ -30,105 +34,37 @@ class EmailService {
         console.warn('⚠️ Resend API key should start with "re_". Please verify your API key.');
       }
 
-      console.log('📧 Initializing Resend email service...');
-      console.log('📧 From email:', fromEmail);
-      console.log('📧 From name:', fromName);
-
-      // Create Resend transporter
-      this.transporter = nodemailer.createTransport({
-        host: 'smtp.resend.com',
-        port: 587,
-        secure: false, // Use TLS
-        auth: {
-          user: 'resend',
-          pass: apiKey
-        },
-        connectionTimeout: 30000,
-        greetingTimeout: 30000,
-        socketTimeout: 60000
-      });
-
+      this.apiKey = apiKey;
       this.isInitialized = true;
-      console.log('✅ Resend email transporter initialized successfully');
+
+      console.log('📧 Initializing Resend email service (REST API)...');
+      console.log('📧 API Key:', apiKey.substring(0, 10) + '...');
+      console.log('✅ Resend email service initialized successfully (REST API)');
     } catch (error) {
       console.error('❌ Error initializing Resend email service:', error);
-      this.transporter = null;
       this.isInitialized = false;
     }
   }
 
   /**
-   * Verify email service connection
-   */
-  async verifyConnection() {
-    if (!this.transporter) {
-      throw new Error('Email transporter not initialized. Please check RESEND_API_KEY environment variable.');
-    }
-
-    try {
-      await this.transporter.verify();
-      console.log('✅ Email service connection verified');
-      return true;
-    } catch (error) {
-      console.error('❌ Email service connection verification failed:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Send email using Resend
+   * Send email using Resend REST API
    */
   async sendEmail({ to, subject, html, text, replyTo, from }) {
-    if (!this.transporter || !this.isInitialized) {
+    if (!this.isInitialized || !this.apiKey) {
       throw new Error('Email service not initialized. Please check RESEND_API_KEY environment variable.');
     }
 
-    // Resend requires verified domain or use onboarding@resend.dev
-    // IMPORTANT: Use onboarding@resend.dev for both localhost and production
-    // It works without verification and is perfect for support emails
-    let fromEmail = from || process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM;
-    
-    // Always use onboarding@resend.dev if custom email is not verified
-    // For production, if you want custom email, verify your domain first in Resend
-    // For now, force onboarding@resend.dev to ensure emails work
-    if (fromEmail && fromEmail !== 'onboarding@resend.dev') {
-      console.warn(`⚠️  Custom FROM email detected: ${fromEmail}`);
-      console.warn('⚠️  Resend requires domain verification for custom emails.');
-      console.warn('⚠️  Switching to onboarding@resend.dev (works without verification)');
-      console.warn('⚠️  Note: Vercel domains (stocksathi.vercel.app) cannot be verified - use your own domain');
-      fromEmail = 'onboarding@resend.dev';
-    } else {
-      fromEmail = 'onboarding@resend.dev';
-    }
+    // Always use onboarding@resend.dev (works without verification)
+    const fromEmail = from || process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM || 'onboarding@resend.dev';
     const fromName = process.env.EMAIL_FROM_NAME || 'StockSathi Support';
     const supportTo = to || process.env.SUPPORT_TO || 'gjain0229@gmail.com';
-    
-    // Log email configuration for debugging
-    console.log('📧 Email configuration:', {
-      from: `${fromName} <${fromEmail}>`,
-      to: supportTo,
-      hasApiKey: !!process.env.RESEND_API_KEY,
-      apiKeyPrefix: process.env.RESEND_API_KEY ? process.env.RESEND_API_KEY.substring(0, 10) + '...' : 'missing'
-    });
 
     // Validate required fields
     if (!supportTo || !subject || !html) {
       throw new Error('Missing required email fields: to, subject, or html');
     }
 
-    const mailOptions = {
-      from: {
-        name: fromName,
-        address: fromEmail
-      },
-      to: supportTo,
-      subject: subject,
-      html: html,
-      ...(text && { text: text }),
-      ...(replyTo && { replyTo: replyTo })
-    };
-
-    console.log('📤 Sending email via Resend:', {
+    console.log('📤 Sending email via Resend REST API:', {
       to: supportTo,
       from: `${fromName} <${fromEmail}>`,
       subject: subject,
@@ -136,109 +72,116 @@ class EmailService {
     });
 
     try {
-      // Skip connection verification in production to speed up email sending
-      // Verification is optional and can add delay
-      if (process.env.NODE_ENV === 'development') {
-        try {
-          await this.verifyConnection();
-        } catch (verifyError) {
-          console.warn('⚠️ Connection verification failed, but continuing with send:', verifyError.message);
-        }
-      }
+      // Use Resend REST API (much faster than SMTP on Render)
+      const payload = {
+        from: `${fromName} <${fromEmail}>`,
+        to: [supportTo],
+        subject: subject,
+        html: html,
+        ...(text && { text: text }),
+        ...(replyTo && { reply_to: [replyTo] })
+      };
 
-      // Send email with timeout protection
-      // Reduced timeout for production to fail faster if there's an issue
-      const timeoutDuration = process.env.NODE_ENV === 'production' ? 20000 : 30000;
-      const sendPromise = this.transporter.sendMail(mailOptions);
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error(`Email send timeout after ${timeoutDuration/1000} seconds`)), timeoutDuration)
-      );
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds timeout
 
-      const info = await Promise.race([sendPromise, timeoutPromise]);
-      
-      // Check if email was actually accepted
-      const wasAccepted = info.accepted && info.accepted.length > 0;
-      const wasRejected = info.rejected && info.rejected.length > 0;
-      
-      console.log('📧 Email send result:', {
-        messageId: info.messageId,
-        response: info.response,
-        accepted: info.accepted,
-        rejected: info.rejected,
-        acceptedCount: info.accepted?.length || 0,
-        rejectedCount: info.rejected?.length || 0
-      });
-
-      // If email was rejected, throw error
-      if (wasRejected || !wasAccepted) {
-        const rejectionReason = info.rejected && info.rejected.length > 0 
-          ? info.rejected[0] 
-          : 'Email was not accepted by the server';
-        
-        console.error('❌ Email was rejected:', {
-          rejected: info.rejected,
-          response: info.response,
-          messageId: info.messageId
+      let response;
+      try {
+        response = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal
         });
-        
-        throw new Error(`Email delivery failed: ${rejectionReason}`);
+        clearTimeout(timeoutId);
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        if (fetchError.name === 'AbortError') {
+          throw new Error('Email send timeout after 30 seconds');
+        }
+        throw fetchError;
       }
 
-      console.log('✅ Email sent successfully and accepted:', {
-        messageId: info.messageId,
-        accepted: info.accepted,
-        response: info.response
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        console.error('❌ Resend API error:', {
+          status: response.status,
+          statusText: response.statusText,
+          response: responseData
+        });
+
+        let userMessage = 'Failed to send email. Please try again later.';
+        
+        if (response.status === 401 || response.status === 403) {
+          userMessage = 'Email authentication failed. Please check RESEND_API_KEY is valid.';
+        } else if (response.status === 422) {
+          userMessage = responseData.message || 'Invalid email configuration. Please check email settings.';
+        } else if (response.status === 429) {
+          userMessage = 'Email rate limit exceeded. Please try again later.';
+        } else if (responseData.message) {
+          userMessage = `Email service error: ${responseData.message}`;
+        }
+
+        throw {
+          code: response.status,
+          message: responseData.message || response.statusText,
+          userMessage: userMessage,
+          responseCode: response.status,
+          responseMessage: responseData.message
+        };
+      }
+
+      console.log('✅ Email sent successfully via Resend REST API:', {
+        id: responseData.id,
+        to: supportTo,
+        from: `${fromName} <${fromEmail}>`
       });
 
       return {
         success: true,
-        messageId: info.messageId,
-        response: info.response,
-        accepted: info.accepted,
-        rejected: info.rejected
+        messageId: responseData.id,
+        accepted: [supportTo],
+        rejected: []
       };
-    } catch (error) {
-      console.error('❌ Email send error:', {
-        code: error.code,
-        command: error.command,
-        response: error.response,
-        responseCode: error.responseCode,
-        responseMessage: error.responseMessage,
-        message: error.message,
-        stack: error.stack
-      });
 
-      // Provide user-friendly error messages
-      let userMessage = 'Failed to send email. Please try again later.';
-      
-      if (error.code === 'EAUTH' || error.responseCode === 401 || error.responseCode === 403) {
-        userMessage = 'Email authentication failed. Please check RESEND_API_KEY is valid.';
-      } else if (error.code === 'ETIMEDOUT' || error.code === 'ECONNECTION' || error.code === 'ESOCKET') {
-        userMessage = 'Email service connection timeout. Please try again later.';
-      } else if (error.message?.includes('timeout')) {
-        userMessage = 'Email send timeout. Please try again later.';
-      } else if (error.responseCode === 422) {
-        // 422 usually means unverified domain/email or invalid FROM address
-        if (error.message?.includes('from') || error.message?.includes('domain') || error.message?.includes('verify') || error.message?.includes('sender')) {
-          userMessage = 'Email address not verified in Resend. The system will use onboarding@resend.dev automatically.';
-        } else {
-          userMessage = 'Invalid email configuration. Please check email settings.';
-        }
-      } else if (error.message?.includes('rejected') || error.message?.includes('not accepted')) {
-        userMessage = 'Email was rejected by the server. Please check the email address and try again.';
-      } else if (error.responseCode === 429) {
-        userMessage = 'Email rate limit exceeded. Please try again later.';
-      } else if (error.responseMessage) {
-        // Use Resend's error message if available
-        userMessage = `Email service error: ${error.responseMessage}`;
+    } catch (error) {
+      // Handle fetch timeout or network errors
+      if (error.name === 'AbortError' || error.message?.includes('timeout')) {
+        console.error('❌ Email send timeout:', error);
+        throw {
+          code: 'ETIMEDOUT',
+          message: 'Email send timeout. Please try again later.',
+          userMessage: 'Email send timeout. Please try again later.',
+          originalError: error
+        };
       }
+
+      // Handle other errors
+      if (error.code && error.userMessage) {
+        // Already formatted error from above
+        throw error;
+      }
+
+      console.error('❌ Email send error:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+        code: error.code,
+        env: {
+          NODE_ENV: process.env.NODE_ENV,
+          hasApiKey: !!this.apiKey
+        }
+      });
 
       throw {
         code: error.code,
         message: error.message,
-        userMessage: userMessage,
-        responseCode: error.responseCode,
-        responseMessage: error.responseMessage,
+        userMessage: 'Failed to send email. Please try again later.',
         originalError: error
       };
     }
